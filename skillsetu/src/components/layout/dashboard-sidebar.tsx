@@ -120,10 +120,15 @@ export function DashboardSidebar({
           <Moon className="w-5 h-5 block dark:hidden" />
           {(!collapsed || mobile) && <span>Toggle Theme</span>}
         </button>
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all w-full">
-          <LogOut className="w-5 h-5" />
-          {(!collapsed || mobile) && <span>Sign Out</span>}
-        </button>
+        <form method="POST" action="/auth/signout" className="w-full">
+          <button
+            type="submit"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all w-full"
+          >
+            <LogOut className="w-5 h-5" />
+            {(!collapsed || mobile) && <span>Sign Out</span>}
+          </button>
+        </form>
       </div>
 
       {(!collapsed || mobile) && (

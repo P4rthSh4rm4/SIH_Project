@@ -65,7 +65,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (user && request.nextUrl.pathname.startsWith("/auth")) {
+  // IMPORTANT: /auth/signout must NOT be redirected — it's the logout endpoint.
+  const isAuthSignout = request.nextUrl.pathname === "/auth/signout";
+  if (user && request.nextUrl.pathname.startsWith("/auth") && !isAuthSignout) {
     const url = request.nextUrl.clone();
     // TODO: Redirect based on user role from profiles table
     url.pathname = "/student/dashboard";
