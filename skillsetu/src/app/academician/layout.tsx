@@ -1,0 +1,29 @@
+"use client";
+
+import { DashboardSidebar, type NavItem } from "@/components/layout/dashboard-sidebar";
+import {
+  LayoutDashboard, BookOpen, FlaskConical, Handshake, Presentation,
+} from "lucide-react";
+
+const academicianNav: NavItem[] = [
+  { label: "Dashboard", href: "/academician/dashboard", icon: LayoutDashboard },
+  { label: "FDPs", href: "/academician/fdps", icon: BookOpen },
+  { label: "Research", href: "/academician/research", icon: FlaskConical },
+  { label: "Consultancy", href: "/academician/consultancy", icon: Handshake },
+  { label: "Mentorship", href: "/academician/mentorship", icon: Presentation },
+];
+
+export default function AcademicianLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <DashboardSidebar
+        navItems={academicianNav}
+        roleLabel="Academician Portal"
+        roleColor="text-emerald-500"
+      />
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>
+      </main>
+    </div>
+  );
+}
