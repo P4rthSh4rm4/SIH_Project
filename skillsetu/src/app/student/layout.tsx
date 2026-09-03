@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Target, User, Briefcase, FolderOpen,
   MessageSquare, Award, FileText,
 } from "lucide-react";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 
 const studentNav: NavItem[] = [
   { label: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
@@ -18,12 +19,16 @@ const studentNav: NavItem[] = [
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  const { profile } = useUserProfile();
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <DashboardSidebar
         navItems={studentNav}
         roleLabel="Student Portal"
         roleColor="text-violet-500"
+        userName={profile?.name}
+        userEmail={profile?.email}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>

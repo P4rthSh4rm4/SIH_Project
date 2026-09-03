@@ -4,6 +4,7 @@ import { DashboardSidebar, type NavItem } from "@/components/layout/dashboard-si
 import {
   LayoutDashboard, Users, BarChart3, FileCheck, Award, FileText,
 } from "lucide-react";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 
 const institutionNav: NavItem[] = [
   { label: "Dashboard", href: "/institution/dashboard", icon: LayoutDashboard },
@@ -15,12 +16,16 @@ const institutionNav: NavItem[] = [
 ];
 
 export default function InstitutionLayout({ children }: { children: React.ReactNode }) {
+  const { profile } = useUserProfile();
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <DashboardSidebar
         navItems={institutionNav}
         roleLabel="Institution Admin"
         roleColor="text-amber-500"
+        userName={profile?.name}
+        userEmail={profile?.email}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>

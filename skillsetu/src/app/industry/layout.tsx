@@ -4,6 +4,7 @@ import { DashboardSidebar, type NavItem } from "@/components/layout/dashboard-si
 import {
   LayoutDashboard, PlusCircle, Users, BookOpen, BarChart3, Kanban,
 } from "lucide-react";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 
 const industryNav: NavItem[] = [
   { label: "Dashboard", href: "/industry/dashboard", icon: LayoutDashboard },
@@ -15,12 +16,16 @@ const industryNav: NavItem[] = [
 ];
 
 export default function IndustryLayout({ children }: { children: React.ReactNode }) {
+  const { profile } = useUserProfile();
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <DashboardSidebar
         navItems={industryNav}
         roleLabel="Industry Portal"
         roleColor="text-blue-500"
+        userName={profile?.name}
+        userEmail={profile?.email}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>

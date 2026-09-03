@@ -41,9 +41,12 @@ function SignupForm() {
     setLoading(true);
     setError("");
     setSuccessMsg("");
-    
+
     try {
       const supabase = createClient();
+
+      // 1. Create the auth user, storing name & role in metadata so the
+      //    DB trigger (handle_new_user) can populate public.users automatically.
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -51,13 +54,32 @@ function SignupForm() {
           data: {
             name,
             role: selectedRole,
-          }
-        }
+          },
+        },
       });
 
       if (authError) throw authError;
 
-      if (data.session) {
+      // 2. If a session was returned (email confirmation disabled), also
+      //    upsert the profile row in case the trigger hasn't fired yet.
+      if (data.session && data.user) {
+        const { error: upsertError } = await supabase
+          .from("users")
+          .upsert(
+            {
+              id: data.user.id,
+              name: name.trim() || email.split("@")[0],
+              email: data.user.email ?? email,
+              role: selectedRole,
+            },
+            { onConflict: "id" }
+          );
+
+        // Non-fatal: the DB trigger may have already inserted the row.
+        if (upsertError && upsertError.code !== "23505") {
+          console.warn("Profile upsert warning:", upsertError.message);
+        }
+
         router.refresh();
         router.push(`/${selectedRole}/dashboard`);
       } else {

@@ -33,8 +33,8 @@ export function DashboardSidebar({
   navItems,
   roleLabel,
   roleColor,
-  userName = "Demo User",
-  userEmail = "demo@skillsetu.in",
+  userName = "",
+  userEmail = "",
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -135,11 +135,19 @@ export function DashboardSidebar({
         <div className="p-4 border-t border-border/50">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-chart-4/20 flex items-center justify-center text-sm font-bold text-primary shrink-0">
-              {userName.charAt(0)}
+              {userName ? userName.charAt(0).toUpperCase() : "?"}
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-medium truncate">{userName}</div>
-              <div className="text-xs text-muted-foreground truncate">{userEmail}</div>
+              {userName ? (
+                <div className="text-sm font-medium truncate">{userName}</div>
+              ) : (
+                <div className="h-3.5 w-24 rounded bg-muted animate-pulse" />
+              )}
+              {userEmail ? (
+                <div className="text-xs text-muted-foreground truncate">{userEmail}</div>
+              ) : (
+                <div className="h-3 w-32 rounded bg-muted animate-pulse mt-1" />
+              )}
             </div>
           </div>
         </div>

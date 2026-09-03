@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import type { UserRole } from "@/lib/types";
 
 /**
  * Refreshes the Supabase auth session on every request via middleware.
- * Also handles role-based route protection.
+ * Also handles role-based route protection and authenticated-user redirects.
  * Gracefully skips when Supabase env vars are not configured (dev mode).
  */
 export async function updateSession(request: NextRequest) {
@@ -64,16 +65,22 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages
-  // IMPORTANT: /auth/signout must NOT be redirected — it's the logout endpoint.
+  // Redirect authenticated users away from auth pages (but NOT /auth/signout)
   const isAuthSignout = request.nextUrl.pathname === "/auth/signout";
   if (user && request.nextUrl.pathname.startsWith("/auth") && !isAuthSignout) {
+    // Fetch the user's role from the database to route correctly
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    const role: UserRole = (userData?.role as UserRole) || "student";
+
     const url = request.nextUrl.clone();
-    // TODO: Redirect based on user role from profiles table
-    url.pathname = "/student/dashboard";
+    url.pathname = `/${role}/dashboard`;
     return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
 }
-

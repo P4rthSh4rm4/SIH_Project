@@ -8,8 +8,8 @@ import {
   BookOpen, Sparkles, Clock, CheckCircle2, Star,
 } from "lucide-react";
 import Link from "next/link";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 
-// Demo data — will be replaced with Supabase queries
 const stats = [
   { label: "Skills Mapped", value: "24", icon: Target, trend: "+3 this week", color: "text-violet-500", bg: "bg-violet-500/10" },
   { label: "Match Score", value: "87%", icon: TrendingUp, trend: "+5% vs last month", color: "text-emerald-500", bg: "bg-emerald-500/10" },
@@ -32,12 +32,22 @@ const topSkills = [
 ];
 
 export default function StudentDashboard() {
+  const { profile, loading } = useUserProfile();
+
+  // Derive first name for the greeting; fall back to a loading skeleton
+  const firstName = profile?.name?.split(" ")[0] ?? "";
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back, <span className="gradient-text">Parth</span>
+          Welcome back,{" "}
+          {loading ? (
+            <span className="inline-block h-8 w-28 rounded-lg bg-muted animate-pulse align-middle" />
+          ) : (
+            <span className="gradient-text">{firstName || "there"}</span>
+          )}
         </h1>
         <p className="text-muted-foreground mt-1">
           Here&apos;s your skill development overview
