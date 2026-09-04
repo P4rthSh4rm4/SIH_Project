@@ -129,7 +129,7 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
                   <div key={wi} className="flex flex-col gap-[1px]">
                     {week.map((day) => (
                       <Tooltip key={day.date}>
-                        <TooltipTrigger asChild>
+                        <TooltipTrigger>
                           <div
                             className={`w-[13px] h-[13px] rounded-sm ${getIntensityClass(day.count)} transition-colors cursor-default`}
                           />

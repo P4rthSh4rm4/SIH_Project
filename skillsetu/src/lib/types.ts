@@ -116,6 +116,8 @@ export interface LearningProgram {
 }
 
 // ─── Certifications ────────────────────────────────────────
+export type VerificationStatus = "pending" | "verified" | "rejected";
+
 export interface Certification {
   id: string;
   student_id: string;
@@ -123,6 +125,9 @@ export interface Certification {
   issuer: string;
   verified: boolean;
   credential_hash?: string;
+  credential_id?: string;
+  certificate_url?: string;
+  verification_status: VerificationStatus;
   issued_at: string;
 }
 
@@ -180,12 +185,88 @@ export interface Institution {
 }
 
 // ─── Student Profile ───────────────────────────────────────
+export type Gender = "male" | "female" | "non_binary" | "prefer_not_to_say";
+
 export interface StudentProfile {
   id: string;
   user_id: string;
   bio?: string;
   resume_url?: string;
   portfolio_json?: Record<string, unknown>;
+  career_objective?: string;
+  linkedin?: string;
+  github?: string;
+  portfolio_website?: string;
+  location?: string;
+  phone?: string;
+  dob?: string;
+  gender?: Gender;
+  updated_at?: string;
+}
+
+// ─── Student Education ─────────────────────────────────────
+export interface StudentEducation {
+  id: string;
+  user_id: string;
+  institute: string;
+  degree: string;
+  branch?: string;
+  cgpa?: number;
+  start_year?: number;
+  end_year?: number;
+  created_at: string;
+}
+
+// ─── Student Experience ────────────────────────────────────
+export type ExperienceType = "internship" | "project" | "research" | "part_time";
+
+export interface StudentExperience {
+  id: string;
+  user_id: string;
+  type: ExperienceType;
+  title: string;
+  organization?: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  is_current: boolean;
+  created_at: string;
+}
+
+// ─── Profile Form Data (merged user + student_profile) ─────
+export interface ProfileFormData {
+  // From users table
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar_url?: string;
+  institution_id?: string;
+  // From student_profiles table
+  student_profile_id?: string;
+  bio?: string;
+  career_objective?: string;
+  linkedin?: string;
+  github?: string;
+  portfolio_website?: string;
+  location?: string;
+  phone?: string;
+  dob?: string;
+  gender?: Gender;
+  resume_url?: string;
+  portfolio_json?: Record<string, unknown>;
+}
+
+// ─── Profile Completion ────────────────────────────────────
+export interface ProfileCompletionItem {
+  label: string;
+  completed: boolean;
+  weight: number;
+}
+
+export interface ProfileCompletionResult {
+  percentage: number;
+  items: ProfileCompletionItem[];
 }
 
 // ─── Gamification ──────────────────────────────────────────
