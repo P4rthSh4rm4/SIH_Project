@@ -1,11 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import type { UserRole } from "@/lib/types";
 
 /**
  * Refreshes the Supabase auth session on every request via middleware.
- * Also handles role-based route protection and authenticated-user redirects.
- * Gracefully skips when Supabase env vars are not configured (dev mode).
+ * Handles:
+ *  - Session refresh (keeps cookies alive)
+ *  - Authentication gate (redirect unauthenticated users from protected routes)
+ *  - Redirect authenticated users away from auth pages (except callback/signout/verify)
+ *
+ * IMPORTANT: This middleware does NOT perform database queries.
+ * Role-based authorization is handled in server components / API routes.
  */
 export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,7 +48,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Define protected route prefixes
+  const pathname = request.nextUrl.pathname;
+
+  // ─── Define route categories ──────────────────────────────────────────
   const protectedPrefixes = [
     "/student",
     "/industry",
@@ -53,32 +59,48 @@ export async function updateSession(request: NextRequest) {
     "/admin",
   ];
 
+  // Auth pages that should NOT redirect authenticated users away
+  const authExcludedPaths = [
+    "/auth/callback",
+    "/auth/signout",
+    "/auth/verify",
+  ];
+
   const isProtectedRoute = protectedPrefixes.some((prefix) =>
-    request.nextUrl.pathname.startsWith(prefix)
+    pathname.startsWith(prefix)
   );
 
-  // Redirect unauthenticated users to login
+  const isAuthRoute = pathname.startsWith("/auth");
+  const isAuthExcluded = authExcludedPaths.some((path) =>
+    pathname.startsWith(path)
+  );
+
+  // ─── Unauthenticated users: block protected routes ────────────────────
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
-    url.searchParams.set("redirectTo", request.nextUrl.pathname);
+    url.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages (but NOT /auth/signout)
-  const isAuthSignout = request.nextUrl.pathname === "/auth/signout";
-  if (user && request.nextUrl.pathname.startsWith("/auth") && !isAuthSignout) {
-    // Fetch the user's role from the database to route correctly
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role: UserRole = (userData?.role as UserRole) || "student";
-
+  // ─── Authenticated users: redirect away from login/signup pages ───────
+  // But NEVER redirect from callback, signout, or verify pages
+  if (user && isAuthRoute && !isAuthExcluded) {
+    // We don't query the DB here for performance and reliability.
+    // Instead, redirect to a generic dashboard route that will
+    // determine the correct portal on the server side.
+    const redirectTo = request.nextUrl.searchParams.get("redirectTo");
     const url = request.nextUrl.clone();
-    url.pathname = `/${role}/dashboard`;
+
+    if (redirectTo && redirectTo.startsWith("/")) {
+      // If there's a specific redirect target, honour it
+      url.pathname = redirectTo;
+      url.search = "";
+    } else {
+      // Default: redirect to the role-resolver page
+      url.pathname = "/auth/callback";
+      url.searchParams.set("resolve", "true");
+    }
     return NextResponse.redirect(url);
   }
 

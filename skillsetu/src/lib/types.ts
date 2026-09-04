@@ -3,8 +3,24 @@ export type UserRole =
   | "student"
   | "industry"
   | "academician"
-  | "institution"
-  | "admin";
+  | "institution_admin"
+  | "super_admin";
+
+/** Roles a normal user can self-assign during signup */
+export const SELF_ASSIGNABLE_ROLES: UserRole[] = [
+  "student",
+  "industry",
+  "academician",
+];
+
+/** Map each role to its portal route prefix */
+export const ROLE_PORTAL_MAP: Record<UserRole, string> = {
+  student: "/student",
+  industry: "/industry",
+  academician: "/academician",
+  institution_admin: "/institution",
+  super_admin: "/admin",
+};
 
 export interface UserProfile {
   id: string;
@@ -13,7 +29,9 @@ export interface UserProfile {
   email: string;
   avatar_url?: string;
   institution_id?: string;
+  onboarding_completed: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 // ─── Skills ────────────────────────────────────────────────

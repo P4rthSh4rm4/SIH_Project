@@ -104,7 +104,7 @@ const roles = [
     title: "Institutions",
     description:
       "Track placements, manage rosters, verify credentials — all in one place.",
-    href: "/auth/signup?role=institution",
+    href: "/auth/signup?role=institution_admin",
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
   },
