@@ -187,3 +187,110 @@ export interface StudentProfile {
   resume_url?: string;
   portfolio_json?: Record<string, unknown>;
 }
+
+// ─── Gamification ──────────────────────────────────────────
+export interface StudentGamification {
+  user_id: string;
+  total_xp: number;
+  level: number;
+  current_streak: number;
+  longest_streak: number;
+  last_active_date: string | null;
+  updated_at: string;
+}
+
+export type ActivityAction =
+  | "assessment_completed"
+  | "course_enrolled"
+  | "course_completed"
+  | "certification_earned"
+  | "profile_updated"
+  | "portfolio_item_added"
+  | "application_submitted"
+  | "document_uploaded"
+  | "login"
+  | "badge_earned"
+  | "skill_added"
+  | "streak_milestone";
+
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  action_type: ActivityAction;
+  xp_earned: number;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface Badge {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon_name: string;
+  xp_reward: number;
+  criteria_json: Record<string, unknown>;
+}
+
+export interface StudentBadge {
+  student_id: string;
+  badge_id: string;
+  earned_at: string;
+  badge?: Badge;
+}
+
+export interface LeaderboardEntry {
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+  total_xp: number;
+  level: number;
+  current_streak: number;
+  rank: number;
+}
+
+// ─── Documents ─────────────────────────────────────────────
+export type DocumentType = "resume" | "academic" | "internship_report" | "other";
+
+export interface Document {
+  id: string;
+  user_id: string;
+  title: string;
+  type: DocumentType;
+  file_url: string;
+  file_size?: number;
+  uploaded_at: string;
+}
+
+// ─── Learning Enrollments ──────────────────────────────────
+export interface LearningEnrollment {
+  id: string;
+  student_id: string;
+  program_id: string;
+  progress_pct: number;
+  enrolled_at: string;
+  completed_at: string | null;
+  program?: LearningProgram;
+}
+
+// ─── Portfolio Items ───────────────────────────────────────
+export type PortfolioItemType = "project" | "achievement" | "internship";
+
+export interface PortfolioItem {
+  id: string;
+  user_id: string;
+  type: PortfolioItemType;
+  title: string;
+  description?: string;
+  url?: string;
+  image_url?: string;
+  created_at: string;
+}
+
+// ─── Award XP Response ─────────────────────────────────────
+export interface AwardXpResult {
+  xp_earned: number;
+  total_xp: number;
+  level: number;
+  streak: number;
+}
