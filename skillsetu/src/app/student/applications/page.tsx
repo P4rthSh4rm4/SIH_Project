@@ -12,6 +12,33 @@ import { useApplications } from "@/lib/hooks/useApplications";
 import { toast } from "sonner";
 import Link from "next/link";
 
+const MOCK_APPLICATIONS = [
+  {
+    id: "mock-app-1",
+    status: "shortlisted",
+    applied_at: new Date().toISOString(),
+    match_score: 95,
+    opportunity: {
+      title: "Software Engineer Intern (Frontend)",
+      company_name: "TechNova Solutions",
+      location: "Remote",
+      type: "internship"
+    }
+  },
+  {
+    id: "mock-app-2",
+    status: "interview",
+    applied_at: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+    match_score: 88,
+    opportunity: {
+      title: "UI/UX Design Intern",
+      company_name: "CreativeLabs",
+      location: "Mumbai",
+      type: "internship"
+    }
+  }
+];
+
 const STATUS_CONFIG = {
   applied: { label: "Applied", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: Clock3 },
   shortlisted: { label: "Shortlisted", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: Eye },
@@ -24,6 +51,8 @@ const STATUS_CONFIG = {
 export default function ApplicationsPage() {
   const { applications, loading, withdrawApplication } = useApplications();
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+
+  const allApplications = [...applications, ...MOCK_APPLICATIONS as any[]];
 
   const handleWithdraw = async (id: string) => {
     if (!confirm("Are you sure you want to withdraw this application? This action cannot be undone.")) return;
@@ -73,7 +102,7 @@ export default function ApplicationsPage() {
         </Button>
       </div>
 
-      {applications.length === 0 ? (
+      {allApplications.length === 0 ? (
         <Card className="border-border/50 border-dashed bg-secondary/20">
           <CardContent className="p-12 text-center text-muted-foreground">
             <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-20" />
@@ -86,7 +115,7 @@ export default function ApplicationsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {applications.map((app) => {
+          {allApplications.map((app) => {
             const opp = app.opportunity as any;
             if (!opp) return null;
             

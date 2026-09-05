@@ -30,7 +30,7 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
     }
 
     const today = new Date();
-    const totalWeeks = 26;
+    const totalWeeks = 52;
     const weeksArray: { date: string; count: number; xp: number; dayOfWeek: number }[][] = [];
     const labels: { label: string; col: number }[] = [];
 
@@ -99,7 +99,7 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
               {DAYS.map((label, i) => (
                 <div
                   key={i}
-                  className="h-[13px] flex items-center text-[9px] text-muted-foreground"
+                  className="h-[15px] flex items-center text-[10px] text-muted-foreground"
                 >
                   {label}
                 </div>
@@ -115,7 +115,7 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
                   return (
                     <div
                       key={wi}
-                      className="w-[13px] text-[9px] text-muted-foreground"
+                      className="w-[15px] text-[10px] text-muted-foreground"
                     >
                       {label?.label ?? ""}
                     </div>
@@ -131,7 +131,7 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
                       <Tooltip key={day.date}>
                         <TooltipTrigger>
                           <div
-                            className={`w-[13px] h-[13px] rounded-sm ${getIntensityClass(day.count)} transition-colors cursor-default`}
+                            className={`w-[15px] h-[15px] rounded-sm ${getIntensityClass(day.count)} transition-colors cursor-default`}
                           />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
@@ -150,11 +150,11 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
         {/* Legend */}
         <div className="flex items-center justify-end gap-1.5 mt-3 text-[10px] text-muted-foreground">
           <span>Less</span>
-          <div className="w-[11px] h-[11px] rounded-sm bg-muted/50" />
-          <div className="w-[11px] h-[11px] rounded-sm bg-emerald-200 dark:bg-emerald-900/60" />
-          <div className="w-[11px] h-[11px] rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-          <div className="w-[11px] h-[11px] rounded-sm bg-emerald-500 dark:bg-emerald-500" />
-          <div className="w-[11px] h-[11px] rounded-sm bg-emerald-600 dark:bg-emerald-400" />
+          <div className="w-[13px] h-[13px] rounded-sm bg-muted/50" />
+          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-200 dark:bg-emerald-900/60" />
+          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-400 dark:bg-emerald-700" />
+          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-500 dark:bg-emerald-500" />
+          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-600 dark:bg-emerald-400" />
           <span>More</span>
         </div>
       </CardContent>

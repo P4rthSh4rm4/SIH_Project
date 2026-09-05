@@ -25,28 +25,39 @@ const CAREER_PATHS = [
     phases: [
       {
         title: "Frontend Fundamentals",
-        description: "HTML, CSS, JS Basics, DOM Manipulation",
+        description: "Master the building blocks of the web and DOM manipulation.",
         completed: true,
+        skills: ["HTML5", "CSS3", "JavaScript", "Web APIs"],
       },
       {
         title: "Modern Frontend Frameworks",
-        description: "React, Hooks, State Management, Next.js",
+        description: "Build interactive UIs with React and Next.js, managing complex states.",
         completed: true,
+        skills: ["React", "Next.js", "Redux", "Tailwind CSS"],
       },
       {
         title: "Backend Development",
-        description: "Node.js, Express, REST APIs",
+        description: "Develop robust server-side logic and RESTful architectures.",
         completed: false,
+        skills: ["Node.js", "Express", "REST API", "GraphQL"],
       },
       {
         title: "Databases & Architecture",
-        description: "PostgreSQL, MongoDB, System Design",
+        description: "Design efficient schemas and understand scalable system design.",
         completed: false,
+        skills: ["PostgreSQL", "MongoDB", "Redis", "System Design"],
       },
       {
         title: "Deployment & DevOps",
-        description: "Docker, CI/CD, AWS/Vercel",
+        description: "Containerize applications and set up automated deployment pipelines.",
         completed: false,
+        skills: ["Docker", "AWS", "CI/CD", "Vercel"],
+      },
+      {
+        title: "Advanced Engineering",
+        description: "Master real-time communication and microservice architectures.",
+        completed: false,
+        skills: ["WebSockets", "Microservices", "Kafka", "Performance Optimization"],
       },
     ],
   },
@@ -59,32 +70,43 @@ const CAREER_PATHS = [
     bg: "bg-emerald-500/10",
     salary: "₹10L - ₹30L",
     demand: "Very High",
-    requiredSkills: ["Python", "SQL", "Statistics", "Machine Learning"],
+    requiredSkills: ["Python", "SQL", "Statistics", "Machine Learning", "Data Visualization"],
     phases: [
       {
         title: "Programming & Math",
-        description: "Python, Linear Algebra, Statistics",
+        description: "Strong foundation in programming and mathematical concepts.",
         completed: false,
+        skills: ["Python", "Linear Algebra", "Statistics", "Calculus"],
       },
       {
         title: "Data Manipulation",
-        description: "Pandas, NumPy, SQL",
+        description: "Clean, transform, and analyze datasets efficiently.",
         completed: false,
+        skills: ["Pandas", "NumPy", "SQL", "Data Cleaning"],
       },
       {
         title: "Data Visualization",
-        description: "Matplotlib, Seaborn, Tableau",
+        description: "Create compelling dashboards and visual narratives.",
         completed: false,
+        skills: ["Matplotlib", "Seaborn", "Tableau", "PowerBI"],
       },
       {
         title: "Machine Learning",
-        description: "Scikit-Learn, Regression, Classification",
+        description: "Train predictive models and evaluate their performance.",
         completed: false,
+        skills: ["Scikit-Learn", "Regression", "Classification", "XGBoost"],
       },
       {
-        title: "Deep Learning (Optional)",
-        description: "TensorFlow, PyTorch, Neural Networks",
+        title: "Deep Learning (Advanced)",
+        description: "Build neural networks for complex pattern recognition.",
         completed: false,
+        skills: ["TensorFlow", "PyTorch", "NLP", "Computer Vision"],
+      },
+      {
+        title: "Model Deployment (MLOps)",
+        description: "Deploy machine learning models into production environments.",
+        completed: false,
+        skills: ["MLflow", "FastAPI", "Docker", "Model Monitoring"],
       },
     ],
   },
@@ -97,32 +119,43 @@ const CAREER_PATHS = [
     bg: "bg-amber-500/10",
     salary: "₹10L - ₹28L",
     demand: "High",
-    requiredSkills: ["Linux", "Git", "Docker", "Kubernetes", "AWS"],
+    requiredSkills: ["Linux", "Git", "Docker", "Kubernetes", "AWS", "Terraform"],
     phases: [
       {
         title: "OS & Networking",
-        description: "Linux Admin, Bash Scripting, TCP/IP",
+        description: "Master operating systems administration and network protocols.",
         completed: false,
+        skills: ["Linux Admin", "Bash Scripting", "TCP/IP", "DNS"],
       },
       {
         title: "Version Control & CI/CD",
-        description: "Git, GitHub Actions, Jenkins",
+        description: "Manage source code and automate testing and deployments.",
         completed: false,
+        skills: ["Git", "GitHub Actions", "Jenkins", "GitLab CI"],
       },
       {
         title: "Containerization",
-        description: "Docker, Docker Compose",
+        description: "Package applications with dependencies into portable containers.",
         completed: false,
+        skills: ["Docker", "Docker Compose", "Container Registry"],
       },
       {
         title: "Infrastructure as Code",
-        description: "Terraform, Ansible",
+        description: "Provision and manage infrastructure programmatically.",
         completed: false,
+        skills: ["Terraform", "Ansible", "CloudFormation"],
       },
       {
         title: "Container Orchestration",
-        description: "Kubernetes, Helm",
+        description: "Manage large clusters of containers efficiently.",
         completed: false,
+        skills: ["Kubernetes", "Helm", "Istio", "EKS/GKE"],
+      },
+      {
+        title: "Monitoring & Observability",
+        description: "Track system health, logs, and performance metrics.",
+        completed: false,
+        skills: ["Prometheus", "Grafana", "ELK Stack", "Datadog"],
       },
     ],
   },
@@ -227,38 +260,50 @@ export default function CareerGuidancePage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-muted before:to-transparent">
+            <CardContent className="pt-6">
+              <div className="space-y-12 relative before:absolute before:inset-0 before:ml-7 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-1 before:bg-gradient-to-b before:from-primary/50 before:via-primary/20 before:to-transparent before:rounded-full">
                 {selectedPath.phases.map((phase, i) => (
                   <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                     {/* Icon */}
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-secondary text-muted-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow shadow-muted-foreground/20 z-10">
+                    <div className="flex items-center justify-center w-14 h-14 rounded-full border-4 border-background bg-secondary text-muted-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-xl z-10 transition-transform duration-300 group-hover:scale-110">
                       {phase.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        <CheckCircle2 className="w-7 h-7 text-emerald-500" />
                       ) : (
-                        <Circle className="w-5 h-5" />
+                        <Circle className="w-7 h-7 text-primary/40" />
                       )}
                     </div>
                     {/* Card */}
-                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-border/50 bg-card shadow-sm group-hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold uppercase text-primary tracking-wider">
+                    <div className="w-[calc(100%-5rem)] md:w-[calc(50%-3.5rem)] p-6 rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden group-hover:-translate-y-1">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                        <span className="text-sm font-bold uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full w-fit">
                           Phase {i + 1}
                         </span>
                         {phase.completed && (
-                          <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30 bg-emerald-500/10">
+                          <Badge variant="outline" className="text-[10px] uppercase text-emerald-600 border-emerald-500/30 bg-emerald-500/10 py-1 px-3">
                             Completed
                           </Badge>
                         )}
                       </div>
-                      <h4 className="font-semibold text-sm mb-1">{phase.title}</h4>
-                      <p className="text-xs text-muted-foreground">
+                      
+                      <h4 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">{phase.title}</h4>
+                      <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
                         {phase.description}
                       </p>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {phase.skills?.map(skill => (
+                          <Badge key={skill} variant="secondary" className="bg-secondary/60 hover:bg-secondary border-none">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+
                       {!phase.completed && (
-                        <Button variant="link" className="p-0 h-auto text-xs mt-3 h-auto text-primary" asChild>
+                        <Button variant="default" size="sm" className="w-full sm:w-auto bg-primary/90 hover:bg-primary shadow-md hover:shadow-primary/25 transition-all" asChild>
                           <Link href="/student/learning-hub">
-                            Find Courses <ArrowRight className="w-3 h-3 ml-1" />
+                            Find Courses <ArrowRight className="w-4 h-4 ml-2" />
                           </Link>
                         </Button>
                       )}

@@ -69,7 +69,7 @@ export type OpportunityType =
   | "micro-internship"
   | "bounty";
 
-export type OpportunityStatus = "draft" | "active" | "closed" | "archived";
+export type OpportunityStatus = "draft" | "pending" | "active" | "rejected" | "closed" | "archived";
 
 export interface Opportunity {
   id: string;
