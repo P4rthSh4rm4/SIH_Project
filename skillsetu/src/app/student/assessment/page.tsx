@@ -22,7 +22,7 @@ interface CategoryConfig {
   icon: React.ElementType;
   color: string;
   bg: string;
-  subcategories: Array<{ id: string; label: string; description: string }>;
+  subcategories: Array<{ id: string; label: string; description: string; targetSkillName: string }>;
 }
 
 const CATEGORIES: CategoryConfig[] = [
@@ -33,9 +33,9 @@ const CATEGORIES: CategoryConfig[] = [
     color: "text-blue-500",
     bg: "bg-blue-500/10",
     subcategories: [
-      { id: "dsa", label: "DSA", description: "Arrays, Trees, Graphs, DP, Sorting" },
-      { id: "sql", label: "SQL", description: "Queries, JOINs, Aggregations, Optimization" },
-      { id: "web_dev", label: "Web Dev", description: "HTML, CSS, JS, React, APIs" },
+      { id: "dsa", label: "DSA", description: "Arrays, Trees, Graphs, DP, Sorting", targetSkillName: "Data Structures & Algorithms" },
+      { id: "sql", label: "SQL", description: "Queries, JOINs, Aggregations, Optimization", targetSkillName: "SQL" },
+      { id: "web_dev", label: "Web Dev", description: "HTML, CSS, JS, React, APIs", targetSkillName: "Web Development" },
     ],
   },
   {
@@ -45,9 +45,9 @@ const CATEGORIES: CategoryConfig[] = [
     color: "text-amber-500",
     bg: "bg-amber-500/10",
     subcategories: [
-      { id: "quant", label: "Quantitative", description: "Numbers, Percentages, Probability" },
-      { id: "logical", label: "Logical Reasoning", description: "Puzzles, Patterns, Syllogisms" },
-      { id: "verbal", label: "Verbal Ability", description: "Comprehension, Grammar, Vocabulary" },
+      { id: "quant", label: "Quantitative", description: "Numbers, Percentages, Probability", targetSkillName: "Quantitative Aptitude" },
+      { id: "logical", label: "Logical Reasoning", description: "Puzzles, Patterns, Syllogisms", targetSkillName: "Logical Reasoning" },
+      { id: "verbal", label: "Verbal Ability", description: "Comprehension, Grammar, Vocabulary", targetSkillName: "Verbal Ability" },
     ],
   },
   {
@@ -57,10 +57,10 @@ const CATEGORIES: CategoryConfig[] = [
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
     subcategories: [
-      { id: "communication", label: "Communication", description: "Listening, Presentation, Feedback" },
-      { id: "leadership", label: "Leadership", description: "Decision Making, Delegation, Vision" },
-      { id: "teamwork", label: "Teamwork", description: "Collaboration, Conflict Resolution" },
-      { id: "problem_solving", label: "Problem Solving", description: "Critical Thinking, Analysis" },
+      { id: "communication", label: "Communication", description: "Listening, Presentation, Feedback", targetSkillName: "Communication Skills" },
+      { id: "leadership", label: "Leadership", description: "Decision Making, Delegation, Vision", targetSkillName: "Leadership" },
+      { id: "teamwork", label: "Teamwork", description: "Collaboration, Conflict Resolution", targetSkillName: "Teamwork" },
+      { id: "problem_solving", label: "Problem Solving", description: "Critical Thinking, Analysis", targetSkillName: "Problem Solving" },
     ],
   },
 ];
@@ -138,7 +138,11 @@ export default function SkillAssessmentPage() {
         timeTaken
       );
       setResult(evalResult);
-      await saveAssessment(selectedCategory, selectedSubcategory, questions, answers, evalResult);
+      const currentSub = CATEGORIES.find((c) => c.id === selectedCategory)
+        ?.subcategories.find((s) => s.id === selectedSubcategory);
+      const targetSkillName = currentSub?.targetSkillName || "";
+
+      await saveAssessment(selectedCategory, selectedSubcategory, targetSkillName, questions, answers, evalResult);
       await awardXp("assessment_completed", {
         score: evalResult.score,
         category: selectedCategory,

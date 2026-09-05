@@ -47,7 +47,7 @@ export default function PortfolioPage() {
         setDescription("");
         setUrl("");
         setImageFile(null);
-        await awardXp("portfolio_updated");
+        await awardXp("portfolio_item_added");
       } else {
         toast.error(error || "Failed to add item");
       }

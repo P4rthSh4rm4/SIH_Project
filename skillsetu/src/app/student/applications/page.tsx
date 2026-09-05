@@ -14,9 +14,9 @@ import Link from "next/link";
 
 const STATUS_CONFIG = {
   applied: { label: "Applied", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: Clock3 },
-  reviewing: { label: "Under Review", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: Eye },
-  interviewed: { label: "Interviewed", color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: RefreshCw },
-  accepted: { label: "Accepted", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: CheckCircle2 },
+  shortlisted: { label: "Shortlisted", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: Eye },
+  interview: { label: "Interview", color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: RefreshCw },
+  offer: { label: "Offer", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: CheckCircle2 },
   rejected: { label: "Not Selected", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", icon: XCircle },
   withdrawn: { label: "Withdrawn", color: "text-muted-foreground", bg: "bg-secondary", border: "border-border/50", icon: X },
 };
@@ -93,7 +93,7 @@ export default function ApplicationsPage() {
             const statusConfig = STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.applied;
             const StatusIcon = statusConfig.icon;
             const isWithdrawing = withdrawingId === app.id;
-            const canWithdraw = app.status === "applied" || app.status === "reviewing";
+            const canWithdraw = app.status === "applied" || app.status === "shortlisted";
 
             return (
               <Card key={app.id} className={`border-border/50 flex flex-col ${app.status === 'withdrawn' ? 'opacity-75 bg-secondary/10' : 'hover:shadow-md transition-shadow'}`}>
@@ -131,7 +131,7 @@ export default function ApplicationsPage() {
                       <Clock className="w-4 h-4 mr-1.5 shrink-0" />
                       <span className="truncate">Applied {new Date(app.applied_at).toLocaleDateString()}</span>
                     </div>
-                    {app.match_score > 0 && (
+                    {(app.match_score ?? 0) > 0 && (
                       <div className="flex items-center text-emerald-600">
                         <CheckCircle2 className="w-4 h-4 mr-1.5 shrink-0" />
                         <span className="truncate">{app.match_score}% Skill Match</span>

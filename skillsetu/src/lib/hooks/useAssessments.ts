@@ -111,6 +111,7 @@ export function useAssessments() {
     async (
       category: string,
       subcategory: string,
+      targetSkillName: string,
       questions: AssessmentQuestion[],
       answers: Record<string, number>,
       result: AssessmentResult
@@ -134,39 +135,49 @@ export function useAssessments() {
           },
         });
 
-        // Upsert student_skills for each assessed skill
-        for (const skill of result.skillsAssessed) {
-          // Find or create the skill in the skills table
-          let { data: existingSkill } = await supabase
+        console.log("[DEBUG] targetSkillName passed to saveAssessment:", targetSkillName);
+
+        // Look for the main skill in the master catalog based on the targetSkillName
+        let masterSkillId: string | null = null;
+        
+        if (targetSkillName) {
+          const { data: existingSkill, error } = await supabase
             .from("skills")
             .select("id")
-            .eq("name", skill.name)
-            .single();
-
-          if (!existingSkill) {
-            const { data: newSkill } = await supabase
-              .from("skills")
-              .insert({
-                name: skill.name,
-                category: category,
-              })
-              .select("id")
-              .single();
-            existingSkill = newSkill;
+            .ilike("name", targetSkillName)
+            .maybeSingle();
+            
+          console.log("[DEBUG] skills lookup result (existingSkill):", existingSkill);
+          if (error) {
+            console.error("[DEBUG] lookup error from skills table:", error);
           }
-
-          if (existingSkill) {
-            await supabase.from("student_skills").upsert(
-              {
-                student_id: user.id,
-                skill_id: existingSkill.id,
-                proficiency_score: skill.score,
-                verified: false,
-                source: "assessment",
-              },
-              { onConflict: "student_id,skill_id" }
-            );
+            
+          if (existingSkill?.id) {
+            masterSkillId = existingSkill.id;
           }
+        }
+        
+        console.log("[DEBUG] masterSkillId resolved to:", masterSkillId);
+
+        // If we found a matching master skill, upsert the overall score into student_skills
+        if (masterSkillId) {
+          const { data: upsertData, error: upsertError } = await supabase.from("student_skills").upsert(
+            {
+              student_id: user.id,
+              skill_id: masterSkillId,
+              proficiency_score: result.score,
+              verified: false,
+              source: "assessment",
+            },
+            { onConflict: "student_id,skill_id" }
+          ).select();
+          
+          console.log("[DEBUG] student_skills upsert result:", upsertData);
+          if (upsertError) {
+            console.error("[DEBUG] student_skills upsert error:", upsertError);
+          }
+        } else {
+          console.warn("[DEBUG] Skipping student_skills upsert because masterSkillId is null. The targetSkillName was not found in the skills table.");
         }
 
         await fetchHistory();

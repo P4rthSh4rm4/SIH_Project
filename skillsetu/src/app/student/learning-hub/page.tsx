@@ -29,8 +29,7 @@ export default function LearningHubPage() {
   const enrolledIds = new Set(enrollments.map((e) => e.program_id));
   const availablePrograms = programs.filter(
     (p) => !enrolledIds.has(p.id) && (
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.description?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+      p.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
@@ -199,10 +198,7 @@ export default function LearningHubPage() {
                   <CardTitle className="text-base line-clamp-2 leading-snug">{program.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1">
-                  <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                    {program.description}
-                  </p>
-                  
+                  <div className="mb-4"></div>
                   {program.skills_covered && program.skills_covered.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-auto">
                       {program.skills_covered.slice(0, 3).map((skill, i) => (
@@ -263,7 +259,7 @@ export default function LearningHubPage() {
                   <div>
                     <h4 className="font-semibold text-sm line-clamp-1">{program.title}</h4>
                     <p className="text-xs text-muted-foreground">
-                      Completed {new Date(enrollment.completed_at || enrollment.updated_at).toLocaleDateString()}
+                      Completed {new Date(enrollment.completed_at || enrollment.enrolled_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>

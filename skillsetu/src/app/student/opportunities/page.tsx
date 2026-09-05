@@ -21,7 +21,6 @@ export default function OpportunitiesPage() {
 
   const filteredOpportunities = opportunities.filter((opp) => 
     opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    opp.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (opp.location && opp.location.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -31,7 +30,7 @@ export default function OpportunitiesPage() {
       const { success, error } = await applyToOpportunity(oppId, matchScore);
       if (success) {
         toast.success("Application submitted successfully!");
-        await awardXp("job_applied", { opportunity_id: oppId });
+        await awardXp("application_submitted", { opportunity_id: oppId });
       } else {
         toast.error(error || "Failed to submit application");
       }
@@ -112,7 +111,7 @@ export default function OpportunitiesPage() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg leading-tight">{opp.title}</h3>
-                            <p className="text-muted-foreground text-sm">{opp.company_name}</p>
+                            <p className="text-muted-foreground text-sm">Partner Company</p>
                           </div>
                         </div>
                         
@@ -134,14 +133,9 @@ export default function OpportunitiesPage() {
                             <MapPin className="w-4 h-4" /> {opp.location}
                           </div>
                         )}
-                        {opp.salary_range && (
+                        {opp.stipend && (
                           <div className="flex items-center gap-1.5">
-                            <DollarSign className="w-4 h-4" /> {opp.salary_range}
-                          </div>
-                        )}
-                        {opp.experience_level && (
-                          <div className="flex items-center gap-1.5 capitalize">
-                            <GraduationCap className="w-4 h-4" /> {opp.experience_level}
+                            <DollarSign className="w-4 h-4" /> {opp.stipend}
                           </div>
                         )}
                         <div className="flex items-center gap-1.5">

@@ -19,36 +19,36 @@ const TARGET_ROLES = [
     id: "fullstack",
     label: "Full-Stack Developer",
     requiredSkills: [
-      { name: "JavaScript", target: 85 },
-      { name: "React", target: 80 },
-      { name: "Node.js", target: 75 },
-      { name: "SQL Queries", target: 70 },
-      { name: "System Design", target: 60 },
-      { name: "Git & DevOps", target: 65 },
+      { name: "Web Development", target: 85 },
+      { name: "Data Structures & Algorithms", target: 80 },
+      { name: "SQL", target: 75 },
+      { name: "Problem Solving", target: 80 },
+      { name: "Logical Reasoning", target: 70 },
+      { name: "Communication Skills", target: 65 },
     ],
   },
   {
     id: "datascience",
     label: "Data Scientist",
     requiredSkills: [
-      { name: "Python", target: 85 },
-      { name: "Statistics", target: 80 },
-      { name: "Machine Learning", target: 75 },
-      { name: "SQL Queries", target: 75 },
-      { name: "Data Visualization", target: 70 },
-      { name: "Deep Learning", target: 60 },
+      { name: "SQL", target: 85 },
+      { name: "Quantitative Aptitude", target: 80 },
+      { name: "Logical Reasoning", target: 75 },
+      { name: "Problem Solving", target: 75 },
+      { name: "Communication Skills", target: 70 },
+      { name: "Data Structures & Algorithms", target: 60 },
     ],
   },
   {
     id: "frontend",
     label: "Frontend Specialist",
     requiredSkills: [
-      { name: "HTML/CSS", target: 90 },
-      { name: "JavaScript", target: 85 },
-      { name: "React", target: 85 },
-      { name: "TypeScript", target: 75 },
-      { name: "UI/UX Design", target: 70 },
-      { name: "Performance", target: 65 },
+      { name: "Web Development", target: 90 },
+      { name: "Problem Solving", target: 80 },
+      { name: "Communication Skills", target: 75 },
+      { name: "Data Structures & Algorithms", target: 60 },
+      { name: "Logical Reasoning", target: 65 },
+      { name: "Teamwork", target: 70 },
     ],
   },
 ];
@@ -59,15 +59,22 @@ export default function SkillAnalysisPage() {
   const selectedRole = TARGET_ROLES[0];
 
   // Build radar chart data from categories
-  const categoryMap: Record<string, { total: number; count: number }> = {};
+  // Pre-fill with core categories to ensure the RadarChart always forms at least a triangle
+  const categoryMap: Record<string, { total: number; count: number }> = {
+    "Coding": { total: 0, count: 0 },
+    "Aptitude": { total: 0, count: 0 },
+    "Soft Skills": { total: 0, count: 0 },
+  };
+
   skills.forEach((s) => {
     if (!categoryMap[s.category]) categoryMap[s.category] = { total: 0, count: 0 };
     categoryMap[s.category].total += s.score;
     categoryMap[s.category].count++;
   });
+
   const radarData = Object.entries(categoryMap).map(([cat, data]) => ({
     category: cat,
-    score: Math.round(data.total / data.count),
+    score: data.count > 0 ? Math.round(data.total / data.count) : 0,
     fullMark: 100,
   }));
 
@@ -153,7 +160,7 @@ export default function SkillAnalysisPage() {
               <CardContent>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData}>
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                       <PolarGrid stroke="hsl(var(--border))" />
                       <PolarAngleAxis
                         dataKey="category"
@@ -167,9 +174,9 @@ export default function SkillAnalysisPage() {
                       <Radar
                         name="Score"
                         dataKey="score"
-                        stroke="hsl(var(--primary))"
-                        fill="hsl(var(--primary))"
-                        fillOpacity={0.2}
+                        stroke="#3b82f6"
+                        fill="#3b82f6"
+                        fillOpacity={0.3}
                         strokeWidth={2}
                       />
                     </RadarChart>
@@ -196,7 +203,12 @@ export default function SkillAnalysisPage() {
                         tick={{ fontSize: 11 }}
                       />
                       <Tooltip />
-                      <Bar dataKey="score" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
+                      <Bar 
+                        dataKey="score" 
+                        fill="#3b82f6" 
+                        radius={[0, 6, 6, 0]} 
+                        maxBarSize={32} 
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -215,7 +227,7 @@ export default function SkillAnalysisPage() {
               <CardContent>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={growth}>
+                    <LineChart data={growth} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                       <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
@@ -223,9 +235,10 @@ export default function SkillAnalysisPage() {
                       <Line
                         type="monotone"
                         dataKey="avgScore"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: "#10b981" }}
+                        activeDot={{ r: 6 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>

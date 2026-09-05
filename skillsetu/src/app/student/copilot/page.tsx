@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Sparkles, Send, Loader2, Bot, User, Brain, Briefcase, 
+  Sparkles, Send, Loader2, Bot, User, Brain, Briefcase,
   Trash2, Lightbulb, CheckCircle2
 } from "lucide-react";
 import { useCopilotChat } from "@/lib/hooks/useCopilotChat";
@@ -26,7 +27,7 @@ export default function CopilotPage() {
   const { messages, isLoading, sendMessage, clearChat } = useCopilotChat();
   const { profile } = useUserProfile();
   const { skills } = useSkillAnalytics();
-  
+
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -46,10 +47,10 @@ export default function CopilotPage() {
 
     // Build context payload
     const studentContext = profile ? {
-      name: profile.full_name,
-      careerObjective: profile.bio || undefined,
+      name: profile.name,
+      careerObjective: undefined,
       skills: skills.map(s => ({ name: s.name, proficiency: s.score })),
-      education: profile.education || undefined,
+      education: undefined,
     } : undefined;
 
     await sendMessage(textToSend, studentContext);
@@ -73,7 +74,7 @@ export default function CopilotPage() {
             Your AI career mentor powered by Gemini 2.0 Flash.
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           {messages.length > 0 && (
             <Button variant="outline" size="sm" onClick={handleClear}>
@@ -84,10 +85,10 @@ export default function CopilotPage() {
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
-        
+
         {/* Chat Area */}
         <Card className="lg:col-span-3 flex flex-col border-border/50 shadow-md h-full overflow-hidden">
-          <div 
+          <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
           >
@@ -96,11 +97,11 @@ export default function CopilotPage() {
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-2">
                   <Sparkles className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">Hello, {profile?.full_name?.split(' ')[0] || 'there'}!</h3>
+                <h3 className="text-xl font-bold">Hello, {profile?.name || 'there'}!</h3>
                 <p className="text-muted-foreground">
                   I'm your personalized AI Career Mentor. I know about your verified skills and profile. How can I help you advance your career today?
                 </p>
-                
+
                 <div className="w-full space-y-2 mt-4">
                   {SUGGESTIONS.map((s, i) => (
                     <button
@@ -116,20 +117,18 @@ export default function CopilotPage() {
               </div>
             ) : (
               messages.map((msg) => (
-                <div 
-                  key={msg.id} 
+                <div
+                  key={msg.id}
                   className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                    msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-emerald-500/10 text-emerald-600'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-emerald-500/10 text-emerald-600'
+                    }`}>
                     {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                   </div>
-                  <div className={`max-w-[80%] rounded-2xl p-4 ${
-                    msg.role === 'user' 
-                      ? 'bg-primary text-primary-foreground rounded-tr-sm' 
-                      : 'bg-secondary/50 text-foreground rounded-tl-sm border border-border/50'
-                  }`}>
+                  <div className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'user'
+                    ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                    : 'bg-secondary/50 text-foreground rounded-tl-sm border border-border/50'
+                    }`}>
                     <div className={`prose prose-sm max-w-none ${msg.role === 'user' ? 'prose-invert' : 'dark:prose-invert'} prose-p:leading-relaxed prose-pre:bg-background/80 prose-pre:border prose-pre:border-border/50`}>
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
@@ -137,7 +136,7 @@ export default function CopilotPage() {
                 </div>
               ))
             )}
-            
+
             {isLoading && (
               <div className="flex gap-4 flex-row">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-emerald-500/10 text-emerald-600">
@@ -154,9 +153,9 @@ export default function CopilotPage() {
               </div>
             )}
           </div>
-          
+
           <div className="p-4 bg-background border-t border-border/50">
-            <form 
+            <form
               onSubmit={handleSend}
               className="relative flex items-center"
             >
@@ -167,9 +166,9 @@ export default function CopilotPage() {
                 className="pr-12 h-12 rounded-full bg-secondary/30 border-border/50 focus-visible:ring-1"
                 disabled={isLoading}
               />
-              <Button 
-                type="submit" 
-                size="icon" 
+              <Button
+                type="submit"
+                size="icon"
                 className="absolute right-1.5 h-9 w-9 rounded-full"
                 disabled={!input.trim() || isLoading}
               >
@@ -194,7 +193,7 @@ export default function CopilotPage() {
               <p className="text-xs text-muted-foreground leading-relaxed">
                 The Copilot is aware of your profile and can give personalized advice based on:
               </p>
-              
+
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
@@ -203,30 +202,20 @@ export default function CopilotPage() {
                     <p className="text-[10px] text-muted-foreground">{skills.length} skills mapped</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-medium">Career Goal</p>
+                    <p className="text-xs font-medium">Account Details</p>
                     <p className="text-[10px] text-muted-foreground line-clamp-2">
-                      {profile?.bio || "Not specified yet"}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-medium">Education</p>
-                    <p className="text-[10px] text-muted-foreground line-clamp-2">
-                      {profile?.education || "Not specified"}
+                      {profile?.email || "Not specified"}
                     </p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-border/50 flex-1">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -248,7 +237,7 @@ export default function CopilotPage() {
             </CardContent>
           </Card>
         </div>
-        
+
       </div>
     </div>
   );

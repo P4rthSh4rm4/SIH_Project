@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -248,9 +250,6 @@ export default function StudentDashboard() {
 /* ─── Recommended Section (reads from Supabase) ─────────────────────── */
 
 function RecommendedSection() {
-  // This imports live data inside the component to keep the main export clean
-  const { useState, useEffect } = require("react");
-  const { createClient } = require("@/lib/supabase/client");
 
   const [opps, setOpps] = useState<
     { id: string; title: string; type: string; deadline: string | null }[]

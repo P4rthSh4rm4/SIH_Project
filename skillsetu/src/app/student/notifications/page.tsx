@@ -89,6 +89,11 @@ export default function NotificationsPage() {
           <div className="divide-y divide-border/50">
             {notifications.map((notif) => {
               const { icon: Icon, color, bg } = getIconAndColor(notif.type);
+              const payload = notif.payload_json || {};
+              const title = typeof payload.title === "string" ? payload.title : "Notification";
+              const message = typeof payload.message === "string" ? payload.message : "";
+              const link = typeof payload.link === "string" ? payload.link : null;
+              
               return (
                 <div 
                   key={notif.id} 
@@ -101,18 +106,18 @@ export default function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className={`text-sm ${notif.read ? 'font-medium' : 'font-bold'}`}>
-                        {notif.title}
+                        {title}
                       </h4>
                       <span className="text-xs text-muted-foreground shrink-0 mt-0.5">
                         {new Date(notif.created_at).toLocaleDateString()}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {notif.message}
+                      {message}
                     </p>
-                    {notif.link && (
+                    {link && (
                       <Button variant="link" className="p-0 h-auto text-xs mt-2" asChild>
-                        <Link href={notif.link}>View Details</Link>
+                        <Link href={link}>View Details</Link>
                       </Button>
                     )}
                   </div>

@@ -17,8 +17,8 @@ import type { DocumentType } from "@/lib/types";
 
 const DOC_TYPES: { id: DocumentType; label: string; icon: React.ElementType }[] = [
   { id: "resume", label: "Resume / CV", icon: FileText },
-  { id: "transcript", label: "Transcript", icon: FileBadge },
-  { id: "id_proof", label: "ID Proof", icon: FileDigit },
+  { id: "academic", label: "Academic Records", icon: FileBadge },
+  { id: "internship_report", label: "Internship Report", icon: FileDigit },
   { id: "other", label: "Other", icon: File },
 ];
 
@@ -245,7 +245,7 @@ export default function DocumentsPage() {
                     {doc.title}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-auto">
-                    {formatSize(doc.file_size)} • {new Date(doc.uploaded_at).toLocaleDateString()}
+                    {formatSize(doc.file_size ?? 0)} • {new Date(doc.uploaded_at).toLocaleDateString()}
                   </p>
                 </CardContent>
                 <CardFooter className="p-3 pt-0 flex gap-2 border-t border-border/10 mt-auto bg-muted/10 opacity-0 group-hover:opacity-100 transition-opacity">
