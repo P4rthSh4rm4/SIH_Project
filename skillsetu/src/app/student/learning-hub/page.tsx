@@ -52,16 +52,18 @@ export default function LearningHubPage() {
   const activeEnrollments = enrollments.filter((e) => e.progress_pct < 100);
   const completedEnrollments = enrollments.filter((e) => e.progress_pct === 100);
 
-  // Filter programs that aren't enrolled in (mix in mocks)
   const enrolledIds = new Set(enrollments.map((e) => e.program_id));
   const allPrograms = [...programs, ...MOCK_PROGRAMS as any[]];
   
   const availablePrograms = allPrograms.filter(
-    (p) => !enrolledIds.has(p.id) && (
+    (p) => (
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase()))
     )
   );
+
+  console.log("[LearningHubPage] programs.length:", programs.length);
+  console.log("[LearningHubPage] availablePrograms.length:", availablePrograms.length);
 
   const handleEnroll = async (programId: string) => {
     setEnrollingId(programId);
@@ -69,7 +71,11 @@ export default function LearningHubPage() {
       const { success, error } = await enroll(programId);
       if (success) {
         toast.success("Successfully enrolled in program!");
-        await awardXp("course_enrolled", { program_id: programId });
+        try {
+          await awardXp("course_enrolled", { program_id: programId });
+        } catch (xpErr) {
+          console.error("Failed to award XP:", xpErr);
+        }
       } else {
         toast.error(error || "Failed to enroll");
       }
@@ -266,6 +272,7 @@ export default function LearningHubPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availablePrograms.map((program) => {
             const isEnrolling = enrollingId === program.id;
+            const isAlreadyEnrolled = enrolledIds.has(program.id);
             
             return (
               <Card key={program.id} className="border-border/50 hover:shadow-md transition-all flex flex-col h-full">
@@ -314,9 +321,9 @@ export default function LearningHubPage() {
                     <Button 
                       size="sm" 
                       onClick={() => handleEnroll(program.id)}
-                      disabled={isEnrolling}
+                      disabled={isEnrolling || isAlreadyEnrolled}
                     >
-                      {isEnrolling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Enroll Now"}
+                      {isEnrolling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : isAlreadyEnrolled ? "Enrolled" : "Enroll Now"}
                     </Button>
                   </div>
                 </CardFooter>

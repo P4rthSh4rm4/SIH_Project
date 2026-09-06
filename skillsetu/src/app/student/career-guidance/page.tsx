@@ -274,7 +274,7 @@ export default function CareerGuidancePage() {
                     </div>
                     {/* Card */}
                     <div className="w-[calc(100%-5rem)] md:w-[calc(50%-3.5rem)] p-6 rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 relative overflow-hidden group-hover:-translate-y-1">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                       
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
                         <span className="text-sm font-bold uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full w-fit">
