@@ -9,29 +9,10 @@ import { Users, Briefcase, TrendingUp, Eye, PlusCircle, ArrowRight, Loader2, Map
 import Link from "next/link";
 import type { UserProfile, StudentProfile } from "@/lib/types";
 
-const MOCK_OPPORTUNITIES = [
-  {
-    id: "mock-opp-1",
-    title: "Software Engineer Intern (Frontend)",
-    type: "internship",
-    location: "Remote",
-    stipend: "₹20,000/month",
-    status: "active",
-    applicationsCount: 12,
-  },
-  {
-    id: "mock-opp-2",
-    title: "Data Analyst Trainee",
-    type: "job",
-    location: "Bangalore",
-    stipend: "₹6 LPA",
-    status: "pending",
-    applicationsCount: 0,
-  }
-];
 
 export default function IndustryDashboard() {
   const [students, setStudents] = useState<(UserProfile & { profile: StudentProfile | null })[]>([]);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,6 +20,19 @@ export default function IndustryDashboard() {
       try {
         const supabase = createClient();
         
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // Fetch industry's opportunities
+          const { data: oppsData } = await supabase
+            .from("opportunities")
+            .select(`*, applications(count)`)
+            .eq("industry_id", user.id)
+            .order("created_at", { ascending: false });
+            
+          setOpportunities(oppsData || []);
+        }
+
         // Fetch users who are students
         const { data: usersData, error: usersError } = await supabase
           .from("users")
@@ -70,8 +64,8 @@ export default function IndustryDashboard() {
   }, []);
 
   const stats = [
-    { label: "Active Listings", value: MOCK_OPPORTUNITIES.length.toString(), icon: Briefcase, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Total Applicants", value: "12", icon: Users, color: "text-violet-500", bg: "bg-violet-500/10" },
+    { label: "Active Listings", value: opportunities.length.toString(), icon: Briefcase, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Total Applicants", value: opportunities.reduce((acc, opp) => acc + (opp.applications?.[0]?.count || 0), 0).toString(), icon: Users, color: "text-violet-500", bg: "bg-violet-500/10" },
     { label: "Available Students", value: students.length.toString(), icon: Eye, color: "text-emerald-500", bg: "bg-emerald-500/10" },
   ];
 
@@ -117,13 +111,18 @@ export default function IndustryDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {MOCK_OPPORTUNITIES.map((opp) => (
+              {opportunities.map((opp) => (
                 <div key={opp.id} className="p-4 rounded-xl border border-border/50 bg-secondary/10 hover:bg-secondary/30 transition-colors">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-sm line-clamp-1">{opp.title}</h3>
-                    <Badge variant={opp.status === "active" ? "default" : "secondary"} className="text-[10px] capitalize">
-                      {opp.status}
-                    </Badge>
+                    <div className="flex gap-1">
+                      <Badge variant={opp.status === "active" ? "default" : "secondary"} className="text-[10px] capitalize">
+                        {opp.status}
+                      </Badge>
+                      <Badge variant="outline" className={`text-[10px] capitalize ${opp.verification_status === 'approved' ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' : opp.verification_status === 'rejected' ? 'text-red-500 border-red-500/30 bg-red-500/10' : 'text-amber-500 border-amber-500/30 bg-amber-500/10'}`}>
+                        {opp.verification_status || 'pending'}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
                     <span className="capitalize">{opp.type}</span>
@@ -131,7 +130,7 @@ export default function IndustryDashboard() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-md">
-                      {opp.applicationsCount} Applicants
+                      {opp.applications?.[0]?.count || 0} Applicants
                     </span>
                     <Button variant="ghost" size="sm" className="h-7 text-xs">
                       Manage

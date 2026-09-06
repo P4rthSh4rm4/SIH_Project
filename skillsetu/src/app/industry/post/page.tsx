@@ -46,7 +46,8 @@ export default function PostOpportunity() {
           location: formData.location,
           stipend: formData.stipend,
           description: formData.description,
-          status: "pending", // Always set to pending for Faculty verification
+          status: "active", // The lifecycle status
+          verification_status: "pending", // Always set to pending for Faculty verification
         });
 
       if (error) throw error;
@@ -56,8 +57,8 @@ export default function PostOpportunity() {
       router.refresh();
       
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to post opportunity");
+      console.error("Supabase insert error:", err);
+      toast.error(`Failed to post opportunity: ${err.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }

@@ -12,34 +12,10 @@ import { useApplications } from "@/lib/hooks/useApplications";
 import { toast } from "sonner";
 import Link from "next/link";
 
-const MOCK_APPLICATIONS = [
-  {
-    id: "mock-app-1",
-    status: "shortlisted",
-    applied_at: new Date().toISOString(),
-    match_score: 95,
-    opportunity: {
-      title: "Software Engineer Intern (Frontend)",
-      company_name: "TechNova Solutions",
-      location: "Remote",
-      type: "internship"
-    }
-  },
-  {
-    id: "mock-app-2",
-    status: "interview",
-    applied_at: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
-    match_score: 88,
-    opportunity: {
-      title: "UI/UX Design Intern",
-      company_name: "CreativeLabs",
-      location: "Mumbai",
-      type: "internship"
-    }
-  }
-];
 
 const STATUS_CONFIG = {
+  pending_faculty: { label: "Pending Verification", color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20", icon: Clock3 },
+  faculty_rejected: { label: "Not Approved", color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/20", icon: XCircle },
   applied: { label: "Applied", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: Clock3 },
   shortlisted: { label: "Shortlisted", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: Eye },
   interview: { label: "Interview", color: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: RefreshCw },
@@ -52,7 +28,7 @@ export default function ApplicationsPage() {
   const { applications, loading, withdrawApplication } = useApplications();
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
 
-  const allApplications = [...applications, ...MOCK_APPLICATIONS as any[]];
+  const allApplications = applications;
 
   const handleWithdraw = async (id: string) => {
     if (!confirm("Are you sure you want to withdraw this application? This action cannot be undone.")) return;

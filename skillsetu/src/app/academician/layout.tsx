@@ -2,12 +2,13 @@
 
 import { DashboardSidebar, type NavItem } from "@/components/layout/dashboard-sidebar";
 import {
-  LayoutDashboard, BookOpen, FlaskConical, Handshake, Presentation,
+  LayoutDashboard, BookOpen, FlaskConical, Handshake, Presentation, Briefcase
 } from "lucide-react";
 import { useUserProfile } from "@/lib/hooks/useUserProfile";
 
 const academicianNav: NavItem[] = [
   { label: "Dashboard", href: "/academician/dashboard", icon: LayoutDashboard },
+  { label: "Placements", href: "/academician/placements", icon: Briefcase },
   { label: "FDPs", href: "/academician/fdps", icon: BookOpen },
   { label: "Research", href: "/academician/research", icon: FlaskConical },
   { label: "Consultancy", href: "/academician/consultancy", icon: Handshake },

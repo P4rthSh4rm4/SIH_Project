@@ -28,6 +28,7 @@ export function useOpportunities() {
         .from("opportunities")
         .select("*")
         .eq("status", "active")
+        .eq("verification_status", "approved")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -104,7 +105,7 @@ export function useOpportunities() {
         const { error } = await supabase.from("applications").insert({
           opportunity_id: opportunityId,
           student_id: user.id,
-          status: "applied",
+          status: "pending_faculty",
           match_score: matchScore,
         });
 

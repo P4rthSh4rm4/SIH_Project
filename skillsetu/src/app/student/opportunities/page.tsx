@@ -14,36 +14,6 @@ import { useOpportunities } from "@/lib/hooks/useOpportunities";
 import { toast } from "sonner";
 import { awardXp } from "@/lib/supabase/queries";
 
-const MOCK_OPPORTUNITIES = [
-  {
-    id: "mock-opp-1",
-    title: "Software Engineer Intern (Frontend)",
-    company: "TechNova Solutions",
-    type: "internship",
-    matchScore: 92,
-    location: "Remote",
-    stipend: "₹20,000/month",
-    description: "Looking for a passionate frontend intern to work on Next.js and React applications. Top performers will get a pre-placement offer.",
-    created_at: new Date().toISOString(),
-    hasApplied: false,
-    sharedBy: "Recruiter (TechNova)",
-    verifiedBy: "Dr. Smith (Faculty)"
-  },
-  {
-    id: "mock-opp-2",
-    title: "Data Analyst Trainee",
-    company: "DataSync Corp",
-    type: "job",
-    matchScore: 78,
-    location: "Bangalore",
-    stipend: "₹6 LPA",
-    description: "Analyze large datasets and build dashboards using Python and Tableau. Excellent opportunity for recent graduates.",
-    created_at: new Date().toISOString(),
-    hasApplied: false,
-    sharedBy: "Faculty",
-    verifiedBy: "Prof. Johnson"
-  }
-];
 
 export default function OpportunitiesPage() {
   const { opportunities, loading, applyToOpportunity } = useOpportunities();
@@ -52,7 +22,7 @@ export default function OpportunitiesPage() {
 
   const applyingId = applyingIdState; // rename for clarity
 
-  const allOpportunities = [...opportunities, ...MOCK_OPPORTUNITIES as any[]];
+  const allOpportunities = opportunities;
 
   const filteredOpportunities = allOpportunities.filter((opp) => 
     opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
