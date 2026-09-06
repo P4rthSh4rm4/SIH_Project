@@ -4,6 +4,33 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { LearningProgram, LearningEnrollment } from "@/lib/types";
 
+export const MOCK_PROGRAMS = [
+  {
+    id: "mock-tech-1",
+    title: "Full Stack Web Development with Next.js",
+    provider: "Sheryians Coding School",
+    type: "tech",
+    skills_covered: ["React", "Next.js", "Node.js", "MongoDB"],
+    url: "https://www.youtube.com/watch?v=8hly31xKli0"
+  },
+  {
+    id: "mock-apti-1",
+    title: "Quantitative Aptitude Mastery",
+    provider: "SkillSetu Prep",
+    type: "aptitude",
+    skills_covered: ["Problem Solving", "Mathematics", "Speed Math"],
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  {
+    id: "mock-comm-1",
+    title: "Business Communication & Soft Skills",
+    provider: "Corporate Trainers Inc",
+    type: "communication",
+    skills_covered: ["Public Speaking", "Email Etiquette", "Negotiation"],
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  }
+];
+
 export function useLearningHub() {
   const [programs, setPrograms] = useState<LearningProgram[]>([]);
   const [enrollments, setEnrollments] = useState<LearningEnrollment[]>([]);
@@ -35,6 +62,19 @@ export function useLearningHub() {
 
       const loadedPrograms = (programsRes.data as LearningProgram[]) ?? [];
       const loadedEnrollments = (enrollmentsRes.data as LearningEnrollment[]) ?? [];
+
+      // Merge with persisted mock enrollments only if the real database is empty
+      try {
+        if (typeof window !== "undefined" && loadedPrograms.length === 0) {
+          const storedMocks = localStorage.getItem("mock_enrollments");
+          if (storedMocks) {
+            const parsedMocks = JSON.parse(storedMocks) as LearningEnrollment[];
+            loadedEnrollments.push(...parsedMocks);
+          }
+        }
+      } catch(e) {
+        console.error("Failed to parse mock enrollments", e);
+      }
       
       console.log("[useLearningHub] programs.length after fetching:", loadedPrograms.length);
       console.log("[useLearningHub] enrollments.length after fetching:", loadedEnrollments.length);
@@ -71,7 +111,10 @@ export function useLearningHub() {
           // Intercept mock program enrollment to preserve UI functionality without DB errors
           console.log("[useLearningHub] Intercepting mock program enrollment for:", programId);
           await new Promise(r => setTimeout(r, 800)); // Simulate network delay
-          setEnrollments(prev => [{
+          
+          const mockProgram = MOCK_PROGRAMS.find(p => p.id === programId);
+          
+          const newEnrollment = {
             id: `mock-enroll-${Date.now()}`,
             student_id: user.id,
             program_id: programId,
@@ -79,8 +122,22 @@ export function useLearningHub() {
             enrolled_at: new Date().toISOString(),
             completed_at: null,
             // @ts-ignore - Mocking the program join for UI purposes
-            program: { id: programId, title: "Mock Program", provider: "Mock Provider" }
-          }, ...prev]);
+            program: { 
+              id: programId, 
+              title: mockProgram?.title || "Mock Program", 
+              provider: mockProgram?.provider || "Mock Provider" 
+            }
+          };
+
+          try {
+            if (typeof window !== "undefined") {
+              const stored = localStorage.getItem("mock_enrollments");
+              const parsed = stored ? JSON.parse(stored) : [];
+              localStorage.setItem("mock_enrollments", JSON.stringify([newEnrollment, ...parsed]));
+            }
+          } catch(e) {}
+          
+          setEnrollments(prev => [newEnrollment, ...prev]);
           return { success: true };
         }
         
@@ -127,6 +184,23 @@ export function useLearningHub() {
         if (enrollmentId.startsWith("mock-")) {
           console.log("[useLearningHub] Intercepting mock program update for:", enrollmentId);
           await new Promise(r => setTimeout(r, 800)); // Simulate network delay
+          
+          try {
+            if (typeof window !== "undefined") {
+              const stored = localStorage.getItem("mock_enrollments");
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                const updated = parsed.map((e: any) => {
+                  if (e.id === enrollmentId) {
+                    return { ...e, progress_pct: progressPct, completed_at: updateData.completed_at as string || e.completed_at };
+                  }
+                  return e;
+                });
+                localStorage.setItem("mock_enrollments", JSON.stringify(updated));
+              }
+            }
+          } catch(e) {}
+
           setEnrollments(prev => prev.map(e => {
             if (e.id === enrollmentId) {
               return { ...e, progress_pct: progressPct, completed_at: updateData.completed_at as string || e.completed_at };

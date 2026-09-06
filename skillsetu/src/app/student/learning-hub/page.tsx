@@ -1,5 +1,8 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import Link from "next/link";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,39 +14,40 @@ import {
   ExternalLink, Layers
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useLearningHub } from "@/lib/hooks/useLearningHub";
+import { useLearningHub, MOCK_PROGRAMS } from "@/lib/hooks/useLearningHub";
 import { toast } from "sonner";
 import { awardXp } from "@/lib/supabase/queries";
 
-const MOCK_PROGRAMS = [
-  {
-    id: "mock-tech-1",
-    title: "Full Stack Web Development with Next.js",
-    provider: "Sheryians Coding School",
-    type: "tech",
-    skills_covered: ["React", "Next.js", "Node.js", "MongoDB"],
-    url: "https://www.youtube.com/watch?v=8hly31xKli0"
-  },
-  {
-    id: "mock-apti-1",
-    title: "Quantitative Aptitude Mastery",
-    provider: "SkillSetu Prep",
-    type: "aptitude",
-    skills_covered: ["Problem Solving", "Mathematics", "Speed Math"],
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-  },
-  {
-    id: "mock-comm-1",
-    title: "Business Communication & Soft Skills",
-    provider: "Corporate Trainers Inc",
-    type: "communication",
-    skills_covered: ["Public Speaking", "Email Etiquette", "Negotiation"],
-    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-  }
-];
-
 export default function LearningHubPage() {
+  return (
+    <Suspense fallback={<LearningHubSkeleton />}>
+      <LearningHubContent />
+    </Suspense>
+  );
+}
+
+function LearningHubSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Learning Hub</h1>
+        <p className="text-muted-foreground mt-1">Loading your learning dashboard...</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="h-48 bg-muted animate-pulse rounded-2xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LearningHubContent() {
   const { programs, enrollments, loading, enroll, updateProgress } = useLearningHub();
+  const searchParams = useSearchParams();
+  const phaseQuery = searchParams.get("phase");
+  const skillsQuery = searchParams.get("skills");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -53,14 +57,38 @@ export default function LearningHubPage() {
   const completedEnrollments = enrollments.filter((e) => e.progress_pct === 100);
 
   const enrolledIds = new Set(enrollments.map((e) => e.program_id));
-  const allPrograms = [...programs, ...MOCK_PROGRAMS as any[]];
+  const allPrograms = programs.length > 0 ? programs : (MOCK_PROGRAMS as any[]);
   
-  const availablePrograms = allPrograms.filter(
-    (p) => (
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-  );
+  let exactMatches: any[] = [];
+  let similarMatches: any[] = [];
+
+  if (phaseQuery && !searchQuery) {
+    exactMatches = allPrograms.filter(p => p.title.toLowerCase().includes(phaseQuery.toLowerCase()));
+    
+    if (exactMatches.length === 0 && skillsQuery) {
+      const phaseSkills = skillsQuery.toLowerCase().split(',');
+      similarMatches = allPrograms.filter(p => {
+        if (!p.skills_covered) return false;
+        return p.skills_covered.some((s: string) => phaseSkills.includes(s.toLowerCase()));
+      });
+    }
+  }
+
+  const isPhaseSearchActive = !!phaseQuery && !searchQuery;
+  let availablePrograms = allPrograms;
+  
+  if (searchQuery) {
+    availablePrograms = allPrograms.filter(
+      (p) => (
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    );
+  } else if (isPhaseSearchActive) {
+    availablePrograms = exactMatches.length > 0 ? exactMatches : similarMatches;
+  }
+
+  const showPhaseEmptyState = isPhaseSearchActive && availablePrograms.length === 0;
 
   console.log("[LearningHubPage] programs.length:", programs.length);
   console.log("[LearningHubPage] availablePrograms.length:", availablePrograms.length);
@@ -100,19 +128,7 @@ export default function LearningHubPage() {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Learning Hub</h1>
-          <p className="text-muted-foreground mt-1">Loading your learning dashboard...</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-48 bg-muted animate-pulse rounded-2xl" />
-          ))}
-        </div>
-      </div>
-    );
+    return <LearningHubSkeleton />;
   }
 
   return (
@@ -231,18 +247,10 @@ export default function LearningHubPage() {
                     <Progress value={enrollment.progress_pct} className="h-2" />
                   </CardContent>
                   <CardFooter className="pt-0 justify-end gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={program.url || "#"} target="_blank" rel="noopener noreferrer">
+                    <Button variant="default" size="sm" asChild>
+                      <Link href={`/student/learning-hub/course/${program.id}`}>
                         Resume Course
-                      </a>
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleCompleteProgram(enrollment.id, program.id)}
-                      disabled={isUpdating}
-                    >
-                      {isUpdating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                      Mark Completed
+                      </Link>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -255,7 +263,8 @@ export default function LearningHubPage() {
       <div className="space-y-4 pt-4 border-t border-border/30">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-lg font-semibold">
-            <BookOpen className="w-5 h-5 text-primary" /> Program Catalog
+            <BookOpen className="w-5 h-5 text-primary" /> 
+            {isPhaseSearchActive ? `Recommended for: ${phaseQuery}` : "Program Catalog"}
           </div>
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -269,8 +278,19 @@ export default function LearningHubPage() {
           </div>
         </div>
 
+        {showPhaseEmptyState && (
+          <div className="bg-muted/30 border border-border/50 rounded-xl p-8 text-center my-4">
+            <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">No Dedicated Course Found</h3>
+            <p className="text-muted-foreground text-sm">
+              No dedicated course is available for the <span className="font-semibold">"{phaseQuery}"</span> roadmap phase yet. 
+              Browse our full catalog below for alternative learning options.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {availablePrograms.map((program) => {
+          {(showPhaseEmptyState ? allPrograms : availablePrograms).map((program) => {
             const isEnrolling = enrollingId === program.id;
             const isAlreadyEnrolled = enrolledIds.has(program.id);
             
@@ -300,7 +320,7 @@ export default function LearningHubPage() {
                   <div className="mb-4"></div>
                   {program.skills_covered && program.skills_covered.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-auto">
-                      {program.skills_covered.slice(0, 3).map((skill, i) => (
+                      {program.skills_covered.slice(0, 3).map((skill: string, i: number) => (
                         <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
                           {skill}
                         </span>
@@ -331,7 +351,7 @@ export default function LearningHubPage() {
             );
           })}
           
-          {availablePrograms.length === 0 && (
+          {availablePrograms.length === 0 && !showPhaseEmptyState && (
              <div className="col-span-full py-12 text-center text-muted-foreground">
                <p>No programs found matching "{searchQuery}"</p>
              </div>

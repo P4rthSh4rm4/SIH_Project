@@ -302,7 +302,7 @@ export default function CareerGuidancePage() {
 
                       {!phase.completed && (
                         <Button variant="default" size="sm" className="w-full sm:w-auto bg-primary/90 hover:bg-primary shadow-md hover:shadow-primary/25 transition-all" asChild>
-                          <Link href="/student/learning-hub">
+                          <Link href={`/student/learning-hub?phase=${encodeURIComponent(phase.title)}&skills=${encodeURIComponent(phase.skills?.join(",") || "")}`}>
                             Find Courses <ArrowRight className="w-4 h-4 ml-2" />
                           </Link>
                         </Button>

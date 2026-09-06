@@ -84,10 +84,10 @@ export function useProfileData(): UseProfileDataResult {
       // Merge into ProfileFormData
       const merged: ProfileFormData = {
         id: userData.id,
-        name: userData.name,
-        email: userData.email,
+        name: userData.name || user.user_metadata?.full_name || user.user_metadata?.name,
+        email: userData.email || user.email,
         role: userData.role,
-        avatar_url: userData.avatar_url,
+        avatar_url: userData.avatar_url || user.user_metadata?.avatar_url,
         institution_id: userData.institution_id,
         student_profile_id: spData?.id,
         bio: spData?.bio,
