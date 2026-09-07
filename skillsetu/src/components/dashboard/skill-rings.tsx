@@ -11,21 +11,26 @@ function SkillRing({
   name,
   score,
   color,
-  size = 80,
+  size = 100,
+  delay = 0,
 }: {
   name: string;
   score: number;
   color: string;
   size?: number;
+  delay?: number;
 }) {
-  const strokeWidth = 6;
+  const strokeWidth = 7;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
   const center = size / 2;
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div
+      className="flex flex-col items-center gap-2.5 animate-scale-in"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
           {/* Background circle */}
@@ -36,7 +41,7 @@ function SkillRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={strokeWidth}
-            className="text-muted/40"
+            className="text-muted/30"
           />
           {/* Progress circle */}
           <circle
@@ -50,13 +55,14 @@ function SkillRing({
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             className="transition-all duration-1000 ease-out"
+            style={{ filter: `drop-shadow(0 0 6px ${color}40)` }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-bold">{score}%</span>
+          <span className="text-base font-extrabold">{score}%</span>
         </div>
       </div>
-      <span className="text-xs font-medium text-muted-foreground text-center leading-tight max-w-[80px] truncate">
+      <span className="text-xs font-semibold text-muted-foreground text-center leading-tight max-w-[100px] truncate">
         {name}
       </span>
     </div>
@@ -65,22 +71,22 @@ function SkillRing({
 
 // Colors that match the existing design system
 const RING_COLORS = [
-  "oklch(0.55 0.25 265)",   // primary violet
-  "oklch(0.65 0.2 170)",    // teal/chart-2
-  "oklch(0.7 0.18 45)",     // amber/chart-3
-  "oklch(0.6 0.22 310)",    // pink/chart-4
-  "oklch(0.75 0.15 85)",    // green/chart-5
-  "oklch(0.6 0.2 200)",     // blue
+  "oklch(0.52 0.26 267)",   // primary violet
+  "oklch(0.62 0.2 170)",    // teal/chart-2
+  "oklch(0.68 0.18 45)",    // amber/chart-3
+  "oklch(0.58 0.22 310)",   // pink/chart-4
+  "oklch(0.72 0.15 85)",    // green/chart-5
+  "oklch(0.58 0.2 200)",    // blue
 ];
 
 export function SkillRings({ skills, loading }: SkillRingsProps) {
   if (loading) {
     return (
-      <div className="flex flex-wrap justify-center gap-6 py-4">
+      <div className="flex flex-wrap justify-center gap-7 py-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex flex-col items-center gap-2">
-            <div className="w-20 h-20 rounded-full bg-muted animate-pulse" />
-            <div className="w-14 h-3 rounded bg-muted animate-pulse" />
+          <div key={i} className="flex flex-col items-center gap-2.5">
+            <div className="w-[100px] h-[100px] rounded-full bg-muted animate-pulse" />
+            <div className="w-16 h-3.5 rounded bg-muted animate-pulse" />
           </div>
         ))}
       </div>
@@ -89,7 +95,7 @@ export function SkillRings({ skills, loading }: SkillRingsProps) {
 
   if (skills.length === 0) {
     return (
-      <div className="py-8 text-center text-sm text-muted-foreground">
+      <div className="py-10 text-center text-[0.9rem] text-muted-foreground">
         No skills mapped yet. Take a skill assessment to get started!
       </div>
     );
@@ -101,13 +107,14 @@ export function SkillRings({ skills, loading }: SkillRingsProps) {
     .slice(0, 6);
 
   return (
-    <div className="flex flex-wrap justify-center gap-5 py-2">
+    <div className="flex flex-wrap justify-center gap-6 py-3">
       {topSkills.map((skill, i) => (
         <SkillRing
           key={skill.name}
           name={skill.name}
           score={skill.score}
           color={RING_COLORS[i % RING_COLORS.length]}
+          delay={i * 80}
         />
       ))}
     </div>

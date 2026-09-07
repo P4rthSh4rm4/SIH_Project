@@ -11,11 +11,11 @@ interface ActivityHeatmapProps {
 }
 
 function getIntensityClass(count: number): string {
-  if (count === 0) return "bg-muted/50";
-  if (count <= 2) return "bg-emerald-200 dark:bg-emerald-900/60";
-  if (count <= 5) return "bg-emerald-400 dark:bg-emerald-700";
-  if (count <= 10) return "bg-emerald-500 dark:bg-emerald-500";
-  return "bg-emerald-600 dark:bg-emerald-400";
+  if (count === 0) return "bg-muted/40";
+  if (count <= 2) return "bg-violet-200 dark:bg-violet-900/60";
+  if (count <= 5) return "bg-violet-400 dark:bg-violet-700";
+  if (count <= 10) return "bg-violet-500 dark:bg-violet-500";
+  return "bg-violet-600 dark:bg-violet-400";
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -69,9 +69,9 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
 
   if (loading) {
     return (
-      <Card className="border-border/50">
-        <CardContent className="p-6">
-          <div className="h-32 rounded-xl bg-muted animate-pulse" />
+      <Card className="border-border/40">
+        <CardContent className="p-7">
+          <div className="h-36 rounded-xl bg-muted animate-pulse" />
         </CardContent>
       </Card>
     );
@@ -81,11 +81,11 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
   const totalXp = heatmap.reduce((sum, d) => sum + d.xp, 0);
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/40">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Activity</CardTitle>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <CardTitle>Activity</CardTitle>
+          <div className="flex items-center gap-5 text-xs text-muted-foreground font-semibold">
             <span>{totalActivities} activities</span>
             <span>{totalXp.toLocaleString()} XP earned</span>
           </div>
@@ -93,13 +93,13 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="inline-flex gap-[1px] min-w-fit">
+          <div className="inline-flex gap-[2px] min-w-fit">
             {/* Day labels */}
-            <div className="flex flex-col gap-[1px] mr-1 pt-4">
+            <div className="flex flex-col gap-[2px] mr-1.5 pt-5">
               {DAYS.map((label, i) => (
                 <div
                   key={i}
-                  className="h-[15px] flex items-center text-[10px] text-muted-foreground"
+                  className="h-[17px] flex items-center text-[11px] text-muted-foreground font-medium"
                 >
                   {label}
                 </div>
@@ -109,13 +109,13 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
             {/* Weeks */}
             <div className="flex flex-col">
               {/* Month labels */}
-              <div className="flex gap-[1px] mb-0.5 h-4">
+              <div className="flex gap-[2px] mb-1 h-5">
                 {weeks.map((_, wi) => {
                   const label = monthLabels.find((m) => m.col === wi);
                   return (
                     <div
                       key={wi}
-                      className="w-[15px] text-[10px] text-muted-foreground"
+                      className="w-[17px] text-[11px] text-muted-foreground font-medium"
                     >
                       {label?.label ?? ""}
                     </div>
@@ -124,18 +124,18 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
               </div>
 
               {/* Grid of days */}
-              <div className="flex gap-[1px]">
+              <div className="flex gap-[2px]">
                 {weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-col gap-[1px]">
+                  <div key={wi} className="flex flex-col gap-[2px]">
                     {week.map((day) => (
                       <Tooltip key={day.date}>
                         <TooltipTrigger>
                           <div
-                            className={`w-[15px] h-[15px] rounded-sm ${getIntensityClass(day.count)} transition-colors cursor-default`}
+                            className={`w-[17px] h-[17px] rounded-[4px] ${getIntensityClass(day.count)} transition-colors duration-200 cursor-default hover:ring-1 hover:ring-foreground/20`}
                           />
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
-                          <p className="font-medium">{day.date}</p>
+                          <p className="font-semibold">{day.date}</p>
                           <p>{day.count} activities • {day.xp} XP</p>
                         </TooltipContent>
                       </Tooltip>
@@ -148,13 +148,13 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-end gap-1.5 mt-3 text-[10px] text-muted-foreground">
+        <div className="flex items-center justify-end gap-2 mt-4 text-[11px] text-muted-foreground font-medium">
           <span>Less</span>
-          <div className="w-[13px] h-[13px] rounded-sm bg-muted/50" />
-          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-200 dark:bg-emerald-900/60" />
-          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-500 dark:bg-emerald-500" />
-          <div className="w-[13px] h-[13px] rounded-sm bg-emerald-600 dark:bg-emerald-400" />
+          <div className="w-[15px] h-[15px] rounded-[3px] bg-muted/40" />
+          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-200 dark:bg-violet-900/60" />
+          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-400 dark:bg-violet-700" />
+          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-500 dark:bg-violet-500" />
+          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-600 dark:bg-violet-400" />
           <span>More</span>
         </div>
       </CardContent>

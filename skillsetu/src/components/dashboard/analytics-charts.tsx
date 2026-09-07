@@ -26,14 +26,14 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
   if (loading) {
     return (
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-border/50">
-          <CardContent className="p-6">
-            <div className="h-64 rounded-xl bg-muted animate-pulse" />
+        <Card className="border-border/40">
+          <CardContent className="p-7">
+            <div className="h-72 rounded-xl bg-muted animate-pulse" />
           </CardContent>
         </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-6">
-            <div className="h-64 rounded-xl bg-muted animate-pulse" />
+        <Card className="border-border/40">
+          <CardContent className="p-7">
+            <div className="h-72 rounded-xl bg-muted animate-pulse" />
           </CardContent>
         </Card>
       </div>
@@ -61,49 +61,51 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       {/* Skill Growth Over Time */}
-      <Card className="border-border/50">
+      <Card className="border-border/40">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Skill Growth Over Time</CardTitle>
+          <CardTitle>Skill Growth Over Time</CardTitle>
         </CardHeader>
         <CardContent>
           {growth.length === 0 ? (
-            <div className="h-56 flex items-center justify-center text-sm text-muted-foreground">
+            <div className="h-72 flex items-center justify-center text-[0.9rem] text-muted-foreground">
               Complete assessments to see your progress chart
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={224}>
+            <ResponsiveContainer width="100%" height={288}>
               <AreaChart data={growthData}>
                 <defs>
                   <linearGradient id="skillGrowthGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="oklch(0.55 0.25 265)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="oklch(0.55 0.25 265)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="oklch(0.52 0.26 267)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="oklch(0.52 0.26 267)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 12, fontWeight: 500 }}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 12, fontWeight: 500 }}
                   tickLine={false}
                   axisLine={false}
-                  width={30}
+                  width={35}
                 />
                 <Tooltip
                   contentStyle={{
-                    borderRadius: "12px",
-                    border: "1px solid oklch(0.91 0.02 265)",
-                    fontSize: "12px",
+                    borderRadius: "14px",
+                    border: "1px solid oklch(0.925 0.015 268)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    boxShadow: "0 8px 24px -4px rgba(0,0,0,0.08)",
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="avgScore"
-                  stroke="oklch(0.55 0.25 265)"
-                  strokeWidth={2}
+                  stroke="oklch(0.52 0.26 267)"
+                  strokeWidth={2.5}
                   fill="url(#skillGrowthGrad)"
                   name="Avg Score"
                 />
@@ -114,51 +116,53 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
       </Card>
 
       {/* Skill Radar — Current vs Target */}
-      <Card className="border-border/50">
+      <Card className="border-border/40">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Current vs Target Proficiency</CardTitle>
+          <CardTitle>Current vs Target Proficiency</CardTitle>
         </CardHeader>
         <CardContent>
           {skills.length === 0 ? (
-            <div className="h-56 flex items-center justify-center text-sm text-muted-foreground">
+            <div className="h-72 flex items-center justify-center text-[0.9rem] text-muted-foreground">
               Map skills to see your radar chart
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={224}>
+            <ResponsiveContainer width="100%" height={288}>
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                <PolarGrid stroke="oklch(0.91 0.02 265 / 0.5)" />
+                <PolarGrid stroke="oklch(0.925 0.015 268 / 0.5)" />
                 <PolarAngleAxis
                   dataKey="subject"
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 11, fontWeight: 500 }}
                 />
                 <PolarRadiusAxis
                   angle={30}
                   domain={[0, 100]}
-                  tick={{ fontSize: 9 }}
+                  tick={{ fontSize: 10, fontWeight: 500 }}
                   axisLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    borderRadius: "12px",
-                    border: "1px solid oklch(0.91 0.02 265)",
-                    fontSize: "12px",
+                    borderRadius: "14px",
+                    border: "1px solid oklch(0.925 0.015 268)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    boxShadow: "0 8px 24px -4px rgba(0,0,0,0.08)",
                   }}
                 />
                 <Radar
                   name="Current"
                   dataKey="current"
-                  stroke="oklch(0.55 0.25 265)"
-                  fill="oklch(0.55 0.25 265)"
+                  stroke="oklch(0.52 0.26 267)"
+                  fill="oklch(0.52 0.26 267)"
                   fillOpacity={0.25}
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                 />
                 <Radar
                   name="Target"
                   dataKey="target"
-                  stroke="oklch(0.6 0.22 310)"
-                  fill="oklch(0.6 0.22 310)"
+                  stroke="oklch(0.58 0.22 310)"
+                  fill="oklch(0.58 0.22 310)"
                   fillOpacity={0.1}
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   strokeDasharray="4 4"
                 />
               </RadarChart>

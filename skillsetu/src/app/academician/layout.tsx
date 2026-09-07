@@ -28,7 +28,7 @@ export default function AcademicianLayout({ children }: { children: React.ReactN
         userEmail={profile?.email}
       />
       <main className="flex-1 overflow-y-auto">
-        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>
+        <div className="p-5 md:p-10 max-w-7xl mx-auto w-full">{children}</div>
       </main>
     </div>
   );

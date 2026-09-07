@@ -259,31 +259,31 @@ function LoginForm() {
   // ─── OTP Verify View ───────────────────────────────────────────────
   if (mode === "otp-verify") {
     return (
-      <Card className="border-border/50 shadow-2xl shadow-primary/5">
-        <CardHeader className="text-center pb-2">
+      <Card className="border-border/40 shadow-2xl shadow-primary/[0.06] dark:shadow-primary/[0.08] animate-scale-in">
+        <CardHeader className="text-center pb-3">
           <button
             onClick={() => {
               setMode("otp-send");
               setError("");
               setSuccessMsg("");
             }}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-5 font-medium"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-lg">
-            <KeyRound className="w-8 h-8 text-white" />
+          <div className="w-18 h-18 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-xl animate-pulse-glow">
+            <KeyRound className="w-9 h-9 text-white" />
           </div>
-          <h1 className="text-2xl font-bold">Verify your email</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-3xl font-extrabold">Verify your email</h1>
+          <p className="text-[0.95rem] text-muted-foreground mt-2">
             We&apos;ve sent a 6-digit code to
           </p>
-          <p className="text-sm font-medium text-foreground">{email}</p>
+          <p className="text-[0.95rem] font-semibold text-foreground">{email}</p>
         </CardHeader>
         <CardContent className="space-y-6 pt-2">
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
+          <form onSubmit={handleVerifyOtp} className="space-y-5">
             {/* OTP input boxes */}
-            <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
+            <div className="flex justify-center gap-3" onPaste={handleOtpPaste}>
               {otpDigits.map((digit, i) => (
                 <input
                   key={i}
@@ -294,26 +294,26 @@ function LoginForm() {
                   value={digit}
                   onChange={(e) => handleOtpChange(i, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                  className="w-12 h-14 text-center text-xl font-bold rounded-xl border border-border/50 bg-background focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-13 h-16 text-center text-2xl font-bold rounded-xl border border-border/50 bg-background focus:border-primary focus:ring-3 focus:ring-primary/20 outline-none transition-all duration-200"
                   autoFocus={i === 0}
                 />
               ))}
             </div>
 
             {error && (
-              <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+              <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 font-medium">
                 {error}
               </p>
             )}
             {successMsg && (
-              <p className="text-sm text-green-600 bg-green-500/10 rounded-lg px-3 py-2">
+              <p className="text-sm text-green-600 bg-green-500/10 rounded-xl px-4 py-3 font-medium">
                 {successMsg}
               </p>
             )}
 
             <Button
               type="submit"
-              className="w-full h-11 bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20"
+              className="w-full h-12 text-[0.95rem] bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20 shimmer-hover"
               disabled={loading || otpDigits.join("").length !== 6}
             >
               {loading ? (
@@ -327,11 +327,11 @@ function LoginForm() {
 
           <div className="text-center text-sm text-muted-foreground">
             {otpCountdown > 0 ? (
-              <p>Resend code in {otpCountdown}s</p>
+              <p className="font-medium">Resend code in {otpCountdown}s</p>
             ) : (
               <button
                 onClick={handleResendOtp}
-                className="text-primary hover:text-primary/80 font-medium"
+                className="text-primary hover:text-primary/80 font-semibold transition-colors"
                 disabled={loading}
               >
                 Resend code
@@ -341,7 +341,7 @@ function LoginForm() {
               Didn&apos;t receive it? Check spam or{" "}
               <button
                 onClick={handleResendOtp}
-                className="text-primary hover:text-primary/80"
+                className="text-primary hover:text-primary/80 font-medium"
                 disabled={otpCountdown > 0 || loading}
               >
                 resend
@@ -356,21 +356,21 @@ function LoginForm() {
 
   // ─── Main Login View ────────────────────────────────────────────────
   return (
-    <Card className="border-border/50 shadow-2xl shadow-primary/5">
-      <CardHeader className="text-center pb-2">
-        <h1 className="text-2xl font-bold">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">Sign in to SkillSetu</p>
+    <Card className="border-border/40 shadow-2xl shadow-primary/[0.06] dark:shadow-primary/[0.08] animate-scale-in">
+      <CardHeader className="text-center pb-3">
+        <h1 className="text-3xl font-extrabold">Welcome back</h1>
+        <p className="text-[0.95rem] text-muted-foreground mt-1">Sign in to SkillSetu</p>
       </CardHeader>
       <CardContent className="space-y-6 pt-2">
         {/* OAuth buttons */}
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"
-            className="h-11"
+            className="h-12 text-[0.9rem]"
             onClick={() => handleOAuth("google")}
             disabled={loading}
           >
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                 fill="#4285F4"
@@ -392,12 +392,12 @@ function LoginForm() {
           </Button>
           <Button
             variant="outline"
-            className="h-11"
+            className="h-12 text-[0.9rem]"
             onClick={() => handleOAuth("github")}
             disabled={loading}
           >
             <svg
-              className="w-4 h-4 mr-2"
+              className="w-5 h-5 mr-2"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -409,7 +409,7 @@ function LoginForm() {
 
         <div className="relative">
           <Separator />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-xs text-muted-foreground font-medium">
             or
           </span>
         </div>
@@ -418,14 +418,14 @@ function LoginForm() {
           <>
             <form onSubmit={handlePasswordLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+                <Label htmlFor="login-email" className="text-[0.9rem] font-semibold">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
                   <Input
                     id="login-email"
                     type="email"
                     placeholder="you@example.com"
-                    className="pl-10 h-11"
+                    className="pl-11 h-12 text-[0.95rem] rounded-xl"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -434,46 +434,46 @@ function LoginForm() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="login-pw">Password</Label>
+                  <Label htmlFor="login-pw" className="text-[0.9rem] font-semibold">Password</Label>
                   <Link
                     href="/auth/forgot-password"
-                    className="text-xs text-primary hover:text-primary/80"
+                    className="text-xs text-primary hover:text-primary/80 font-semibold transition-colors"
                   >
                     Forgot?
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
                   <Input
                     id="login-pw"
                     type={showPw ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10 pr-10 h-11"
+                    className="pl-11 pr-11 h-12 text-[0.95rem] rounded-xl"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => setShowPw(!showPw)}
                   >
                     {showPw ? (
-                      <EyeOff className="w-4 h-4" />
+                      <EyeOff className="w-4.5 h-4.5" />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-4.5 h-4.5" />
                     )}
                   </button>
                 </div>
               </div>
               {error && (
-                <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+                <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 font-medium">
                   {error}
                 </p>
               )}
               <Button
                 type="submit"
-                className="w-full h-11 bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20"
+                className="w-full h-12 text-[0.95rem] bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20 shimmer-hover"
                 disabled={loading}
               >
                 {loading ? (
@@ -489,9 +489,9 @@ function LoginForm() {
                 setMode("otp-send");
                 setError("");
               }}
-              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              <KeyRound className="w-3.5 h-3.5 inline mr-1" />
+              <KeyRound className="w-3.5 h-3.5 inline mr-1.5" />
               Sign in with email code instead
             </button>
           </>
@@ -499,14 +499,14 @@ function LoginForm() {
           <>
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="otp-email">Email</Label>
+                <Label htmlFor="otp-email" className="text-[0.9rem] font-semibold">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
                   <Input
                     id="otp-email"
                     type="email"
                     placeholder="you@example.com"
-                    className="pl-10 h-11"
+                    className="pl-11 h-12 text-[0.95rem] rounded-xl"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -514,13 +514,13 @@ function LoginForm() {
                 </div>
               </div>
               {error && (
-                <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+                <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 font-medium">
                   {error}
                 </p>
               )}
               <Button
                 type="submit"
-                className="w-full h-11 bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20"
+                className="w-full h-12 text-[0.95rem] bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20 shimmer-hover"
                 disabled={loading}
               >
                 {loading ? (
@@ -536,19 +536,19 @@ function LoginForm() {
                 setMode("password");
                 setError("");
               }}
-              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
-              <Lock className="w-3.5 h-3.5 inline mr-1" />
+              <Lock className="w-3.5 h-3.5 inline mr-1.5" />
               Sign in with password instead
             </button>
           </>
         )}
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-[0.9rem] text-muted-foreground">
           No account?{" "}
           <Link
             href="/auth/signup"
-            className="text-primary font-medium hover:text-primary/80"
+            className="text-primary font-semibold hover:text-primary/80 transition-colors"
           >
             Sign up
           </Link>
@@ -561,7 +561,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense
-      fallback={<div className="animate-shimmer h-[500px] rounded-xl" />}
+      fallback={<div className="animate-shimmer h-[500px] rounded-2xl" />}
     >
       <LoginForm />
     </Suspense>

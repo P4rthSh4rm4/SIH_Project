@@ -29,30 +29,35 @@ const roles: {
   label: string;
   icon: React.ElementType;
   desc: string;
+  color: string;
 }[] = [
   {
     value: "student",
     label: "Student",
     icon: GraduationCap,
     desc: "Find internships & build your portfolio",
+    color: "text-violet-500",
   },
   {
     value: "industry",
     label: "Industry / Recruiter",
     icon: Building2,
     desc: "Post opportunities & find talent",
+    color: "text-blue-500",
   },
   {
     value: "academician",
     label: "Academician",
     icon: BookOpen,
     desc: "FDPs, research & consultancy",
+    color: "text-emerald-500",
   },
   {
     value: "institution_admin",
     label: "Institution Admin",
     icon: BarChart3,
     desc: "Manage placements & analytics",
+    color: "text-amber-500",
   },
 ];
 
@@ -150,18 +155,18 @@ function SignupForm() {
 
   // ─── Signup Form ────────────────────────────────────────────────────
   return (
-    <Card className="border-border/50 shadow-2xl shadow-primary/5">
-      <CardHeader className="text-center pb-2">
-        <h1 className="text-2xl font-bold">Create your account</h1>
-        <p className="text-sm text-muted-foreground">
+    <Card className="border-border/40 shadow-2xl shadow-primary/[0.06] dark:shadow-primary/[0.08] animate-scale-in">
+      <CardHeader className="text-center pb-3">
+        <h1 className="text-3xl font-extrabold">Create your account</h1>
+        <p className="text-[0.95rem] text-muted-foreground mt-1">
           Join the SkillSetu community
         </p>
       </CardHeader>
       <CardContent className="space-y-5 pt-2">
         {/* Role selector */}
-        <div className="space-y-2">
-          <Label>I am a...</Label>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-2.5">
+          <Label className="text-[0.9rem] font-semibold">I am a...</Label>
+          <div className="grid grid-cols-2 gap-2.5">
             {roles.map((role) => {
               const isPrivileged = !SELF_ASSIGNABLE_ROLES.includes(role.value);
               return (
@@ -170,11 +175,11 @@ function SignupForm() {
                   type="button"
                   onClick={() => !isPrivileged && setSelectedRole(role.value)}
                   disabled={isPrivileged}
-                  className={`p-3 rounded-xl border text-left transition-all duration-200 ${
+                  className={`p-4 rounded-2xl border text-left transition-all duration-300 ${
                     isPrivileged
                       ? "border-border/30 opacity-50 cursor-not-allowed"
                       : selectedRole === role.value
-                        ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
+                        ? "border-primary bg-primary/5 shadow-md shadow-primary/10 ring-1 ring-primary/20"
                         : "border-border/50 hover:border-primary/30 hover:bg-accent/50"
                   }`}
                   title={
@@ -184,17 +189,17 @@ function SignupForm() {
                   }
                 >
                   <role.icon
-                    className={`w-5 h-5 mb-1 ${selectedRole === role.value ? "text-primary" : "text-muted-foreground"}`}
+                    className={`w-6 h-6 mb-2 ${selectedRole === role.value ? role.color : "text-muted-foreground"} transition-colors`}
                   />
-                  <div className="text-sm font-medium">
+                  <div className="text-[0.9rem] font-semibold">
                     {role.label}
                     {isPrivileged && (
-                      <span className="ml-1 text-[10px] text-muted-foreground">
+                      <span className="ml-1 text-[10px] text-muted-foreground font-medium">
                         (by invite)
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                  <div className="text-xs text-muted-foreground leading-snug mt-1">
                     {role.desc}
                   </div>
                 </button>
@@ -209,11 +214,11 @@ function SignupForm() {
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"
-            className="h-10 text-sm"
+            className="h-12 text-[0.9rem]"
             onClick={() => handleOAuth("google")}
             disabled={loading}
           >
-            <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                 fill="#4285F4"
@@ -235,12 +240,12 @@ function SignupForm() {
           </Button>
           <Button
             variant="outline"
-            className="h-10 text-sm"
+            className="h-12 text-[0.9rem]"
             onClick={() => handleOAuth("github")}
             disabled={loading}
           >
             <svg
-              className="w-4 h-4 mr-1.5"
+              className="w-5 h-5 mr-2"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -252,7 +257,7 @@ function SignupForm() {
 
         <div className="relative">
           <Separator />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-xs text-muted-foreground font-medium">
             or
           </span>
         </div>
@@ -260,13 +265,13 @@ function SignupForm() {
         {/* Form */}
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="signup-name">Full Name</Label>
+            <Label htmlFor="signup-name" className="text-[0.9rem] font-semibold">Full Name</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
               <Input
                 id="signup-name"
                 placeholder="Your name"
-                className="pl-10 h-11"
+                className="pl-11 h-12 text-[0.95rem] rounded-xl"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -274,14 +279,14 @@ function SignupForm() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="signup-email">Email</Label>
+            <Label htmlFor="signup-email" className="text-[0.9rem] font-semibold">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
               <Input
                 id="signup-email"
                 type="email"
                 placeholder="you@example.com"
-                className="pl-10 h-11"
+                className="pl-11 h-12 text-[0.95rem] rounded-xl"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -289,14 +294,14 @@ function SignupForm() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="signup-pw">Password</Label>
+            <Label htmlFor="signup-pw" className="text-[0.9rem] font-semibold">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
               <Input
                 id="signup-pw"
                 type={showPw ? "text" : "password"}
                 placeholder="Min 8 characters"
-                className="pl-10 pr-10 h-11"
+                className="pl-11 pr-11 h-12 text-[0.95rem] rounded-xl"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -304,30 +309,30 @@ function SignupForm() {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setShowPw(!showPw)}
               >
                 {showPw ? (
-                  <EyeOff className="w-4 h-4" />
+                  <EyeOff className="w-4.5 h-4.5" />
                 ) : (
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-4.5 h-4.5" />
                 )}
               </button>
             </div>
           </div>
           {error && (
-            <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
+            <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 font-medium">
               {error}
             </p>
           )}
           {successMsg && (
-            <p className="text-sm text-green-600 bg-green-500/10 rounded-lg px-3 py-2">
+            <p className="text-sm text-green-600 bg-green-500/10 rounded-xl px-4 py-3 font-medium">
               {successMsg}
             </p>
           )}
           <Button
             type="submit"
-            className="w-full h-11 bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20"
+            className="w-full h-12 text-[0.95rem] bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20 shimmer-hover"
             disabled={loading}
           >
             {loading ? (
@@ -339,11 +344,11 @@ function SignupForm() {
           </Button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-[0.9rem] text-muted-foreground">
           Already have an account?{" "}
           <Link
             href="/auth/login"
-            className="text-primary font-medium hover:text-primary/80"
+            className="text-primary font-semibold hover:text-primary/80 transition-colors"
           >
             Log in
           </Link>
@@ -356,7 +361,7 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense
-      fallback={<div className="animate-shimmer h-[600px] rounded-xl" />}
+      fallback={<div className="animate-shimmer h-[600px] rounded-2xl" />}
     >
       <SignupForm />
     </Suspense>

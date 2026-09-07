@@ -42,38 +42,43 @@ export default function StudentDashboard() {
     {
       label: "Skills Mapped", value: stats.skillsMapped.toString(),
       icon: Target, trend: stats.skillsTrend,
-      color: "text-violet-500", bg: "bg-violet-500/10",
+      color: "text-violet-500", bg: "bg-violet-500/10 dark:bg-violet-500/15",
+      gradient: "from-violet-500/5 to-transparent",
     },
     {
       label: "Match Score", value: stats.matchScore > 0 ? `${stats.matchScore}%` : "—",
       icon: TrendingUp, trend: stats.matchTrend,
-      color: "text-emerald-500", bg: "bg-emerald-500/10",
+      color: "text-emerald-500", bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+      gradient: "from-emerald-500/5 to-transparent",
     },
     {
       label: "Applications", value: stats.applications.toString(),
       icon: Briefcase, trend: stats.appsTrend,
-      color: "text-blue-500", bg: "bg-blue-500/10",
+      color: "text-blue-500", bg: "bg-blue-500/10 dark:bg-blue-500/15",
+      gradient: "from-blue-500/5 to-transparent",
     },
     {
       label: "Certifications", value: stats.certifications.toString(),
       icon: Award, trend: stats.certsTrend,
-      color: "text-amber-500", bg: "bg-amber-500/10",
+      color: "text-amber-500", bg: "bg-amber-500/10 dark:bg-amber-500/15",
+      gradient: "from-amber-500/5 to-transparent",
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="animate-slide-up">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
           Welcome back,{" "}
           {isLoading ? (
-            <span className="inline-block h-8 w-28 rounded-lg bg-muted animate-pulse align-middle" />
+            <span className="inline-block h-9 w-32 rounded-xl bg-muted animate-pulse align-middle" />
           ) : (
             <span className="gradient-text">{firstName || "there"}</span>
           )}
+          {" "}👋
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-2 text-[0.95rem]">
           Here&apos;s your skill development overview
         </p>
       </div>
@@ -91,23 +96,24 @@ export default function StudentDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => (
-          <Card key={stat.label} className="border-border/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
-            <CardContent className="p-5">
+        {statCards.map((stat, i) => (
+          <Card key={stat.label} className={`border-border/40 hover:shadow-xl hover:shadow-primary/[0.04] transition-all duration-500 hover:-translate-y-0.5 overflow-hidden relative animate-slide-up stagger-${i + 1}`}>
+            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} pointer-events-none`} />
+            <CardContent className="p-6 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-3xl font-bold mt-1">
+                  <p className="text-[0.9rem] text-muted-foreground font-medium">{stat.label}</p>
+                  <p className="text-4xl font-extrabold mt-2 tracking-tight">
                     {isLoading ? (
-                      <span className="inline-block h-8 w-12 rounded bg-muted animate-pulse" />
+                      <span className="inline-block h-10 w-14 rounded-lg bg-muted animate-pulse" />
                     ) : (
                       stat.value
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.trend}</p>
+                  <p className="text-xs text-muted-foreground mt-1.5 font-medium">{stat.trend}</p>
                 </div>
-                <div className={`w-11 h-11 rounded-xl ${stat.bg} flex items-center justify-center`}>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
               </div>
             </CardContent>
@@ -117,22 +123,22 @@ export default function StudentDashboard() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Skill Assessment CTA */}
-        <Card className="lg:col-span-2 border-border/50 overflow-hidden relative">
+        <Card className="lg:col-span-2 border-border/40 overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-chart-4/5" />
-          <CardContent className="relative p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-lg animate-pulse-glow">
-                <Sparkles className="w-7 h-7 text-white" />
+          <CardContent className="relative p-7">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-xl animate-pulse-glow">
+                <Sparkles className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold">Take Your Skill Assessment</h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <h3 className="text-xl font-bold">Take Your Skill Assessment</h3>
+                <p className="text-[0.9rem] text-muted-foreground mt-1.5 leading-relaxed">
                   Complete an AI-powered assessment to map your skills and unlock personalised recommendations.
                 </p>
               </div>
               <Link href="/student/assessment">
-                <Button className="bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20">
-                  Start Now <ArrowRight className="w-4 h-4 ml-1" />
+                <Button className="bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20 shimmer-hover h-11 px-6 text-[0.9rem]">
+                  Start Now <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </Link>
             </div>
@@ -140,25 +146,25 @@ export default function StudentDashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <Card className="border-border/50">
+        <Card className="border-border/40">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Quick Actions</CardTitle>
+            <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Link href="/student/copilot" className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent/80 transition-colors group">
+            <Link href="/student/copilot" className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-accent/60 transition-all duration-200 group">
               <Sparkles className="w-5 h-5 text-violet-500" />
-              <span className="text-sm font-medium flex-1">Career Copilot</span>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              <span className="text-[0.9rem] font-semibold flex-1">Career Copilot</span>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform duration-200" />
             </Link>
-            <Link href="/student/opportunities" className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent/80 transition-colors group">
+            <Link href="/student/opportunities" className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-accent/60 transition-all duration-200 group">
               <Briefcase className="w-5 h-5 text-blue-500" />
-              <span className="text-sm font-medium flex-1">Browse Jobs</span>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              <span className="text-[0.9rem] font-semibold flex-1">Browse Jobs</span>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform duration-200" />
             </Link>
-            <Link href="/student/portfolio" className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent/80 transition-colors group">
+            <Link href="/student/portfolio" className="flex items-center gap-3 p-3.5 rounded-xl hover:bg-accent/60 transition-all duration-200 group">
               <BookOpen className="w-5 h-5 text-emerald-500" />
-              <span className="text-sm font-medium flex-1">My Portfolio</span>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              <span className="text-[0.9rem] font-semibold flex-1">My Portfolio</span>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform duration-200" />
             </Link>
           </CardContent>
         </Card>
@@ -166,13 +172,13 @@ export default function StudentDashboard() {
 
       {/* Skill Rings + Leaderboard */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-border/50">
+        <Card className="border-border/40">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Your Top Skills</CardTitle>
+            <CardTitle>Your Top Skills</CardTitle>
           </CardHeader>
           <CardContent>
             <SkillRings skills={skills} loading={skillsLoading} />
-            <Link href="/student/profile" className="block mt-4">
+            <Link href="/student/profile" className="block mt-5">
               <Button variant="outline" size="sm" className="w-full">
                 View Full Profile <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
@@ -190,11 +196,11 @@ export default function StudentDashboard() {
       <ActivityHeatmap heatmap={heatmap} loading={activityLoading} />
 
       {/* Badges Section */}
-      <Card className="border-border/50">
+      <Card className="border-border/40">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Badges</CardTitle>
-            <span className="text-xs text-muted-foreground">
+            <CardTitle>Badges</CardTitle>
+            <span className="text-xs text-muted-foreground font-semibold bg-muted px-3 py-1 rounded-full">
               {earnedBadges.length}/{allBadges.length} earned
             </span>
           </div>
@@ -208,9 +214,9 @@ export default function StudentDashboard() {
               return (
                 <div
                   key={badge.id}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 ${
                     earned
-                      ? "bg-primary/5 border-primary/20 shadow-sm"
+                      ? "bg-primary/5 dark:bg-primary/10 border-primary/20 shadow-sm hover:shadow-md"
                       : "border-border/30 opacity-40 grayscale"
                   }`}
                   title={
@@ -220,17 +226,17 @@ export default function StudentDashboard() {
                   }
                 >
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                       earned ? "bg-primary/10" : "bg-muted"
                     }`}
                   >
                     <Award
-                      className={`w-4 h-4 ${earned ? "text-primary" : "text-muted-foreground"}`}
+                      className={`w-5 h-5 ${earned ? "text-primary" : "text-muted-foreground"}`}
                     />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold">{badge.name}</p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[0.85rem] font-bold">{badge.name}</p>
+                    <p className="text-[11px] text-muted-foreground font-medium">
                       +{badge.xp_reward} XP
                     </p>
                   </div>
@@ -270,16 +276,16 @@ function RecommendedSection() {
   }, []);
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/40">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Recommended For You</CardTitle>
-          <Badge variant="secondary" className="text-xs">AI Matched</Badge>
+          <CardTitle>Recommended For You</CardTitle>
+          <Badge variant="secondary" className="text-xs font-bold">AI Matched</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {opps.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">
+          <p className="text-[0.9rem] text-muted-foreground py-6 text-center">
             No active opportunities right now. Check back soon!
           </p>
         ) : (
@@ -292,19 +298,19 @@ function RecommendedSection() {
             }) => (
               <div
                 key={opp.id}
-                className="flex items-start gap-3 p-3 rounded-xl hover:bg-accent/50 transition-colors group cursor-pointer"
+                className="flex items-start gap-3 p-4 rounded-xl hover:bg-accent/50 transition-all duration-200 group cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center shrink-0">
                   <Star className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{opp.title}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  <div className="font-semibold text-[0.9rem] truncate">{opp.title}</div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Badge variant="secondary" className="text-[10px] px-2 py-0 font-bold">
                       {opp.type}
                     </Badge>
                     {opp.deadline && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
                         <Clock className="w-3 h-3" />
                         {new Date(opp.deadline).toLocaleDateString()}
                       </span>
