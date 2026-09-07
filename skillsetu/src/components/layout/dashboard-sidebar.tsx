@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import {
-  Sparkles, Menu, LogOut, Moon, Sun, Bell,
+  Network, Menu, LogOut, Moon, Sun, Bell,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -46,10 +46,10 @@ export function DashboardSidebar({
       <div className="p-5 flex items-center gap-3">
         <Link href="/" className="flex items-center gap-2.5 group flex-1 min-w-0">
           <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-lg group-hover:shadow-primary/30 transition-all duration-300">
-            <Sparkles className="w-5 h-5 text-white" />
+            <Network className="w-5 h-5 text-white" />
           </div>
           {(!collapsed || mobile) && (
-            <span className="text-xl font-bold truncate">
+            <span className="text-xl font-bold truncate font-heading">
               Skill<span className="gradient-text">Setu</span>
             </span>
           )}
@@ -173,9 +173,9 @@ export function DashboardSidebar({
       <div className="md:hidden flex items-center justify-between p-4 border-b border-border/40 bg-sidebar sticky top-0 z-40">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+            <Network className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-lg">SkillSetu</span>
+          <span className="font-bold text-lg font-heading">SkillSetu</span>
         </Link>
         <div className="flex items-center gap-1">
           <button className="p-2.5 rounded-xl hover:bg-accent/60 text-muted-foreground transition-colors">

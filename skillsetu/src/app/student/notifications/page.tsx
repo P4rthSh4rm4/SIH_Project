@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Bell, Check, Trash2, CheckCircle2,
-  AlertCircle, Info, Sparkles, MessageSquare, Briefcase
+  AlertCircle, Info, Sparkles, MessageSquare, Briefcase, Presentation
 } from "lucide-react";
 import { useNotifications } from "@/lib/hooks/useNotifications";
 import { toast } from "sonner";
@@ -21,6 +21,8 @@ export default function NotificationsPage() {
 
   const getIconAndColor = (type: string) => {
     switch (type) {
+      case "mentorship_message":
+        return { icon: Presentation, color: "text-amber-500", bg: "bg-amber-500/10" };
       case "assessment_result":
         return { icon: Sparkles, color: "text-emerald-500", bg: "bg-emerald-500/10" };
       case "opportunity_match":

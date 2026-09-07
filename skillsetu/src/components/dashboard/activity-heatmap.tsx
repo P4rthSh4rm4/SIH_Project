@@ -12,10 +12,10 @@ interface ActivityHeatmapProps {
 
 function getIntensityClass(count: number): string {
   if (count === 0) return "bg-muted/40";
-  if (count <= 2) return "bg-violet-200 dark:bg-violet-900/60";
-  if (count <= 5) return "bg-violet-400 dark:bg-violet-700";
-  if (count <= 10) return "bg-violet-500 dark:bg-violet-500";
-  return "bg-violet-600 dark:bg-violet-400";
+  if (count <= 2) return "bg-sky-200 dark:bg-sky-900/60";
+  if (count <= 5) return "bg-sky-400 dark:bg-sky-700";
+  if (count <= 10) return "bg-sky-500 dark:bg-sky-500";
+  return "bg-sky-600 dark:bg-sky-400";
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -71,7 +71,7 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
     return (
       <Card className="border-border/40">
         <CardContent className="p-7">
-          <div className="h-36 rounded-xl bg-muted animate-pulse" />
+          <div className="h-[200px] rounded-xl bg-muted animate-pulse" />
         </CardContent>
       </Card>
     );
@@ -85,21 +85,21 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle>Activity</CardTitle>
-          <div className="flex items-center gap-5 text-xs text-muted-foreground font-semibold">
+          <div className="flex items-center gap-5 text-sm text-muted-foreground font-semibold">
             <span>{totalActivities} activities</span>
             <span>{totalXp.toLocaleString()} XP earned</span>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <div className="inline-flex gap-[2px] min-w-fit">
+        <div className="overflow-x-auto pb-4">
+          <div className="inline-flex gap-[3px] min-w-fit">
             {/* Day labels */}
-            <div className="flex flex-col gap-[2px] mr-1.5 pt-5">
+            <div className="flex flex-col gap-[3px] mr-2 pt-[26px]">
               {DAYS.map((label, i) => (
                 <div
                   key={i}
-                  className="h-[17px] flex items-center text-[11px] text-muted-foreground font-medium"
+                  className="h-[20px] flex items-center text-xs text-muted-foreground font-medium"
                 >
                   {label}
                 </div>
@@ -109,13 +109,13 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
             {/* Weeks */}
             <div className="flex flex-col">
               {/* Month labels */}
-              <div className="flex gap-[2px] mb-1 h-5">
+              <div className="flex gap-[3px] mb-1.5 h-5">
                 {weeks.map((_, wi) => {
                   const label = monthLabels.find((m) => m.col === wi);
                   return (
                     <div
                       key={wi}
-                      className="w-[17px] text-[11px] text-muted-foreground font-medium"
+                      className="w-[20px] text-xs text-muted-foreground font-medium"
                     >
                       {label?.label ?? ""}
                     </div>
@@ -124,18 +124,18 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
               </div>
 
               {/* Grid of days */}
-              <div className="flex gap-[2px]">
+              <div className="flex gap-[3px]">
                 {weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-col gap-[2px]">
+                  <div key={wi} className="flex flex-col gap-[3px]">
                     {week.map((day) => (
                       <Tooltip key={day.date}>
                         <TooltipTrigger>
                           <div
-                            className={`w-[17px] h-[17px] rounded-[4px] ${getIntensityClass(day.count)} transition-colors duration-200 cursor-default hover:ring-1 hover:ring-foreground/20`}
+                            className={`w-[20px] h-[20px] rounded-[5px] ${getIntensityClass(day.count)} transition-colors duration-200 cursor-default hover:ring-2 hover:ring-foreground/20`}
                           />
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          <p className="font-semibold">{day.date}</p>
+                        <TooltipContent side="top" className="text-sm px-3 py-2">
+                          <p className="font-semibold mb-1">{day.date}</p>
                           <p>{day.count} activities • {day.xp} XP</p>
                         </TooltipContent>
                       </Tooltip>
@@ -148,13 +148,13 @@ export function ActivityHeatmap({ heatmap, loading }: ActivityHeatmapProps) {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-end gap-2 mt-4 text-[11px] text-muted-foreground font-medium">
+        <div className="flex items-center justify-end gap-2.5 mt-2 text-xs text-muted-foreground font-medium">
           <span>Less</span>
-          <div className="w-[15px] h-[15px] rounded-[3px] bg-muted/40" />
-          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-200 dark:bg-violet-900/60" />
-          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-400 dark:bg-violet-700" />
-          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-500 dark:bg-violet-500" />
-          <div className="w-[15px] h-[15px] rounded-[3px] bg-violet-600 dark:bg-violet-400" />
+          <div className="w-[18px] h-[18px] rounded-[4px] bg-muted/40" />
+          <div className="w-[18px] h-[18px] rounded-[4px] bg-sky-200 dark:bg-sky-900/60" />
+          <div className="w-[18px] h-[18px] rounded-[4px] bg-sky-400 dark:bg-sky-700" />
+          <div className="w-[18px] h-[18px] rounded-[4px] bg-sky-500 dark:bg-sky-500" />
+          <div className="w-[18px] h-[18px] rounded-[4px] bg-sky-600 dark:bg-sky-400" />
           <span>More</span>
         </div>
       </CardContent>

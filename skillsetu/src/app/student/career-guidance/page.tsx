@@ -1,169 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Compass, Map, Briefcase, ChevronRight, CheckCircle2,
   Circle, Star, ArrowRight, Zap, PlayCircle, Trophy,
+  Search
 } from "lucide-react";
 import Link from "next/link";
 import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
-
-const CAREER_PATHS = [
-  {
-    id: "fullstack",
-    title: "Full-Stack Engineer",
-    description: "Build end-to-end web applications, from responsive UIs to scalable backends.",
-    icon: Compass,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-    salary: "₹8L - ₹25L",
-    demand: "High",
-    requiredSkills: ["JavaScript", "React", "Node.js", "SQL", "Git"],
-    phases: [
-      {
-        title: "Frontend Fundamentals",
-        description: "Master the building blocks of the web and DOM manipulation.",
-        completed: true,
-        skills: ["HTML5", "CSS3", "JavaScript", "Web APIs"],
-      },
-      {
-        title: "Modern Frontend Frameworks",
-        description: "Build interactive UIs with React and Next.js, managing complex states.",
-        completed: true,
-        skills: ["React", "Next.js", "Redux", "Tailwind CSS"],
-      },
-      {
-        title: "Backend Development",
-        description: "Develop robust server-side logic and RESTful architectures.",
-        completed: false,
-        skills: ["Node.js", "Express", "REST API", "GraphQL"],
-      },
-      {
-        title: "Databases & Architecture",
-        description: "Design efficient schemas and understand scalable system design.",
-        completed: false,
-        skills: ["PostgreSQL", "MongoDB", "Redis", "System Design"],
-      },
-      {
-        title: "Deployment & DevOps",
-        description: "Containerize applications and set up automated deployment pipelines.",
-        completed: false,
-        skills: ["Docker", "AWS", "CI/CD", "Vercel"],
-      },
-      {
-        title: "Advanced Engineering",
-        description: "Master real-time communication and microservice architectures.",
-        completed: false,
-        skills: ["WebSockets", "Microservices", "Kafka", "Performance Optimization"],
-      },
-    ],
-  },
-  {
-    id: "data_science",
-    title: "Data Scientist",
-    description: "Extract insights from data, build ML models, and drive data-informed decisions.",
-    icon: Map,
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-    salary: "₹10L - ₹30L",
-    demand: "Very High",
-    requiredSkills: ["Python", "SQL", "Statistics", "Machine Learning", "Data Visualization"],
-    phases: [
-      {
-        title: "Programming & Math",
-        description: "Strong foundation in programming and mathematical concepts.",
-        completed: false,
-        skills: ["Python", "Linear Algebra", "Statistics", "Calculus"],
-      },
-      {
-        title: "Data Manipulation",
-        description: "Clean, transform, and analyze datasets efficiently.",
-        completed: false,
-        skills: ["Pandas", "NumPy", "SQL", "Data Cleaning"],
-      },
-      {
-        title: "Data Visualization",
-        description: "Create compelling dashboards and visual narratives.",
-        completed: false,
-        skills: ["Matplotlib", "Seaborn", "Tableau", "PowerBI"],
-      },
-      {
-        title: "Machine Learning",
-        description: "Train predictive models and evaluate their performance.",
-        completed: false,
-        skills: ["Scikit-Learn", "Regression", "Classification", "XGBoost"],
-      },
-      {
-        title: "Deep Learning (Advanced)",
-        description: "Build neural networks for complex pattern recognition.",
-        completed: false,
-        skills: ["TensorFlow", "PyTorch", "NLP", "Computer Vision"],
-      },
-      {
-        title: "Model Deployment (MLOps)",
-        description: "Deploy machine learning models into production environments.",
-        completed: false,
-        skills: ["MLflow", "FastAPI", "Docker", "Model Monitoring"],
-      },
-    ],
-  },
-  {
-    id: "devops",
-    title: "DevOps Engineer",
-    description: "Automate infrastructure, CI/CD pipelines, and ensure system reliability.",
-    icon: Zap,
-    color: "text-amber-500",
-    bg: "bg-amber-500/10",
-    salary: "₹10L - ₹28L",
-    demand: "High",
-    requiredSkills: ["Linux", "Git", "Docker", "Kubernetes", "AWS", "Terraform"],
-    phases: [
-      {
-        title: "OS & Networking",
-        description: "Master operating systems administration and network protocols.",
-        completed: false,
-        skills: ["Linux Admin", "Bash Scripting", "TCP/IP", "DNS"],
-      },
-      {
-        title: "Version Control & CI/CD",
-        description: "Manage source code and automate testing and deployments.",
-        completed: false,
-        skills: ["Git", "GitHub Actions", "Jenkins", "GitLab CI"],
-      },
-      {
-        title: "Containerization",
-        description: "Package applications with dependencies into portable containers.",
-        completed: false,
-        skills: ["Docker", "Docker Compose", "Container Registry"],
-      },
-      {
-        title: "Infrastructure as Code",
-        description: "Provision and manage infrastructure programmatically.",
-        completed: false,
-        skills: ["Terraform", "Ansible", "CloudFormation"],
-      },
-      {
-        title: "Container Orchestration",
-        description: "Manage large clusters of containers efficiently.",
-        completed: false,
-        skills: ["Kubernetes", "Helm", "Istio", "EKS/GKE"],
-      },
-      {
-        title: "Monitoring & Observability",
-        description: "Track system health, logs, and performance metrics.",
-        completed: false,
-        skills: ["Prometheus", "Grafana", "ELK Stack", "Datadog"],
-      },
-    ],
-  },
-];
+import { CAREER_PATHS } from "@/lib/data/career-paths";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 export default function CareerGuidancePage() {
   const { skills, loading } = useSkillAnalytics();
   const [selectedPath, setSelectedPath] = useState(CAREER_PATHS[0]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsSearchOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   // Calculate suitability score for each path based on student skills
   const getSuitability = (path: typeof CAREER_PATHS[0]) => {
@@ -191,23 +64,36 @@ export default function CareerGuidancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Career Guidance</h1>
           <p className="text-muted-foreground mt-1">
             Explore career paths, map your skills, and get AI-driven advice.
           </p>
         </div>
-        <Button asChild className="bg-primary/10 text-primary hover:bg-primary/20">
-          <Link href="/student/copilot">
-            <SparklesIcon className="w-4 h-4 mr-2" /> Ask AI Mentor
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            className="flex-1 sm:flex-none justify-start text-muted-foreground bg-muted/20 backdrop-blur-sm border-border/50 hover:bg-muted/40"
+            onClick={() => setIsSearchOpen(true)}
+          >
+            <Search className="w-4 h-4 mr-2" />
+            Find Career Paths...
+            <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:ml-6">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
+          <Button asChild className="bg-primary/10 text-primary hover:bg-primary/20 shrink-0">
+            <Link href="/student/copilot">
+              <SparklesIcon className="w-4 h-4 mr-2" /> Ask AI Mentor
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Career Paths Grid */}
+      {/* Career Paths Grid (Featured) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {CAREER_PATHS.map((path) => {
+        {CAREER_PATHS.slice(0, 3).map((path) => {
           const suitability = getSuitability(path);
           const isSelected = selectedPath.id === path.id;
 
@@ -367,7 +253,43 @@ export default function CareerGuidancePage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+    </div>
+
+      <CommandDialog open={isSearchOpen} onOpenChange={setIsSearchOpen} modal={true} className="sm:max-w-3xl">
+        <Command className="bg-card/70 backdrop-blur-2xl border-none h-full">
+          <CommandInput placeholder="Type a career path or skill to search..." className="border-none focus:ring-0 text-base py-4" />
+          <CommandList className="bg-transparent pb-2 max-h-[60vh]">
+            <CommandEmpty>No career path found.</CommandEmpty>
+            <CommandGroup heading="All Paths" className="text-foreground">
+              {CAREER_PATHS.map((path) => {
+                const suitability = getSuitability(path);
+                return (
+                  <CommandItem
+                    key={path.id}
+                    value={`${path.title} ${path.requiredSkills.join(" ")}`}
+                    onSelect={() => {
+                      setSelectedPath(path);
+                      setIsSearchOpen(false);
+                    }}
+                    className="flex items-center gap-3 py-3 px-4 cursor-pointer data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary"
+                  >
+                    <div className={`p-2 rounded-lg ${path.bg}`}>
+                      <path.icon className={`w-4 h-4 ${path.color}`} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">{path.title}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">{path.description}</div>
+                    </div>
+                    <Badge variant={suitability >= 70 ? "default" : "secondary"} className="shrink-0">
+                      {suitability}% Match
+                    </Badge>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </CommandDialog>
     </div>
   );
 }

@@ -28,12 +28,12 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="border-border/40">
           <CardContent className="p-7">
-            <div className="h-72 rounded-xl bg-muted animate-pulse" />
+            <div className="h-[400px] rounded-xl bg-muted animate-pulse" />
           </CardContent>
         </Card>
         <Card className="border-border/40">
           <CardContent className="p-7">
-            <div className="h-72 rounded-xl bg-muted animate-pulse" />
+            <div className="h-[400px] rounded-xl bg-muted animate-pulse" />
           </CardContent>
         </Card>
       </div>
@@ -67,27 +67,27 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
         </CardHeader>
         <CardContent>
           {growth.length === 0 ? (
-            <div className="h-72 flex items-center justify-center text-[0.9rem] text-muted-foreground">
+            <div className="h-[400px] flex items-center justify-center text-[0.9rem] text-muted-foreground">
               Complete assessments to see your progress chart
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={288}>
+            <ResponsiveContainer width="100%" height={400}>
               <AreaChart data={growthData}>
                 <defs>
                   <linearGradient id="skillGrowthGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="oklch(0.52 0.26 267)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="oklch(0.52 0.26 267)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="oklch(0.55 0.15 245)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="oklch(0.55 0.15 245)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 12, fontWeight: 500 }}
+                  tick={{ fontSize: 13, fontWeight: 500 }}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tick={{ fontSize: 12, fontWeight: 500 }}
+                  tick={{ fontSize: 13, fontWeight: 500 }}
                   tickLine={false}
                   axisLine={false}
                   width={35}
@@ -96,7 +96,7 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
                   contentStyle={{
                     borderRadius: "14px",
                     border: "1px solid oklch(0.925 0.015 268)",
-                    fontSize: "13px",
+                    fontSize: "14px",
                     fontWeight: 500,
                     boxShadow: "0 8px 24px -4px rgba(0,0,0,0.08)",
                   }}
@@ -104,8 +104,8 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
                 <Area
                   type="monotone"
                   dataKey="avgScore"
-                  stroke="oklch(0.52 0.26 267)"
-                  strokeWidth={2.5}
+                  stroke="oklch(0.55 0.15 245)"
+                  strokeWidth={3}
                   fill="url(#skillGrowthGrad)"
                   name="Avg Score"
                 />
@@ -122,28 +122,28 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
         </CardHeader>
         <CardContent>
           {skills.length === 0 ? (
-            <div className="h-72 flex items-center justify-center text-[0.9rem] text-muted-foreground">
+            <div className="h-[400px] flex items-center justify-center text-[0.9rem] text-muted-foreground">
               Map skills to see your radar chart
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={288}>
+            <ResponsiveContainer width="100%" height={400}>
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
                 <PolarGrid stroke="oklch(0.925 0.015 268 / 0.5)" />
                 <PolarAngleAxis
                   dataKey="subject"
-                  tick={{ fontSize: 11, fontWeight: 500 }}
+                  tick={{ fontSize: 13, fontWeight: 500 }}
                 />
                 <PolarRadiusAxis
                   angle={30}
                   domain={[0, 100]}
-                  tick={{ fontSize: 10, fontWeight: 500 }}
+                  tick={{ fontSize: 11, fontWeight: 500 }}
                   axisLine={false}
                 />
                 <Tooltip
                   contentStyle={{
                     borderRadius: "14px",
                     border: "1px solid oklch(0.925 0.015 268)",
-                    fontSize: "13px",
+                    fontSize: "14px",
                     fontWeight: 500,
                     boxShadow: "0 8px 24px -4px rgba(0,0,0,0.08)",
                   }}
@@ -151,18 +151,18 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
                 <Radar
                   name="Current"
                   dataKey="current"
-                  stroke="oklch(0.52 0.26 267)"
-                  fill="oklch(0.52 0.26 267)"
+                  stroke="oklch(0.55 0.15 245)"
+                  fill="oklch(0.55 0.15 245)"
                   fillOpacity={0.25}
-                  strokeWidth={2.5}
+                  strokeWidth={3}
                 />
                 <Radar
                   name="Target"
                   dataKey="target"
-                  stroke="oklch(0.58 0.22 310)"
-                  fill="oklch(0.58 0.22 310)"
+                  stroke="oklch(0.68 0.15 190)"
+                  fill="oklch(0.68 0.15 190)"
                   fillOpacity={0.1}
-                  strokeWidth={2.5}
+                  strokeWidth={3}
                   strokeDasharray="4 4"
                 />
               </RadarChart>

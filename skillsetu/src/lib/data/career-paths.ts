@@ -1,0 +1,302 @@
+import {
+  Compass, Map, Zap, BrainCircuit, ShieldAlert,
+  Smartphone, Cloud, Palette, Blocks
+} from "lucide-react";
+
+export const CAREER_PATHS = [
+  {
+    id: "fullstack",
+    title: "Full-Stack Engineer",
+    description: "Build end-to-end web applications, from responsive UIs to scalable backends.",
+    icon: Compass,
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    salary: "₹8L - ₹25L",
+    demand: "High",
+    requiredSkills: ["JavaScript", "React", "Node.js", "SQL", "Git"],
+    phases: [
+      {
+        title: "Frontend Fundamentals",
+        description: "Master the building blocks of the web and DOM manipulation.",
+        completed: true,
+        skills: ["HTML5", "CSS3", "JavaScript", "Web APIs"],
+      },
+      {
+        title: "Modern Frontend Frameworks",
+        description: "Build interactive UIs with React and Next.js, managing complex states.",
+        completed: true,
+        skills: ["React", "Next.js", "Redux", "Tailwind CSS"],
+      },
+      {
+        title: "Backend Development",
+        description: "Develop robust server-side logic and RESTful architectures.",
+        completed: false,
+        skills: ["Node.js", "Express", "REST API", "GraphQL"],
+      },
+      {
+        title: "Databases & Architecture",
+        description: "Design efficient schemas and understand scalable system design.",
+        completed: false,
+        skills: ["PostgreSQL", "MongoDB", "Redis", "System Design"],
+      },
+      {
+        title: "Deployment & DevOps",
+        description: "Containerize applications and set up automated deployment pipelines.",
+        completed: false,
+        skills: ["Docker", "AWS", "CI/CD", "Vercel"],
+      },
+      {
+        title: "Advanced Engineering",
+        description: "Master real-time communication and microservice architectures.",
+        completed: false,
+        skills: ["WebSockets", "Microservices", "Kafka", "Performance Optimization"],
+      },
+    ],
+  },
+  {
+    id: "data_science",
+    title: "Data Scientist",
+    description: "Extract insights from data, build ML models, and drive data-informed decisions.",
+    icon: Map,
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    salary: "₹10L - ₹30L",
+    demand: "Very High",
+    requiredSkills: ["Python", "SQL", "Statistics", "Machine Learning", "Data Visualization"],
+    phases: [
+      {
+        title: "Programming & Math",
+        description: "Strong foundation in programming and mathematical concepts.",
+        completed: false,
+        skills: ["Python", "Linear Algebra", "Statistics", "Calculus"],
+      },
+      {
+        title: "Data Manipulation",
+        description: "Clean, transform, and analyze datasets efficiently.",
+        completed: false,
+        skills: ["Pandas", "NumPy", "SQL", "Data Cleaning"],
+      },
+      {
+        title: "Data Visualization",
+        description: "Create compelling dashboards and visual narratives.",
+        completed: false,
+        skills: ["Matplotlib", "Seaborn", "Tableau", "PowerBI"],
+      },
+      {
+        title: "Machine Learning",
+        description: "Train predictive models and evaluate their performance.",
+        completed: false,
+        skills: ["Scikit-Learn", "Regression", "Classification", "XGBoost"],
+      },
+      {
+        title: "Deep Learning (Advanced)",
+        description: "Build neural networks for complex pattern recognition.",
+        completed: false,
+        skills: ["TensorFlow", "PyTorch", "NLP", "Computer Vision"],
+      },
+      {
+        title: "Model Deployment (MLOps)",
+        description: "Deploy machine learning models into production environments.",
+        completed: false,
+        skills: ["MLflow", "FastAPI", "Docker", "Model Monitoring"],
+      },
+    ],
+  },
+  {
+    id: "devops",
+    title: "DevOps Engineer",
+    description: "Automate infrastructure, CI/CD pipelines, and ensure system reliability.",
+    icon: Zap,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    salary: "₹10L - ₹28L",
+    demand: "High",
+    requiredSkills: ["Linux", "Git", "Docker", "Kubernetes", "AWS", "Terraform"],
+    phases: [
+      {
+        title: "OS & Networking",
+        description: "Master operating systems administration and network protocols.",
+        completed: false,
+        skills: ["Linux Admin", "Bash Scripting", "TCP/IP", "DNS"],
+      },
+      {
+        title: "Version Control & CI/CD",
+        description: "Manage source code and automate testing and deployments.",
+        completed: false,
+        skills: ["Git", "GitHub Actions", "Jenkins", "GitLab CI"],
+      },
+      {
+        title: "Containerization",
+        description: "Package applications with dependencies into portable containers.",
+        completed: false,
+        skills: ["Docker", "Docker Compose", "Container Registry"],
+      },
+      {
+        title: "Infrastructure as Code",
+        description: "Provision and manage infrastructure programmatically.",
+        completed: false,
+        skills: ["Terraform", "Ansible", "CloudFormation"],
+      },
+      {
+        title: "Container Orchestration",
+        description: "Manage large clusters of containers efficiently.",
+        completed: false,
+        skills: ["Kubernetes", "Helm", "Istio", "EKS/GKE"],
+      },
+      {
+        title: "Monitoring & Observability",
+        description: "Track system health, logs, and performance metrics.",
+        completed: false,
+        skills: ["Prometheus", "Grafana", "ELK Stack", "Datadog"],
+      },
+    ],
+  },
+  {
+    id: "ai_engineer",
+    title: "AI Engineer",
+    description: "Build and integrate generative AI models, LLMs, and intelligent agents into products.",
+    icon: BrainCircuit,
+    color: "text-purple-500",
+    bg: "bg-purple-500/10",
+    salary: "₹15L - ₹40L",
+    demand: "Very High",
+    requiredSkills: ["Python", "PyTorch", "LLMs", "LangChain", "Vector DBs"],
+    phases: [
+      {
+        title: "Foundations of AI",
+        description: "Understand neural networks, transformers, and the basics of generative AI.",
+        completed: false,
+        skills: ["Transformers", "Attention Mechanism", "Embeddings"],
+      },
+      {
+        title: "Working with APIs & Models",
+        description: "Integrate APIs from OpenAI, Anthropic, or open-source HuggingFace models.",
+        completed: false,
+        skills: ["OpenAI API", "HuggingFace", "Prompt Engineering"],
+      },
+      {
+        title: "RAG & Vector Databases",
+        description: "Build Retrieval-Augmented Generation systems for private data.",
+        completed: false,
+        skills: ["Pinecone", "ChromaDB", "LangChain", "LlamaIndex"],
+      },
+      {
+        title: "Fine-Tuning & Deployment",
+        description: "Fine-tune models on custom datasets and serve them efficiently.",
+        completed: false,
+        skills: ["LoRA", "QLoRA", "vLLM", "Ollama"],
+      },
+    ]
+  },
+  {
+    id: "cyber_security",
+    title: "Cyber Security Analyst",
+    description: "Protect systems and networks from cyber threats and vulnerabilities.",
+    icon: ShieldAlert,
+    color: "text-red-500",
+    bg: "bg-red-500/10",
+    salary: "₹8L - ₹22L",
+    demand: "High",
+    requiredSkills: ["Networking", "Linux", "Ethical Hacking", "SIEM", "Cryptography"],
+    phases: [
+      {
+        title: "Network Fundamentals",
+        description: "Understand TCP/IP, routing, and network packet analysis.",
+        completed: false,
+        skills: ["Wireshark", "TCP/IP", "Nmap"],
+      },
+      {
+        title: "System Security & Hardening",
+        description: "Secure operating systems and identify misconfigurations.",
+        completed: false,
+        skills: ["Linux Security", "Windows Active Directory", "IAM"],
+      },
+      {
+        title: "Vulnerability Management",
+        description: "Scan, assess, and patch vulnerabilities in systems and applications.",
+        completed: false,
+        skills: ["Nessus", "Burp Suite", "OWASP Top 10"],
+      },
+      {
+        title: "Incident Response",
+        description: "Detect, analyze, and respond to active security incidents.",
+        completed: false,
+        skills: ["Splunk", "SIEM", "Digital Forensics"],
+      },
+    ]
+  },
+  {
+    id: "mobile_dev",
+    title: "Mobile App Developer",
+    description: "Build native or cross-platform mobile applications for iOS and Android.",
+    icon: Smartphone,
+    color: "text-cyan-500",
+    bg: "bg-cyan-500/10",
+    salary: "₹6L - ₹20L",
+    demand: "Medium",
+    requiredSkills: ["React Native", "Flutter", "Swift", "Kotlin", "Mobile UI"],
+    phases: [
+      {
+        title: "Mobile UX & Fundamentals",
+        description: "Learn mobile design patterns and basic application lifecycle.",
+        completed: false,
+        skills: ["Figma", "UI/UX", "Mobile Patterns"],
+      },
+      {
+        title: "Cross-Platform Frameworks",
+        description: "Build apps that run on both iOS and Android using a single codebase.",
+        completed: false,
+        skills: ["React Native", "Flutter", "Dart"],
+      },
+      {
+        title: "State Management & APIs",
+        description: "Connect to backends and manage complex application state.",
+        completed: false,
+        skills: ["Redux", "REST APIs", "GraphQL"],
+      },
+      {
+        title: "Native Modules & Deployment",
+        description: "Interact with device hardware and publish to app stores.",
+        completed: false,
+        skills: ["App Store Connect", "Google Play Console", "Native Code (Swift/Kotlin)"],
+      },
+    ]
+  },
+  {
+    id: "ui_ux",
+    title: "UI/UX Designer",
+    description: "Design intuitive, engaging, and accessible user experiences for digital products.",
+    icon: Palette,
+    color: "text-pink-500",
+    bg: "bg-pink-500/10",
+    salary: "₹7L - ₹18L",
+    demand: "High",
+    requiredSkills: ["Figma", "Prototyping", "User Research", "Wireframing", "Interaction Design"],
+    phases: [
+      {
+        title: "Design Principles",
+        description: "Master color theory, typography, spacing, and layout.",
+        completed: false,
+        skills: ["Color Theory", "Typography", "Grid Systems"],
+      },
+      {
+        title: "User Research & Empathy",
+        description: "Understand user needs through interviews, surveys, and personas.",
+        completed: false,
+        skills: ["User Interviews", "Personas", "Journey Mapping"],
+      },
+      {
+        title: "Wireframing & Prototyping",
+        description: "Create low and high-fidelity prototypes using modern design tools.",
+        completed: false,
+        skills: ["Figma", "Adobe XD", "Interactive Prototyping"],
+      },
+      {
+        title: "Design Systems",
+        description: "Build scalable, reusable component libraries.",
+        completed: false,
+        skills: ["Component Variants", "Auto Layout", "Design Tokens"],
+      },
+    ]
+  }
+];

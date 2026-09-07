@@ -8,17 +8,21 @@ import { Input } from "@/components/ui/input";
 import {
   Briefcase, Search, MapPin, Building2, Clock, 
   DollarSign, GraduationCap, ArrowRight, Loader2,
-  CheckCircle2, AlertCircle, Percent
+  CheckCircle2, AlertCircle, Percent, Sparkles
 } from "lucide-react";
 import { useOpportunities } from "@/lib/hooks/useOpportunities";
 import { toast } from "sonner";
 import { awardXp } from "@/lib/supabase/queries";
+import { OpportunityAnalyzerModal } from "@/components/opportunities/opportunity-analyzer-modal";
 
 
 export default function OpportunitiesPage() {
   const { opportunities, loading, applyToOpportunity } = useOpportunities();
   const [searchQuery, setSearchQuery] = useState("");
   const [applyingIdState, setApplyingId] = useState<string | null>(null);
+  
+  // Analyzer state
+  const [analyzingOpp, setAnalyzingOpp] = useState<{id: string, title: string} | null>(null);
 
   const applyingId = applyingIdState; // rename for clarity
 
@@ -169,24 +173,33 @@ export default function OpportunitiesPage() {
                     </div>
 
                     {/* Action */}
-                    <div className="flex flex-col justify-end min-w-[120px] pt-2 md:pt-0 border-t md:border-t-0 md:border-l border-border/30 md:pl-4 mt-4 md:mt-0">
+                    <div className="flex flex-col justify-end min-w-[140px] pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-border/30 md:pl-5 mt-4 md:mt-0 gap-2.5">
                       {opp.hasApplied ? (
                         <div className="flex flex-col items-center justify-center text-center p-3 bg-secondary/30 rounded-xl h-full border border-border/30">
                           <CheckCircle2 className="w-5 h-5 text-emerald-500 mb-1" />
                           <span className="text-sm font-medium">Applied</span>
                         </div>
                       ) : (
-                        <Button 
-                          className="w-full h-full min-h-[60px]" 
-                          disabled={isApplying}
-                          onClick={() => handleApply(opp.id, opp.matchScore)}
-                        >
-                          {isApplying ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <>Apply Now <ArrowRight className="w-4 h-4 ml-2" /></>
-                          )}
-                        </Button>
+                        <>
+                          <Button 
+                            variant="outline"
+                            className="w-full text-xs h-9 font-bold flex items-center justify-center gap-1.5 border-primary/20 hover:bg-primary/5 text-primary"
+                            onClick={() => setAnalyzingOpp({ id: opp.id, title: opp.title })}
+                          >
+                            <Sparkles className="w-3.5 h-3.5" /> Analyze Resume
+                          </Button>
+                          <Button 
+                            className="w-full h-11" 
+                            disabled={isApplying}
+                            onClick={() => handleApply(opp.id, opp.matchScore)}
+                          >
+                            {isApplying ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <>Apply Now <ArrowRight className="w-4 h-4 ml-2" /></>
+                            )}
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -196,6 +209,13 @@ export default function OpportunitiesPage() {
           })
         )}
       </div>
+
+      <OpportunityAnalyzerModal
+        isOpen={!!analyzingOpp}
+        onClose={() => setAnalyzingOpp(null)}
+        opportunityId={analyzingOpp?.id ?? null}
+        opportunityTitle={analyzingOpp?.title ?? ""}
+      />
     </div>
   );
 }

@@ -22,6 +22,7 @@ import {
   X,
   Moon,
   Sun,
+  Network
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
@@ -190,13 +191,13 @@ export default function LandingPage() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-18">
+          <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-lg group-hover:shadow-primary/30 transition-all duration-300 group-hover:scale-105">
-                <Sparkles className="w-5 h-5 text-white" />
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-lg group-hover:shadow-primary/30 transition-all duration-300 group-hover:scale-105">
+                <Network className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold tracking-tight">
+              <span className="text-2xl font-bold tracking-tight font-heading">
                 Skill<span className="gradient-text">Setu</span>
               </span>
             </Link>
@@ -211,7 +212,7 @@ export default function LandingPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="relative px-4 py-2 text-[0.9rem] text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-accent/60 font-medium"
+                  className="relative px-4 py-2 text-base text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-accent/60 font-medium"
                 >
                   {link.label}
                 </Link>
@@ -219,27 +220,27 @@ export default function LandingPage() {
             </div>
 
             {/* Desktop Actions */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-4">
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="p-2.5 rounded-xl hover:bg-accent/60 transition-all duration-200 text-muted-foreground hover:text-foreground hover:scale-105"
                 aria-label="Toggle theme"
               >
-                <Sun className="w-[18px] h-[18px] hidden dark:block" />
-                <Moon className="w-[18px] h-[18px] block dark:hidden" />
+                <Sun className="w-5 h-5 hidden dark:block" />
+                <Moon className="w-5 h-5 block dark:hidden" />
               </button>
               <Link href="/auth/login">
-                <Button variant="ghost" size="sm" className="text-[0.9rem] font-medium">
+                <Button variant="ghost" size="sm" className="text-base font-medium">
                   Log in
                 </Button>
               </Link>
               <Link href="/auth/signup">
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-primary to-chart-4 hover:opacity-90 transition-all text-white shadow-lg shadow-primary/25 shimmer-hover text-[0.9rem]"
+                  className="bg-gradient-to-r from-primary to-chart-4 hover:opacity-90 transition-all text-white shadow-lg shadow-primary/25 shimmer-hover text-base h-11 px-5"
                 >
                   Get Started
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                  <ArrowRight className="w-5 h-5 ml-1.5" />
                 </Button>
               </Link>
             </div>

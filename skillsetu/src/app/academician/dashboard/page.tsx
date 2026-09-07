@@ -1,25 +1,44 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, FlaskConical, Handshake, Presentation, ArrowRight, Calendar, CheckCircle2, XCircle, Loader2, Building2 } from "lucide-react";
+import { BookOpen, FlaskConical, Handshake, Presentation, ArrowRight, Calendar, CheckCircle2, XCircle, Loader2, Building2, TrendingUp, Clock, FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import type { Opportunity } from "@/lib/types";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Link from "next/link";
 
 const stats = [
   { label: "FDPs Available", value: "12", icon: BookOpen, color: "text-emerald-500", bg: "bg-emerald-500/10" },
   { label: "Research Projects", value: "5", icon: FlaskConical, color: "text-violet-500", bg: "bg-violet-500/10" },
   { label: "Consultancy", value: "3", icon: Handshake, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { label: "Mentorships", value: "8", icon: Presentation, color: "text-amber-500", bg: "bg-amber-500/10" },
+  { label: "Active Mentees", value: "18", icon: Presentation, color: "text-amber-500", bg: "bg-amber-500/10" },
 ];
 
 const opportunities = [
   { title: "AI/ML Faculty Development Program", host: "Google India", type: "FDP", date: "Oct 5-12, 2024" },
   { title: "Collaborative Research: NLP in Healthcare", host: "Microsoft Research", type: "Research", date: "Rolling" },
   { title: "Industry Consulting — Fintech Risk Models", host: "Paytm", type: "Consultancy", date: "Nov 1, 2024" },
+];
+
+// Mock data for student progress chart
+const studentProgressData = [
+  { month: 'Jan', avgScore: 65, projectsCompleted: 2 },
+  { month: 'Feb', avgScore: 68, projectsCompleted: 4 },
+  { month: 'Mar', avgScore: 72, projectsCompleted: 5 },
+  { month: 'Apr', avgScore: 78, projectsCompleted: 8 },
+  { month: 'May', avgScore: 82, projectsCompleted: 12 },
+  { month: 'Jun', avgScore: 89, projectsCompleted: 15 },
+];
+
+const upcomingSchedule = [
+  { title: "1-on-1 Mentorship: Parth", time: "Today, 2:00 PM", type: "Mentorship", color: "border-l-amber-500" },
+  { title: "Advanced Pedagogy FDP", time: "Tomorrow, 9:00 AM", type: "FDP", color: "border-l-emerald-500" },
+  { title: "Consultancy Kick-off", time: "Thursday, 11:30 AM", type: "Consultancy", color: "border-l-blue-500" },
+  { title: "Research Paper Review", time: "Friday, 4:00 PM", type: "Research", color: "border-l-violet-500" },
 ];
 
 export default function AcademicianDashboard() {
@@ -71,20 +90,31 @@ export default function AcademicianDashboard() {
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Academician <span className="gradient-text">Dashboard</span></h1>
-        <p className="text-muted-foreground mt-1">Discover FDPs, research, and industry collaborations</p>
+    <div className="space-y-8 animate-fade-in pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Academician <span className="gradient-text">Dashboard</span></h1>
+          <p className="text-muted-foreground mt-1">Discover FDPs, research, and manage your students.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="bg-emerald-600 hover:bg-emerald-700">
+            <Presentation className="w-4 h-4 mr-2" /> Schedule Session
+          </Button>
+          <Button variant="outline" className="border-border/50 bg-background hover:bg-muted">
+            <FileText className="w-4 h-4 mr-2" /> Add Publication
+          </Button>
+        </div>
       </div>
 
+      {/* Top Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <Card key={s.label} className="border-border/50 hover:shadow-lg transition-all">
+          <Card key={s.label} className="border-border/50 hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-3xl font-bold mt-1">{s.value}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{s.label}</p>
+                  <p className="text-3xl font-bold mt-1 text-foreground">{s.value}</p>
                 </div>
                 <div className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center`}>
                   <s.icon className={`w-5 h-5 ${s.color}`} />
@@ -95,12 +125,74 @@ export default function AcademicianDashboard() {
         ))}
       </div>
 
+      {/* Mid Section: Chart and Schedule */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 border-border/50">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-500" /> Mentee Progress Overview
+                </CardTitle>
+                <CardDescription>Average skill scores and project completions of your students</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={studentProgressData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333333" opacity={0.2} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f8fafc' }}
+                    itemStyle={{ color: '#f8fafc' }}
+                  />
+                  <Area type="monotone" dataKey="avgScore" name="Avg Score" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-amber-500" /> Upcoming Schedule
+            </CardTitle>
+            <CardDescription>Your next few days at a glance</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {upcomingSchedule.map((item, i) => (
+              <div key={i} className={`pl-4 border-l-4 ${item.color} py-1 relative hover:bg-muted/30 transition-colors cursor-pointer rounded-r-lg`}>
+                <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
+                <div className="flex items-center gap-2 mt-1">
+                  <Clock className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground font-medium">{item.time}</span>
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full mt-4 text-emerald-600 border-emerald-200 hover:bg-emerald-50" asChild>
+              <Link href="/academician/calendar">View Full Calendar</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bottom Section: Approvals and Opportunities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Industry Approvals */}
-        <Card className="border-border/50 border-amber-500/20 bg-amber-500/5">
+        <Card className="border-border/50 border-t-4 border-t-amber-500 bg-amber-500/5">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-amber-500" /> Pending Industry Approvals
+              <Building2 className="w-5 h-5 text-amber-600" /> Pending Industry Approvals
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -154,25 +246,26 @@ export default function AcademicianDashboard() {
           </CardContent>
         </Card>
 
+        {/* Latest Academic Opportunities */}
         <Card className="border-border/50">
           <CardHeader><CardTitle className="text-base">Latest Academic Opportunities</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {opportunities.map((o) => (
-              <div key={o.title} className="flex items-start gap-4 p-3 rounded-xl hover:bg-accent/50 transition-colors cursor-pointer">
+              <div key={o.title} className="flex items-start gap-4 p-3 rounded-xl hover:bg-accent/50 transition-colors cursor-pointer border border-transparent hover:border-border/50">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
                   {o.type === "FDP" ? <BookOpen className="w-5 h-5 text-emerald-500" /> : o.type === "Research" ? <FlaskConical className="w-5 h-5 text-violet-500" /> : <Handshake className="w-5 h-5 text-blue-500" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm">{o.title}</div>
+                  <div className="font-medium text-sm text-foreground">{o.title}</div>
                   <div className="text-xs text-muted-foreground">{o.host}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <Badge variant="secondary" className="text-[10px]">{o.type}</Badge>
-                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Calendar className="w-3 h-3" />{o.date}</div>
+                  <Badge variant="secondary" className="text-[10px] bg-secondary/80">{o.type}</Badge>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center justify-end gap-1"><Calendar className="w-3 h-3" />{o.date}</div>
                 </div>
               </div>
             ))}
-            <Button variant="outline" size="sm" className="w-full mt-2">Browse All <ArrowRight className="w-3.5 h-3.5 ml-1" /></Button>
+            <Button variant="outline" size="sm" className="w-full mt-4 bg-muted/20 border-border/50">Browse All <ArrowRight className="w-3.5 h-3.5 ml-1" /></Button>
           </CardContent>
         </Card>
       </div>

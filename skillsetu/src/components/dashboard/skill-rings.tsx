@@ -20,7 +20,7 @@ function SkillRing({
   size?: number;
   delay?: number;
 }) {
-  const strokeWidth = 7;
+  const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
@@ -28,7 +28,7 @@ function SkillRing({
 
   return (
     <div
-      className="flex flex-col items-center gap-2.5 animate-scale-in"
+      className="flex flex-col items-center gap-3 animate-scale-in"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="relative" style={{ width: size, height: size }}>
@@ -59,10 +59,10 @@ function SkillRing({
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-base font-extrabold">{score}%</span>
+          <span className="text-xl font-extrabold">{score}%</span>
         </div>
       </div>
-      <span className="text-xs font-semibold text-muted-foreground text-center leading-tight max-w-[100px] truncate">
+      <span className="text-sm font-semibold text-muted-foreground text-center leading-tight max-w-[120px] truncate">
         {name}
       </span>
     </div>
@@ -71,22 +71,21 @@ function SkillRing({
 
 // Colors that match the existing design system
 const RING_COLORS = [
-  "oklch(0.52 0.26 267)",   // primary violet
-  "oklch(0.62 0.2 170)",    // teal/chart-2
-  "oklch(0.68 0.18 45)",    // amber/chart-3
-  "oklch(0.58 0.22 310)",   // pink/chart-4
-  "oklch(0.72 0.15 85)",    // green/chart-5
-  "oklch(0.58 0.2 200)",    // blue
+  "oklch(0.55 0.15 245)",   // primary ocean
+  "oklch(0.68 0.15 190)",   // teal
+  "oklch(0.70 0.14 150)",   // emerald
+  "oklch(0.62 0.15 280)",   // purple-blue
+  "oklch(0.75 0.15 60)",    // warm amber
 ];
 
 export function SkillRings({ skills, loading }: SkillRingsProps) {
   if (loading) {
     return (
-      <div className="flex flex-wrap justify-center gap-7 py-4">
+      <div className="flex flex-wrap justify-center gap-8 py-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex flex-col items-center gap-2.5">
-            <div className="w-[100px] h-[100px] rounded-full bg-muted animate-pulse" />
-            <div className="w-16 h-3.5 rounded bg-muted animate-pulse" />
+          <div key={i} className="flex flex-col items-center gap-3">
+            <div className="w-[120px] h-[120px] rounded-full bg-muted animate-pulse" />
+            <div className="w-20 h-4 rounded bg-muted animate-pulse" />
           </div>
         ))}
       </div>

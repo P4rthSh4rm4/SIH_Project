@@ -120,10 +120,10 @@ export default function ProfilePage() {
   // ─── Loading State ────────────────────────────────────────
   if (profileLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-extrabold tracking-tight font-heading">My Profile</h1>
+          <p className="text-lg text-muted-foreground mt-1.5">
             Manage your personal and academic details
           </p>
         </div>
@@ -135,15 +135,15 @@ export default function ProfilePage() {
   // ─── Error State ──────────────────────────────────────────
   if (profileError || !formData) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-extrabold tracking-tight font-heading">My Profile</h1>
+          <p className="text-lg text-muted-foreground mt-1.5">
             Manage your personal and academic details
           </p>
         </div>
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-card rounded-2xl border border-border/50">
+          <AlertTriangle className="w-16 h-16 text-amber-500 mb-5" />
           <h2 className="text-lg font-semibold mb-2">
             Failed to load profile
           </h2>
@@ -163,12 +163,12 @@ export default function ProfilePage() {
 
   // ─── Main Render ──────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <Toaster
         position="top-right"
         toastOptions={{
           className:
-            "border-border/50 bg-card text-card-foreground shadow-lg",
+            "border-border/50 bg-card text-card-foreground shadow-xl rounded-xl",
         }}
         richColors
         closeButton
@@ -176,10 +176,10 @@ export default function ProfilePage() {
 
       {/* Page Title */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-4xl font-extrabold tracking-tight font-heading">
           <span className="gradient-text">My Profile</span>
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-lg text-muted-foreground mt-1.5">
           Manage your personal and academic details
         </p>
       </div>
@@ -195,35 +195,35 @@ export default function ProfilePage() {
 
       {/* Tabbed Content */}
       <Tabs defaultValue="profile">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="profile">
-            <User className="w-3.5 h-3.5 mr-1.5" />
+        <TabsList className="flex-wrap bg-muted/50 p-1.5 rounded-2xl gap-1">
+          <TabsTrigger value="profile" className="rounded-xl px-5 py-2.5 text-base font-semibold data-[state=active]:shadow-md">
+            <User className="w-4 h-4 mr-2" />
             Profile
           </TabsTrigger>
-          <TabsTrigger value="education">
-            <GraduationCap className="w-3.5 h-3.5 mr-1.5" />
+          <TabsTrigger value="education" className="rounded-xl px-5 py-2.5 text-base font-semibold data-[state=active]:shadow-md">
+            <GraduationCap className="w-4 h-4 mr-2" />
             Education
           </TabsTrigger>
-          <TabsTrigger value="experience">
-            <Briefcase className="w-3.5 h-3.5 mr-1.5" />
+          <TabsTrigger value="experience" className="rounded-xl px-5 py-2.5 text-base font-semibold data-[state=active]:shadow-md">
+            <Briefcase className="w-4 h-4 mr-2" />
             Experience
           </TabsTrigger>
-          <TabsTrigger value="skills">
-            <Target className="w-3.5 h-3.5 mr-1.5" />
+          <TabsTrigger value="skills" className="rounded-xl px-5 py-2.5 text-base font-semibold data-[state=active]:shadow-md">
+            <Target className="w-4 h-4 mr-2" />
             Skills
           </TabsTrigger>
-          <TabsTrigger value="certifications">
-            <Award className="w-3.5 h-3.5 mr-1.5" />
+          <TabsTrigger value="certifications" className="rounded-xl px-5 py-2.5 text-base font-semibold data-[state=active]:shadow-md">
+            <Award className="w-4 h-4 mr-2" />
             Certifications
           </TabsTrigger>
-          <TabsTrigger value="resume">
-            <FileText className="w-3.5 h-3.5 mr-1.5" />
+          <TabsTrigger value="resume" className="rounded-xl px-5 py-2.5 text-base font-semibold data-[state=active]:shadow-md">
+            <FileText className="w-4 h-4 mr-2" />
             Resume
           </TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
-        <TabsContent value="profile" className="mt-4">
+        <TabsContent value="profile" className="mt-6">
           <ProfileForm
             profile={formData}
             onChange={handleFormChange}

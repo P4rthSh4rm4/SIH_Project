@@ -44,13 +44,13 @@ export function ProfileForm({
 }: ProfileFormProps) {
   return (
     <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <User className="w-4 h-4 text-primary" />
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-heading flex items-center gap-2.5">
+          <User className="w-5 h-5 text-primary" />
           Personal Information
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-7 md:p-8 pt-0">
         {/* Row 1: Name + Email */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-2">
@@ -208,20 +208,21 @@ export function ProfileForm({
         </div>
 
         {/* Save Button */}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-4">
           <Button
             onClick={onSave}
             disabled={saving}
-            className="bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20 min-w-[120px]"
+            size="lg"
+            className="bg-gradient-to-r from-primary to-chart-4 text-white hover:opacity-90 shadow-lg shadow-primary/20 min-w-[140px] text-base"
           >
             {saving ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 Saving…
               </>
             ) : (
               <>
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="w-5 h-5 mr-2" />
                 Save Profile
               </>
             )}
