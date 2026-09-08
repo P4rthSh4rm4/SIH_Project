@@ -56,11 +56,11 @@
   --card-foreground: oklch(0.18 0.03 245);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.03 245);
-  
+
   /* Ocean Blue Primary */
   --primary: oklch(0.55 0.15 245);
   --primary-foreground: oklch(0.99 0.005 245);
-  
+
   --secondary: oklch(0.95 0.01 245);
   --secondary-foreground: oklch(0.25 0.04 245);
   --muted: oklch(0.96 0.01 245);
@@ -71,14 +71,19 @@
   --border: oklch(0.90 0.01 245);
   --input: oklch(0.90 0.01 245);
   --ring: oklch(0.55 0.15 245);
-  
+
   /* Beautiful data viz colors */
-  --chart-1: oklch(0.55 0.15 245); /* Ocean */
-  --chart-2: oklch(0.68 0.15 190); /* Teal */
-  --chart-3: oklch(0.70 0.14 150); /* Emerald */
-  --chart-4: oklch(0.62 0.15 280); /* Deep Purple-Blue */
-  --chart-5: oklch(0.75 0.15 60);  /* Warm Amber */
-  
+  --chart-1: oklch(0.55 0.15 245);
+  /* Ocean */
+  --chart-2: oklch(0.68 0.15 190);
+  /* Teal */
+  --chart-3: oklch(0.70 0.14 150);
+  /* Emerald */
+  --chart-4: oklch(0.62 0.15 280);
+  /* Deep Purple-Blue */
+  --chart-5: oklch(0.75 0.15 60);
+  /* Warm Amber */
+
   --radius: 1rem;
   --sidebar: oklch(0.98 0.008 245);
   --sidebar-foreground: oklch(0.18 0.03 245);
@@ -98,15 +103,15 @@
   --card-foreground: #F5F5F7;
   --popover: #111827;
   --popover-foreground: #F5F5F7;
-  
+
   /* Primary CTAs: Violet */
   --primary: #8B5CF6;
   --primary-foreground: #FFFFFF;
-  
+
   /* Secondary/Badges: Soft Pink */
   --secondary: #F472B6;
   --secondary-foreground: #FFFFFF;
-  
+
   --muted: #374151;
   --muted-foreground: #9CA3AF;
   --accent: #374151;
@@ -115,13 +120,13 @@
   --border: #374151;
   --input: #374151;
   --ring: #8B5CF6;
-  
+
   --chart-1: #8B5CF6;
   --chart-2: #F472B6;
   --chart-3: #10B981;
   --chart-4: #F59E0B;
   --chart-5: #EF4444;
-  
+
   --sidebar: #111827;
   --sidebar-foreground: #F5F5F7;
   --sidebar-primary: #8B5CF6;
@@ -136,28 +141,38 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     @apply font-sans scroll-smooth;
     /* Boost base font size to make entire UI structurally larger */
     font-size: 17px;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   /* Heading font family for all headings */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading), var(--font-sans), system-ui, sans-serif;
   }
 }
 
 /* ─── SkillSetu Custom Utilities ─── */
 @layer utilities {
+
   /* Glassmorphism card */
   .glass {
     @apply bg-white/70 dark:bg-white/[0.06] backdrop-blur-2xl border border-white/30 dark:border-white/10;
     box-shadow: 0 1px 3px 0 oklch(0 0 0 / 0.04), inset 0 1px 0 0 oklch(1 0 0 / 0.06);
   }
+
   .dark .glass {
     box-shadow: 0 1px 3px 0 oklch(0 0 0 / 0.3), inset 0 1px 0 0 oklch(1 0 0 / 0.03);
   }
@@ -170,6 +185,7 @@
       0 4px 16px oklch(0 0 0 / 0.04),
       inset 0 1px 0 oklch(1 0 0 / 0.06);
   }
+
   .dark .card-elevated {
     box-shadow:
       0 1px 2px oklch(0 0 0 / 0.2),
@@ -180,12 +196,10 @@
   /* Gradient text — animated shift */
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(
-      135deg,
-      oklch(0.55 0.15 245),
-      oklch(0.68 0.15 190),
-      oklch(0.62 0.15 280)
-    );
+    background-image: linear-gradient(135deg,
+        oklch(0.55 0.15 245),
+        oklch(0.68 0.15 190),
+        oklch(0.62 0.15 280));
     background-size: 200% auto;
     animation: gradient-shift 4s ease-in-out infinite;
   }
@@ -194,6 +208,7 @@
   .glow-primary {
     box-shadow: 0 0 32px -6px oklch(0.55 0.15 245 / 0.3);
   }
+
   .dark .glow-primary {
     box-shadow: 0 0 44px -6px oklch(0.65 0.18 245 / 0.35);
   }
@@ -206,6 +221,7 @@
       radial-gradient(at 50% 5%, oklch(0.62 0.15 280 / 0.05) 0px, transparent 50%),
       radial-gradient(at 80% 20%, oklch(0.70 0.14 150 / 0.04) 0px, transparent 50%);
   }
+
   .dark .mesh-bg {
     background-image:
       radial-gradient(at 15% 15%, oklch(0.65 0.18 245 / 0.12) 0px, transparent 55%),
@@ -218,6 +234,7 @@
   .noise-bg {
     position: relative;
   }
+
   .noise-bg::before {
     content: "";
     position: absolute;
@@ -227,6 +244,7 @@
     pointer-events: none;
     z-index: 0;
   }
+
   .dark .noise-bg::before {
     opacity: 0.04;
   }
@@ -236,6 +254,7 @@
     position: relative;
     border: none !important;
   }
+
   .gradient-border::before {
     content: "";
     position: absolute;
@@ -256,8 +275,15 @@
   /* ─── Keyframes ─── */
 
   @keyframes gradient-shift {
-    0%, 100% { background-position: 0% center; }
-    50% { background-position: 200% center; }
+
+    0%,
+    100% {
+      background-position: 0% center;
+    }
+
+    50% {
+      background-position: 200% center;
+    }
   }
 
   @keyframes slide-up {
@@ -265,19 +291,27 @@
       opacity: 0;
       transform: translateY(24px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
+
   .animate-slide-up {
     animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
+
   .animate-fade-in {
     animation: fade-in 0.5s ease-out both;
   }
@@ -287,86 +321,130 @@
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
     }
   }
+
   .animate-scale-in {
     animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   @keyframes shimmer-btn {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
+    0% {
+      background-position: -200% center;
+    }
+
+    100% {
+      background-position: 200% center;
+    }
   }
+
   .shimmer-hover {
     position: relative;
     overflow: hidden;
   }
+
   .shimmer-hover::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      oklch(1 0 0 / 0.15) 50%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg,
+        transparent 0%,
+        oklch(1 0 0 / 0.15) 50%,
+        transparent 100%);
     background-size: 200% 100%;
     opacity: 0;
     transition: opacity 0.3s ease;
   }
+
   .shimmer-hover:hover::after {
     opacity: 1;
     animation: shimmer-btn 1.2s ease-in-out;
   }
 
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
   }
+
   .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      oklch(0.96 0 0) 0%,
-      oklch(0.92 0.01 245) 50%,
-      oklch(0.96 0 0) 100%
-    );
+    background: linear-gradient(90deg,
+        oklch(0.96 0 0) 0%,
+        oklch(0.92 0.01 245) 50%,
+        oklch(0.96 0 0) 100%);
     background-size: 200% 100%;
     animation: shimmer 2s ease-in-out infinite;
   }
+
   .dark .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      oklch(0.18 0.02 245) 0%,
-      oklch(0.26 0.03 245) 50%,
-      oklch(0.18 0.02 245) 100%
-    );
+    background: linear-gradient(90deg,
+        oklch(0.18 0.02 245) 0%,
+        oklch(0.26 0.03 245) 50%,
+        oklch(0.18 0.02 245) 100%);
     background-size: 200% 100%;
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-12px);
+    }
   }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
 
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 24px -5px oklch(0.55 0.15 245 / 0.25); }
-    50% { box-shadow: 0 0 40px -5px oklch(0.55 0.15 245 / 0.5); }
+
+    0%,
+    100% {
+      box-shadow: 0 0 24px -5px oklch(0.55 0.15 245 / 0.25);
+    }
+
+    50% {
+      box-shadow: 0 0 40px -5px oklch(0.55 0.15 245 / 0.5);
+    }
   }
+
   .animate-pulse-glow {
     animation: pulse-glow 3s ease-in-out infinite;
   }
 
-  .stagger-1 { animation-delay: 0.1s; }
-  .stagger-2 { animation-delay: 0.2s; }
-  .stagger-3 { animation-delay: 0.3s; }
-  .stagger-4 { animation-delay: 0.4s; }
-  .stagger-5 { animation-delay: 0.5s; }
-  .stagger-6 { animation-delay: 0.6s; }
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.4s;
+  }
+
+  .stagger-5 {
+    animation-delay: 0.5s;
+  }
+
+  .stagger-6 {
+    animation-delay: 0.6s;
+  }
 }

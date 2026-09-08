@@ -315,7 +315,7 @@ export default function LandingPage() {
             className="mb-8 px-5 py-2 text-sm font-medium border border-primary/20 bg-primary/5 backdrop-blur-sm animate-fade-in"
           >
             <Sparkles className="w-4 h-4 mr-2 text-primary" />
-            Smart India Hackathon 2024 — PS 26044
+            Smart India Hackathon 2026 — PS 26044
           </Badge>
 
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05] mb-8 text-balance animate-slide-up">
@@ -527,7 +527,7 @@ export default function LandingPage() {
               </span>
             </div>
             <p className="text-sm text-muted-foreground font-medium">
-              Built for Smart India Hackathon 2024 — PS 26044
+              Built for Smart India Hackathon 2026 — PS 26044
             </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
               <Link href="#" className="hover:text-foreground transition-colors">

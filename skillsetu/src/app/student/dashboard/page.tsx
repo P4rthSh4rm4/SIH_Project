@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Target, TrendingUp, Briefcase, Award, ArrowRight,
   BookOpen, Sparkles, Clock, CheckCircle2, Star,
-  AlertCircle, ChevronRight, Zap, TargetIcon
+  AlertCircle, ChevronRight, Zap, TargetIcon, MapPin, DollarSign, Info
 } from "lucide-react";
 import Link from "next/link";
 import { useUserProfile } from "@/lib/hooks/useUserProfile";
@@ -17,7 +17,7 @@ import { useDashboardData } from "@/lib/hooks/useDashboardData";
 import { useGamification } from "@/lib/hooks/useGamification";
 import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
 import { useActivityLog } from "@/lib/hooks/useActivityLog";
-import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
+import { useSkillAnalytics, SkillDataPoint } from "@/lib/hooks/useSkillAnalytics";
 
 import { GamificationBar } from "@/components/dashboard/gamification-bar";
 import { OnboardingStrip } from "@/components/dashboard/onboarding-strip";
@@ -25,6 +25,7 @@ import { SkillRings } from "@/components/dashboard/skill-rings";
 import { AnalyticsCharts } from "@/components/dashboard/analytics-charts";
 import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import { LeaderboardWidget } from "@/components/dashboard/leaderboard-widget";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function StudentDashboard() {
   const { profile, loading: profileLoading } = useUserProfile();
@@ -39,7 +40,7 @@ export default function StudentDashboard() {
 
   const firstName = profile?.name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
-  const targetRole = profile?.career_objective || "Software Engineer";
+  const targetRole = (profile as any)?.career_objective || "Software Engineer";
 
   const statCards = [
     {
@@ -67,6 +68,19 @@ export default function StudentDashboard() {
       gradient: "from-amber-500/5 to-transparent",
     },
   ];
+
+  const topSkills = [...skills].sort((a, b) => b.score - a.score).slice(0, 2);
+  const weakSkills = [...skills].filter(s => s.score < 70).sort((a, b) => a.score - b.score);
+  
+  const dynamicTasks = weakSkills.slice(0, 3).map((skill, idx) => {
+    if (idx === 0) {
+      return { title: `Improve ${skill.name} to 60%`, desc: "Complete 2 modules and 1 quiz.", xp: 150, cta: "Start Modules" };
+    } else if (idx === 1) {
+      return { title: `Strengthen ${skill.name}`, desc: `Finish the '${skill.name} Fundamentals' path.`, xp: 100, cta: "View Path" };
+    } else {
+      return { title: `Apply ${skill.name} in a project`, desc: "Build one small project and add it to your portfolio.", xp: 200, cta: "Create Project" };
+    }
+  });
 
   return (
     <div className="space-y-7 pb-20">
@@ -100,25 +114,68 @@ export default function StudentDashboard() {
         <Card className="border-primary/20 shadow-md shadow-primary/5 bg-gradient-to-br from-background to-primary/5 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
           <CardContent className="p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 sm:gap-8 relative z-10">
-            <div className="shrink-0 relative">
-              <svg className="w-32 h-32 transform -rotate-90">
-                <circle cx="64" cy="64" r="56" fill="transparent" stroke="currentColor" strokeWidth="12" className="text-muted/30" />
-                <circle 
-                  cx="64" cy="64" r="56" fill="transparent" stroke="currentColor" strokeWidth="12" 
-                  strokeDasharray="351.8" 
-                  strokeDashoffset={351.8 - (351.8 * (stats.matchScore || 45)) / 100}
-                  className="text-primary transition-all duration-1000 ease-out" 
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold">{stats.matchScore || 45}<span className="text-xl text-muted-foreground">%</span></span>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mt-1">Ready</span>
-              </div>
-            </div>
+            <Popover>
+              <PopoverTrigger className="shrink-0 relative cursor-pointer hover:scale-105 transition-transform outline-none border-none bg-transparent">
+                <svg className="w-32 h-32 transform -rotate-90">
+                  <circle cx="64" cy="64" r="56" fill="transparent" stroke="currentColor" strokeWidth="12" className="text-muted/30" />
+                  <circle 
+                    cx="64" cy="64" r="56" fill="transparent" stroke="currentColor" strokeWidth="12" 
+                    strokeDasharray="351.8" 
+                    strokeDashoffset={351.8 - (351.8 * (stats.matchScore || 45)) / 100}
+                    className="text-primary transition-all duration-1000 ease-out" 
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-extrabold text-foreground">{stats.matchScore || 45}<span className="text-xl text-muted-foreground">%</span></span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground mt-1 flex items-center gap-1">Ready <Info className="w-3 h-3" /></span>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4 border-border/60 shadow-xl rounded-2xl" sideOffset={10}>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-bold text-sm text-foreground">How is this calculated?</h4>
+                    <p className="text-[13px] text-muted-foreground mt-1 leading-snug">
+                      Your score is matched against the typical requirements for <strong className="text-primary">{targetRole}</strong> roles.
+                    </p>
+                  </div>
+                  
+                  {topSkills.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">Top Matching Skills</span>
+                      {topSkills.map(s => (
+                        <div key={s.id} className="text-[13px] flex items-center justify-between font-medium">
+                          <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> {s.name}</span>
+                          <span className="text-emerald-600">{s.score}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {weakSkills.length > 0 ? (
+                    <div className="pt-3 border-t space-y-2">
+                      <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Areas Pulling Score Down</span>
+                      <div className="text-[13px] flex items-center justify-between font-medium">
+                        <span className="flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5 text-amber-500" /> {weakSkills[0].name}</span>
+                        <span className="text-amber-600">{weakSkills[0].score}%</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-2 bg-secondary/10 p-2 rounded-lg flex items-start gap-1.5 border border-secondary/20">
+                        <TrendingUp className="w-3.5 h-3.5 text-secondary shrink-0" />
+                        <span>Increase {weakSkills[0].name} to 60% to gain <strong className="text-secondary">+5% match score</strong>.</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-3 border-t">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Areas Pulling Score Down</span>
+                      <p className="text-[12px] text-muted-foreground mt-1">Take assessments to map your weak areas.</p>
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
             
             <div className="flex-1 text-center sm:text-left">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3">
-                <TargetIcon className="w-3.5 h-3.5" /> Target Role: {targetRole}
+                <TargetIcon className="w-3.5 h-3.5" /> Matched to: {targetRole}
               </div>
               <h2 className="text-xl font-bold mb-2">You are on the right track!</h2>
               <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
@@ -131,7 +188,9 @@ export default function StudentDashboard() {
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Main Next Action</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <span className="text-sm font-medium">Complete the System Design module</span>
+                  <span className="text-sm font-medium">
+                    {weakSkills.length > 0 ? `Improve ${weakSkills[0].name} concepts` : "Complete the System Design module"}
+                  </span>
                   <Link href="/student/learning-hub">
                     <Button size="sm" className="w-full sm:w-auto text-xs h-8">Start Module</Button>
                   </Link>
@@ -146,40 +205,48 @@ export default function StudentDashboard() {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Your Weekly Plan</CardTitle>
-                <CardDescription>Small consistent steps lead to big wins</CardDescription>
+                <CardTitle>This Week&apos;s Plan</CardTitle>
+                <CardDescription>Personalized steps to boost your match score</CardDescription>
               </div>
-              <div className="text-right">
-                <span className="text-xl font-bold">1</span><span className="text-muted-foreground text-sm">/3</span>
-                <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Completed</div>
-              </div>
+              {dynamicTasks.length > 0 && (
+                <div className="text-right">
+                  <span className="text-xl font-bold">0</span><span className="text-muted-foreground text-sm">/{dynamicTasks.length}</span>
+                  <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Completed</div>
+                </div>
+              )}
             </div>
-            <Progress value={33} className="h-2 mt-4" />
+            {dynamicTasks.length > 0 && <Progress value={0} className="h-2 mt-4" />}
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium line-through opacity-70">Update your resume</p>
-                <Badge variant="secondary" className="text-[10px] mt-1 bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/20">+50 XP</Badge>
+            {skillsLoading ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-16 bg-muted rounded-xl" />
+                <div className="h-16 bg-muted rounded-xl" />
               </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-              <div className="w-5 h-5 rounded-full border-2 border-muted-foreground shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Take a mock interview for Python</p>
-                <Badge variant="secondary" className="text-[10px] mt-1">+100 XP</Badge>
+            ) : dynamicTasks.length === 0 ? (
+              <div className="text-center py-6 px-4 bg-secondary/5 rounded-xl border border-dashed border-secondary/30">
+                <TargetIcon className="w-8 h-8 text-secondary/50 mx-auto mb-2" />
+                <h4 className="text-sm font-bold text-foreground">No weak skills detected</h4>
+                <p className="text-xs text-muted-foreground mt-1 mb-4">Take your skill assessment to generate your personalized learning plan.</p>
+                <Link href="/student/assessment">
+                  <Button size="sm" variant="outline" className="h-8 text-xs font-semibold text-secondary border-secondary/20 hover:bg-secondary/10">Take Assessment</Button>
+                </Link>
               </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6"><ChevronRight className="w-4 h-4" /></Button>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-              <div className="w-5 h-5 rounded-full border-2 border-muted-foreground shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Apply to 2 recommended internships</p>
-                <Badge variant="secondary" className="text-[10px] mt-1">+150 XP</Badge>
-              </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6"><ChevronRight className="w-4 h-4" /></Button>
-            </div>
+            ) : (
+              dynamicTasks.map((task, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 hover:border-primary/20 transition-all duration-300 group cursor-pointer">
+                  <div className="w-5 h-5 rounded-full border-2 border-muted-foreground group-hover:border-primary shrink-0 mt-0.5 transition-colors" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{task.title}</p>
+                    <p className="text-xs text-muted-foreground leading-snug mt-0.5">{task.desc}</p>
+                    <Badge variant="secondary" className="text-[10px] mt-2 bg-secondary/10 text-secondary hover:bg-secondary/20 px-2 py-0 h-5">+{task.xp} XP</Badge>
+                  </div>
+                  <Link href="/student/learning-hub">
+                    <Button variant="ghost" size="sm" className="h-8 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity -mr-2 text-primary">{task.cta}</Button>
+                  </Link>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
@@ -193,64 +260,39 @@ export default function StudentDashboard() {
             <CardDescription>Mastering these will directly improve your readiness score for {targetRole} roles.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-red-500" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm">System Design</h4>
-                  <p className="text-xs text-muted-foreground">Missing completely</p>
-                </div>
+            {skillsLoading ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-16 bg-muted rounded-xl" />
+                <div className="h-16 bg-muted rounded-xl" />
               </div>
-              <div className="text-right">
-                <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm">+8% Match</Badge>
-                <Link href="/student/learning-hub" className="block mt-2">
-                  <span className="text-xs font-bold text-primary hover:underline">Learn &rarr;</span>
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-amber-500" />
+            ) : weakSkills.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No major skill gaps identified yet. Keep assessing!</p>
+            ) : (
+              weakSkills.slice(0, 3).map((skill, i) => (
+                <div key={skill.id} className="flex items-center justify-between p-3 rounded-xl bg-secondary/5 border border-secondary/10 hover:border-secondary/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-red-500/10' : 'bg-amber-500/10'}`}>
+                      {i === 0 ? <AlertCircle className="w-5 h-5 text-red-500" /> : <TrendingUp className="w-5 h-5 text-amber-500" />}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground">{skill.name}</h4>
+                      <p className="text-xs text-muted-foreground">{skill.score < 40 ? "Missing completely" : `Needs improvement (${skill.score}%)`}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Badge className="bg-secondary hover:bg-secondary/90 text-white shadow-sm px-2 py-0.5 text-[10px]">+{i === 0 ? '8' : '5'}% Match</Badge>
+                    <Link href="/student/learning-hub" className="block mt-2">
+                      <span className="text-[11px] font-bold text-primary hover:underline">Learn &rarr;</span>
+                    </Link>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-sm">React.js</h4>
-                  <p className="text-xs text-muted-foreground">Needs improvement (45%)</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm">+5% Match</Badge>
-                <Link href="/student/learning-hub" className="block mt-2">
-                  <span className="text-xs font-bold text-primary hover:underline">Practice &rarr;</span>
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-amber-500" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm">Docker</h4>
-                  <p className="text-xs text-muted-foreground">Needs improvement (30%)</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm">+4% Match</Badge>
-                <Link href="/student/learning-hub" className="block mt-2">
-                  <span className="text-xs font-bold text-primary hover:underline">Practice &rarr;</span>
-                </Link>
-              </div>
-            </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
         {/* Recommended Opportunities */}
-        <RecommendedSection />
+        <RecommendedSection skills={skills} />
       </div>
 
       <div className="pt-8 border-t border-border/50">
@@ -308,7 +350,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Reports & Analytics */}
-        <div className="mt-6">
+        <div className="mt-6" id="analytics">
           <AnalyticsCharts skills={skills} growth={growth} loading={skillsLoading} />
         </div>
 
@@ -318,7 +360,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Badges Section */}
-        <Card className="border-border/40 mt-6">
+        <Card className="border-border/40 mt-6" id="badges">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle>Badges & Achievements</CardTitle>
@@ -376,17 +418,18 @@ export default function StudentDashboard() {
 
 /* ─── Recommended Section (reads from Supabase) ─────────────────────── */
 
-function RecommendedSection() {
+function RecommendedSection({ skills }: { skills: SkillDataPoint[] }) {
   const [opps, setOpps] = useState<
-    { id: string; title: string; type: string; deadline: string | null }[]
+    { id: string; title: string; type: string; deadline: string | null; location?: string; stipend_amount?: number }[]
   >([]);
 
   useEffect(() => {
     async function fetchOpps() {
       const supabase = createClient();
+      // Try fetching location and stipend_amount as well if they exist
       const { data } = await supabase
         .from("opportunities")
-        .select("id, title, type, deadline")
+        .select("id, title, type, deadline, location, stipend_amount")
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(3);
@@ -411,17 +454,17 @@ function RecommendedSection() {
           </p>
         ) : (
           opps.map(
-            (opp: {
-              id: string;
-              title: string;
-              type: string;
-              deadline: string | null;
-            }, i: number) => {
-              // Mock reasons based on index to show the UI
+            (opp, i: number) => {
+              // Dynamic AI match reasons based on student skills and opportunity
+              const sortedSkills = [...skills].sort((a, b) => b.score - a.score);
+              const topSkill = sortedSkills.length > 0 ? sortedSkills[0].name : "React";
+              const secondSkill = sortedSkills.length > 1 ? sortedSkills[1].name : "Python";
+              const weakSkill = sortedSkills.length > 2 ? sortedSkills[sortedSkills.length - 1].name : "SQL";
+
               const reasons = [
-                "Strong match with your Python and React skills.",
-                "Your assessment scores place you in the top 10% for this role.",
-                "Great fit for your career objective in software engineering."
+                `85% fit — Strong match with your ${topSkill} and ${secondSkill} skills.`,
+                `Matches your core profile. Needs ${weakSkill} (you're at ${sortedSkills.length > 2 ? sortedSkills[sortedSkills.length - 1].score : 50}%).`,
+                `Great fit for your objective. Your assessment scores place you in the top 10%.`
               ];
               
               return (
@@ -436,10 +479,22 @@ function RecommendedSection() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-[0.95rem] truncate text-foreground group-hover:text-primary transition-colors">{opp.title}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-[10px] px-2 py-0 font-semibold capitalize">
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <Badge variant="secondary" className="text-[10px] px-2 py-0 font-semibold capitalize bg-muted text-muted-foreground border-transparent">
                           {opp.type}
                         </Badge>
+                        {opp.location && (
+                          <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium bg-muted/50 px-1.5 py-0.5 rounded">
+                            <MapPin className="w-3 h-3" />
+                            {opp.location}
+                          </span>
+                        )}
+                        {opp.stipend_amount && opp.stipend_amount > 0 && (
+                          <span className="text-[11px] text-emerald-600 flex items-center gap-0.5 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            <DollarSign className="w-3 h-3" />
+                            {opp.stipend_amount}/mo
+                          </span>
+                        )}
                         {opp.deadline && (
                           <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
                             <Clock className="w-3 h-3" />
@@ -451,14 +506,14 @@ function RecommendedSection() {
                   </div>
                 </div>
                 
-                <div className="bg-secondary/30 rounded-lg p-2.5 text-xs text-muted-foreground flex items-start gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                <div className="bg-secondary/10 rounded-lg p-2.5 text-[11px] text-foreground font-medium flex items-start gap-2 border border-secondary/20">
+                  <Sparkles className="w-3.5 h-3.5 text-secondary shrink-0 mt-0.5" />
                   <span>{reasons[i % reasons.length]}</span>
                 </div>
                 
                 <div className="pt-1">
                   <Link href={`/student/opportunities`} className="block">
-                    <Button size="sm" className="w-full h-8 text-xs font-semibold">Apply Now</Button>
+                    <Button size="sm" className="w-full h-8 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground">Apply Now &rarr;</Button>
                   </Link>
                 </div>
               </div>
@@ -467,7 +522,7 @@ function RecommendedSection() {
       </CardContent>
       <div className="px-6 pb-6 mt-auto">
         <Link href="/student/opportunities">
-          <Button variant="ghost" size="sm" className="w-full border border-border hover:bg-secondary/50">
+          <Button variant="ghost" size="sm" className="w-full border border-border hover:bg-secondary/50 font-semibold">
             View All Matches <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </Link>

@@ -41,13 +41,13 @@ export function OnboardingStrip({
     {
       label: "Map 5 skills",
       description: "Build your skill profile",
-      href: "/student/profile",
+      href: "/student/skill-analysis",
       complete: skillsCount >= 5,
     },
     {
       label: "Earn your first badge",
       description: "Complete activities to unlock badges",
-      href: "/student/dashboard",
+      href: "/student/dashboard#badges",
       complete: badgesCount > 0,
     },
   ];
@@ -81,7 +81,7 @@ export function OnboardingStrip({
           {steps.map((step, i) => (
             <Link
               key={i}
-              href={step.complete ? "#" : step.href}
+              href={step.href}
               className={`flex items-start gap-3 p-4 rounded-xl transition-all duration-300 ${
                 step.complete
                   ? "bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20"
