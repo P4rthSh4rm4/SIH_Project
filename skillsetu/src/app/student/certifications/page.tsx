@@ -1,32 +1,43 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Award, ShieldCheck, Share2, Download, CheckCircle2,
-  Medal, Star, ExternalLink, BookOpen, FileText, Expand
+  Medal, Star, ExternalLink, BookOpen, FileText, Expand,
+  ArrowRight, Trophy
 } from "lucide-react";
 import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
-import { useLearningHub } from "@/lib/hooks/useLearningHub";
 import { useProfileData } from "@/lib/hooks/useProfileData";
+import { useCareerAssessment, type CareerCertificate } from "@/lib/hooks/useCareerAssessment";
+import { CAREER_PATHS } from "@/lib/data/career-paths";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { CertificateView } from "@/components/dashboard/certificate-view";
-import { useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 export default function CertificationsPage() {
   const { skills, loading: skillsLoading } = useSkillAnalytics();
-  const { enrollments, loading: enrollmentsLoading } = useLearningHub();
   const { profile, loading: profileLoading } = useProfileData();
-  
-  const loading = skillsLoading || enrollmentsLoading || profileLoading;
+  const { getCertificates } = useCareerAssessment();
+  const [careerCerts, setCareerCerts] = useState<CareerCertificate[]>([]);
+  const [certsLoading, setCertsLoading] = useState(true);
+
+  useEffect(() => {
+    getCertificates().then((certs) => {
+      setCareerCerts(certs);
+      setCertsLoading(false);
+    });
+  }, [getCertificates]);
+
+  const loading = skillsLoading || profileLoading || certsLoading;
 
   const certificateRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const handleDownload = async (certificateId: string, enrollmentId: string) => {
-    const element = certificateRefs.current[enrollmentId];
+  const handleDownload = async (certificateId: string, refKey: string) => {
+    const element = certificateRefs.current[refKey];
     if (!element) {
       toast.error("Certificate element not found. Please try refreshing.");
       return;
@@ -35,16 +46,14 @@ export default function CertificationsPage() {
     const toastId = toast.loading("Generating high-resolution PDF...");
     
     try {
-      // Lazy load html2canvas and jspdf
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
       const canvas = await html2canvas(element, {
-        scale: 3, // High resolution
+        scale: 3,
         useCORS: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          // Remove all stylesheets so html2canvas doesn't try to parse oklch/lab variables
           const styles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
           styles.forEach(style => style.remove());
         }
@@ -58,7 +67,6 @@ export default function CertificationsPage() {
         format: "a4",
       });
 
-      // A4 dimensions: 297x210 mm
       pdf.addImage(imgData, "PNG", 0, 0, 297, 210);
       pdf.save(`SkillSetu_Certificate_${certificateId}.pdf`);
       
@@ -71,10 +79,9 @@ export default function CertificationsPage() {
 
   const verifiedSkills = skills.filter((s) => s.verified);
   const unverifiedSkills = skills.filter((s) => !s.verified);
-  const completedCourses = enrollments.filter((e) => e.progress_pct >= 100);
 
-  const handleShare = (skillName: string) => {
-    navigator.clipboard.writeText(`I just earned a verified skill badge in ${skillName} on SkillSetu!`);
+  const handleShare = (text: string) => {
+    navigator.clipboard.writeText(text);
     toast.success("Share text copied to clipboard!");
   };
 
@@ -96,53 +103,56 @@ export default function CertificationsPage() {
 
   return (
     <div className="space-y-8">
-      {/* ─── COURSE CERTIFICATES ─── */}
+      {/* ─── CAREER PATH CERTIFICATES ─── */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Course Certificates</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Career Path Certificates</h2>
           <p className="text-muted-foreground mt-1">
-            Certificates earned from completing learning programs.
+            Certificates earned by completing all modules and passing the final assessment.
           </p>
         </div>
       </div>
 
-      {completedCourses.length === 0 ? (
+      {careerCerts.length === 0 ? (
         <Card className="border-border/50 border-dashed bg-secondary/20">
           <CardContent className="p-12 text-center text-muted-foreground">
-            <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p className="text-lg font-medium">No course certificates yet</p>
-            <p className="text-sm mb-4">Complete a course to earn your first certificate.</p>
+            <Trophy className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p className="text-lg font-medium">No career path certificates yet</p>
+            <p className="text-sm mb-4">Complete all modules in a career path and pass the final assessment to earn your first certificate.</p>
             <Button asChild>
-              <Link href="/student/learning-hub">Explore Courses</Link>
+              <Link href="/student/career-guidance">Explore Career Paths</Link>
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {completedCourses.map((enrollment) => {
-            const program = enrollment.program as any;
-            if (!program) return null;
+          {careerCerts.map((cert) => {
+            const careerPath = CAREER_PATHS.find((p) => p.id === cert.career_path_id);
+            const pathTitle = careerPath?.title || cert.career_path_id;
+            const PathIcon = careerPath?.icon || Award;
+
             return (
-              <Card key={enrollment.id} className="border-border/50 overflow-hidden relative hover:shadow-lg transition-all group flex flex-col">
+              <Card key={cert.id} className="border-border/50 overflow-hidden relative hover:shadow-lg transition-all group flex flex-col">
                 {/* Scaled preview for the card */}
                 <div className="bg-slate-200/50 flex items-center justify-center overflow-hidden h-[240px] relative border-b border-border/50 p-4">
                    <div className="transform scale-[0.35] origin-center group-hover:scale-[0.37] transition-transform duration-500 shadow-xl">
                       <CertificateView
                         studentName={profile?.name || "Student"}
-                        courseTitle={program.title}
-                        provider={program.provider || "SkillSetu Partner"}
-                        completionDate={enrollment.completed_at || enrollment.enrolled_at || new Date()}
-                        certificateId={enrollment.id.split('-').pop() || enrollment.id}
+                        courseTitle={pathTitle}
+                        provider="SkillSetu Career Path"
+                        completionDate={cert.issued_at}
+                        certificateId={cert.certificate_id}
+                        score={cert.score}
                       />
                    </div>
                 </div>
 
                 <CardContent className="p-4 text-center pt-5">
                   <Badge className="mb-2 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20">
-                    <CheckCircle2 className="w-3 h-3 mr-1" /> Program Completed
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Certified
                   </Badge>
-                  <h3 className="font-bold text-lg mb-1 line-clamp-1" title={program.title}>{program.title}</h3>
-                  <p className="text-xs text-muted-foreground">{program.provider || "SkillSetu Partner"}</p>
+                  <h3 className="font-bold text-lg mb-1 line-clamp-1" title={pathTitle}>{pathTitle}</h3>
+                  <p className="text-xs text-muted-foreground">Score: {cert.score}% • ID: {cert.certificate_id}</p>
                 </CardContent>
                 
                 <CardFooter className="p-4 pt-0 mt-auto grid grid-cols-2 gap-2">
@@ -156,10 +166,11 @@ export default function CertificationsPage() {
                           <foreignObject width="800" height="565">
                             <CertificateView
                               studentName={profile?.name || "Student"}
-                              courseTitle={program.title}
-                              provider={program.provider || "SkillSetu Partner"}
-                              completionDate={enrollment.completed_at || enrollment.enrolled_at || new Date()}
-                              certificateId={enrollment.id.split('-').pop() || enrollment.id}
+                              courseTitle={pathTitle}
+                              provider="SkillSetu Career Path"
+                              completionDate={cert.issued_at}
+                              certificateId={cert.certificate_id}
+                              score={cert.score}
                             />
                           </foreignObject>
                         </svg>
@@ -170,7 +181,7 @@ export default function CertificationsPage() {
                     variant="outline" 
                     size="sm" 
                     className="w-full text-xs" 
-                    onClick={() => handleDownload(enrollment.id.split('-').pop() || enrollment.id, enrollment.id)}
+                    onClick={() => handleDownload(cert.certificate_id, cert.id)}
                   >
                     <Download className="w-3.5 h-3.5 mr-1.5" /> Download
                   </Button>
@@ -233,7 +244,7 @@ export default function CertificationsPage() {
               </CardContent>
               
               <CardFooter className="p-4 pt-0 border-t border-border/10 mt-auto bg-muted/10 grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handleShare(skill.name)}>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handleShare(`I just earned a verified skill badge in ${skill.name} on SkillSetu!`)}>
                   <Share2 className="w-3.5 h-3.5 mr-1.5" /> Share
                 </Button>
                 <Button variant="outline" size="sm" className="w-full text-xs">
@@ -269,7 +280,8 @@ export default function CertificationsPage() {
           </div>
         </div>
       )}
-      {/* Hidden certificates for PDF rendering (Outside any overflow-hidden containers) */}
+
+      {/* Hidden certificates for PDF rendering */}
       <div className="absolute top-0 left-0 -z-50 pointer-events-none" aria-hidden="true">
         <style dangerouslySetInnerHTML={{ __html: `
           .pdf-capture-container * {
@@ -280,20 +292,21 @@ export default function CertificationsPage() {
             --tw-ring-color: transparent;
           }
         `}} />
-        {completedCourses.map((enrollment) => {
-          const program = enrollment.program as any;
-          if (!program) return null;
+        {careerCerts.map((cert) => {
+          const careerPath = CAREER_PATHS.find((p) => p.id === cert.career_path_id);
+          const pathTitle = careerPath?.title || cert.career_path_id;
           return (
-            <div key={`hidden-${enrollment.id}`} className="absolute top-0 left-0 opacity-[0.01] pdf-capture-container">
+            <div key={`hidden-${cert.id}`} className="absolute top-0 left-0 opacity-[0.01] pdf-capture-container">
               <CertificateView
                 ref={(el) => {
-                  if (el) certificateRefs.current[enrollment.id] = el;
+                  if (el) certificateRefs.current[cert.id] = el;
                 }}
                 studentName={profile?.name || "Student"}
-                courseTitle={program.title}
-                provider={program.provider || "SkillSetu Partner"}
-                completionDate={enrollment.completed_at || enrollment.enrolled_at || new Date()}
-                certificateId={enrollment.id.split('-').pop() || enrollment.id}
+                courseTitle={pathTitle}
+                provider="SkillSetu Career Path"
+                completionDate={cert.issued_at}
+                certificateId={cert.certificate_id}
+                score={cert.score}
               />
             </div>
           );

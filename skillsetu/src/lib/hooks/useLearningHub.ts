@@ -63,9 +63,17 @@ export function useLearningHub() {
       const loadedPrograms = (programsRes.data as LearningProgram[]) ?? [];
       const loadedEnrollments = (enrollmentsRes.data as LearningEnrollment[]) ?? [];
 
+      // Deduplicate programs by title (seed script may have created duplicates)
+      const seenTitles = new Set<string>();
+      const uniquePrograms = loadedPrograms.filter((p) => {
+        if (seenTitles.has(p.title)) return false;
+        seenTitles.add(p.title);
+        return true;
+      });
+
       // Merge with persisted mock enrollments only if the real database is empty
       try {
-        if (typeof window !== "undefined" && loadedPrograms.length === 0) {
+        if (typeof window !== "undefined" && uniquePrograms.length === 0) {
           const storedMocks = localStorage.getItem("mock_enrollments");
           if (storedMocks) {
             const parsedMocks = JSON.parse(storedMocks) as LearningEnrollment[];
@@ -76,10 +84,10 @@ export function useLearningHub() {
         console.error("Failed to parse mock enrollments", e);
       }
       
-      console.log("[useLearningHub] programs.length after fetching:", loadedPrograms.length);
+      console.log("[useLearningHub] programs.length after fetching:", uniquePrograms.length);
       console.log("[useLearningHub] enrollments.length after fetching:", loadedEnrollments.length);
 
-      setPrograms(loadedPrograms);
+      setPrograms(uniquePrograms);
       setEnrollments(loadedEnrollments);
     } catch (err) {
       console.error("[useLearningHub] fetch error:", err);

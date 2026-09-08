@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   Compass, Map, Briefcase, ChevronRight, CheckCircle2,
   Circle, Star, ArrowRight, Zap, PlayCircle, Trophy,
-  Search
+  Search, Lock, Award, Flag, Shield
 } from "lucide-react";
 import Link from "next/link";
 import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
+import { useLearningHub } from "@/lib/hooks/useLearningHub";
+import { useCareerAssessment, type CareerCertificate } from "@/lib/hooks/useCareerAssessment";
 import { CAREER_PATHS } from "@/lib/data/career-paths";
 import {
   Command,
@@ -24,8 +26,60 @@ import {
 
 export default function CareerGuidancePage() {
   const { skills, loading } = useSkillAnalytics();
+  const { enrollments, loading: enrollmentsLoading } = useLearningHub();
+  const { getCertificates } = useCareerAssessment();
   const [selectedPath, setSelectedPath] = useState(CAREER_PATHS[0]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [pathStatuses, setPathStatuses] = useState<Record<string, "in_progress" | "assessment_unlocked" | "certified">>({});
+  const [certificates, setCertificates] = useState<CareerCertificate[]>([]);
+
+  // Calculate path statuses once enrollments load
+  useEffect(() => {
+    if (enrollmentsLoading) return;
+    const statuses: Record<string, "in_progress" | "assessment_unlocked" | "certified"> = {};
+    for (const path of CAREER_PATHS) {
+      // Find completed phases using stable program IDs
+      const completedPhases = path.phases.filter((phase) => {
+        // If phase has a program_id, use it for robust matching. Otherwise it's incomplete.
+        if (!("program_id" in phase)) return false;
+        return enrollments.some(
+          (e) => e.program_id === (phase as any).program_id && e.progress_pct === 100
+        );
+      });
+      
+      const completedCount = completedPhases.length;
+      
+      if (completedCount === path.phases.length && path.phases.length > 0) {
+        statuses[path.id] = "assessment_unlocked";
+      } else {
+        statuses[path.id] = "in_progress";
+      }
+
+      // Temporary debug logs for this path
+      if (path.id === selectedPath.id) {
+        console.log(`[Path Completion Debug] Path: ${path.title}`);
+        console.log(`- Total Phases: ${path.phases.length}`);
+        console.log(`- Completed Phases: ${completedCount}`);
+        console.log(`- Completed Programs (100%):`, enrollments.filter(e => e.progress_pct === 100).map(e => e.program_id));
+        console.log(`- Incomplete Programs (<100%):`, enrollments.filter(e => e.progress_pct < 100).map(e => e.program_id));
+        console.log(`- Assessment Unlocked:`, completedCount === path.phases.length);
+        if (completedCount < path.phases.length) {
+          const incompletePhases = path.phases.filter(p => !completedPhases.includes(p));
+          console.log(`- Reason Locked: Missing completions for phases:`, incompletePhases.map(p => p.title));
+        }
+      }
+    }
+    // Check certificates
+    getCertificates().then((certs) => {
+      setCertificates(certs);
+      for (const cert of certs) {
+        if (statuses[cert.career_path_id] === "assessment_unlocked") {
+          statuses[cert.career_path_id] = "certified";
+        }
+      }
+      setPathStatuses({ ...statuses });
+    });
+  }, [enrollments, enrollmentsLoading, getCertificates, selectedPath.id]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -199,6 +253,101 @@ export default function CareerGuidancePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Final Assessment Card */}
+          {(() => {
+            const status = pathStatuses[selectedPath.id];
+            const cert = certificates.find((c) => c.career_path_id === selectedPath.id);
+            if (!status) return null;
+
+            return (
+              <Card className={`border-border/50 overflow-hidden ${
+                status === "certified"
+                  ? "ring-1 ring-emerald-500/30"
+                  : status === "assessment_unlocked"
+                  ? "ring-1 ring-primary/30"
+                  : ""
+              }`}>
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-xl shrink-0 ${
+                      status === "certified"
+                        ? "bg-emerald-500/10"
+                        : status === "assessment_unlocked"
+                        ? "bg-primary/10"
+                        : "bg-secondary/30"
+                    }`}>
+                      {status === "certified" ? (
+                        <Award className="w-6 h-6 text-emerald-500" />
+                      ) : status === "assessment_unlocked" ? (
+                        <Flag className="w-6 h-6 text-primary" />
+                      ) : (
+                        <Lock className="w-6 h-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-lg">Final Assessment</h4>
+                        <Badge className={`text-xs ${
+                          status === "certified"
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            : status === "assessment_unlocked"
+                            ? "bg-primary/10 text-primary border-primary/20"
+                            : "bg-secondary/30 text-muted-foreground border-border/50"
+                        }`}>
+                          {status === "certified" ? "✓ Certified" : status === "assessment_unlocked" ? "Unlocked" : "Locked"}
+                        </Badge>
+                      </div>
+
+                      {status === "in_progress" && (
+                        <p className="text-sm text-muted-foreground">
+                          Complete all modules to unlock the final assessment.
+                        </p>
+                      )}
+
+                      {status === "assessment_unlocked" && (
+                        <>
+                          <p className="text-sm text-muted-foreground">
+                            All modules complete! Pass the final assessment (30 questions, 75% to pass) to earn your career certificate.
+                          </p>
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><Flag className="w-3 h-3" /> 30 Questions</span>
+                            <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> 35 Min Timer</span>
+                            <span className="flex items-center gap-1"><Trophy className="w-3 h-3" /> 75% to Pass</span>
+                          </div>
+                          <Button asChild className="mt-1">
+                            <Link href={`/student/career-assessment/${selectedPath.id}`}>
+                              Start Final Assessment <ArrowRight className="w-4 h-4 ml-2" />
+                            </Link>
+                          </Button>
+                        </>
+                      )}
+
+                      {status === "certified" && cert && (
+                        <>
+                          <p className="text-sm text-muted-foreground">
+                            Certificate earned! Score: <span className="font-semibold text-emerald-600">{cert.score}%</span> • ID: {cert.certificate_id}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" asChild>
+                              <Link href="/student/certifications">
+                                <Award className="w-3.5 h-3.5 mr-1.5" /> View Certificate
+                              </Link>
+                            </Button>
+                            <Button size="sm" variant="ghost" asChild>
+                              <Link href={`/student/career-assessment/${selectedPath.id}`}>
+                                Retake
+                              </Link>
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
 
         {/* AI Recommendations */}

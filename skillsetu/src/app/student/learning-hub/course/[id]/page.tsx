@@ -87,6 +87,22 @@ export default function CourseViewerPage() {
   const isCurrentlyCompleted = activeLessonIndex < completedLessons;
   const isCourseComplete = progressPct === 100;
 
+  // Shared completion estimate used by both Course Overview and Course Content sidebar
+  const completionDays = (() => {
+    if (!curriculum.estimated_duration) return 2;
+    let hours = 0;
+    let mins = 0;
+    const hrMatch = curriculum.estimated_duration.match(/(\d+)\s*hr/);
+    if (hrMatch) hours = parseInt(hrMatch[1], 10);
+    const minMatch = curriculum.estimated_duration.match(/(\d+)\s*min/);
+    if (minMatch) mins = parseInt(minMatch[1], 10);
+    const totalHours = hours + (mins / 60);
+    if (totalHours < 2) return 2;
+    if (totalHours <= 4) return 3;
+    if (totalHours <= 6) return 5;
+    return 7;
+  })();
+
   const handleMarkComplete = async () => {
     if (!enrollment || isUpdating || isCurrentlyCompleted) return;
     
@@ -105,7 +121,7 @@ export default function CourseViewerPage() {
       if (success) {
         toast.success("Lesson completed!");
         if (newPct === 100) {
-          toast.success("🎉 Congratulations! You have completed the course and earned a certificate!");
+          toast.success("🎉 Module complete! Check Career Guidance to see if your career path assessment is unlocked.", { duration: 6000 });
           await awardXp("course_completed", { program_id: program.id });
         } else if (activeLessonIndex < totalLessons - 1) {
           // Auto advance to next lesson
@@ -208,9 +224,9 @@ export default function CourseViewerPage() {
                 <div className="bg-secondary/20 p-3 rounded-lg">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
                     <Clock className="w-4 h-4" />
-                    <span className="text-xs font-medium">Duration</span>
+                    <span className="text-xs font-medium">Time to Complete</span>
                   </div>
-                  <p className="text-sm font-semibold">{curriculum.estimated_duration}</p>
+                  <p className="text-sm font-semibold">{completionDays} Days</p>
                 </div>
                 <div className="bg-secondary/20 p-3 rounded-lg">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
@@ -255,7 +271,15 @@ export default function CourseViewerPage() {
         <div className="space-y-6">
           <Card className="border-border/50 sticky top-6">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Course Content</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Course Content</CardTitle>
+                {curriculum.estimated_duration && (
+                  <Badge variant="outline" className="text-xs font-normal bg-primary/5 text-primary border-primary/20 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {`Complete in ${completionDays} Days`}
+                  </Badge>
+                )}
+              </div>
               <div className="flex items-center justify-between text-sm mt-2 mb-1">
                 <span className="text-muted-foreground">{completedLessons} of {totalLessons} completed</span>
                 <span className="font-medium text-primary">{progressPct}%</span>
@@ -313,9 +337,6 @@ export default function CourseViewerPage() {
                                 <div className="flex-1 min-w-0">
                                   <p className={`truncate ${isActive ? "font-medium text-primary" : "text-foreground/80"}`}>
                                     {lesson.title}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                    <Clock className="w-3 h-3" /> {lesson.duration}
                                   </p>
                                 </div>
                               </button>

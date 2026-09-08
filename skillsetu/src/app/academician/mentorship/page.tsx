@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { UserProfile } from "@/lib/types";
+import { sendNotificationAction } from "./actions";
 
 export default function MentorshipPage() {
   const [students, setStudents] = useState<UserProfile[]>([]);
@@ -47,35 +48,29 @@ export default function MentorshipPage() {
 
   const handleSendMessage = async () => {
     if (!selectedStudent || !subject.trim() || !message.trim()) {
-      toast.error("Please fill in both subject and message.");
+      toast.error("Please fill in all fields.");
       return;
     }
 
-    setIsSending(true);
     try {
-      const supabase = createClient();
-      const payload_json = {
-        title: `Mentorship: ${subject}`,
-        message: message,
-        link: "/student/profile"
-      };
-
-      const { error } = await supabase
-        .from("notifications")
-        .insert({
-          user_id: selectedStudent.id,
-          type: "mentorship_message",
-          payload_json: payload_json
-        });
-
-      if (error) throw error;
+      setIsSending(true);
       
-      toast.success(`Message sent to ${selectedStudent.name}`);
+      const result = await sendNotificationAction(
+        selectedStudent.id,
+        subject,
+        message
+      );
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      toast.success("Message sent successfully!");
       setSubject("");
       setMessage("");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to send notification", err);
-      toast.error("Failed to send message.");
+      toast.error(err.message || "Failed to send message. Please try again.");
     } finally {
       setIsSending(false);
     }

@@ -7,10 +7,11 @@ export interface CertificateViewProps {
   provider: string;
   completionDate: string | Date;
   certificateId: string;
+  score?: number;
 }
 
 export const CertificateView = forwardRef<HTMLDivElement, CertificateViewProps>(
-  ({ studentName, courseTitle, provider, completionDate, certificateId }, ref) => {
+  ({ studentName, courseTitle, provider, completionDate, certificateId, score }, ref) => {
     const formattedDate = new Date(completionDate).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -57,6 +58,11 @@ export const CertificateView = forwardRef<HTMLDivElement, CertificateViewProps>(
             <p style={{ color: '#64748b', fontWeight: 500, paddingTop: '0.25rem', margin: 0 }}>
               provided by <span style={{ color: '#1e293b', fontWeight: 600 }}>{provider}</span>
             </p>
+            {score !== undefined && (
+              <p style={{ color: '#047857', fontWeight: 700, paddingTop: '0.75rem', fontSize: '0.875rem', margin: 0 }}>
+                Assessment Score: {score}%
+              </p>
+            )}
           </div>
         </div>
 
