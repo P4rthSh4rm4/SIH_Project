@@ -90,44 +90,46 @@
   --sidebar-ring: oklch(0.55 0.15 245);
 }
 
-/* ─── SkillSetu Soft Slate Dark Theme ─── */
+/* ─── SkillSetu Creative Dark Theme (Charcoal + Violet + Pink) ─── */
 .dark {
-  --background: oklch(0.15 0.02 245);
-  --foreground: oklch(0.97 0.005 245);
-  --card: oklch(0.18 0.025 245);
-  --card-foreground: oklch(0.97 0.005 245);
-  --popover: oklch(0.18 0.025 245);
-  --popover-foreground: oklch(0.97 0.005 245);
+  --background: #1F2937;
+  --foreground: #F5F5F7;
+  --card: #111827;
+  --card-foreground: #F5F5F7;
+  --popover: #111827;
+  --popover-foreground: #F5F5F7;
   
-  /* Luminous Ocean */
-  --primary: oklch(0.65 0.18 245);
-  --primary-foreground: oklch(0.99 0.005 245);
+  /* Primary CTAs: Violet */
+  --primary: #8B5CF6;
+  --primary-foreground: #FFFFFF;
   
-  --secondary: oklch(0.22 0.03 245);
-  --secondary-foreground: oklch(0.95 0.005 245);
-  --muted: oklch(0.22 0.03 245);
-  --muted-foreground: oklch(0.65 0.01 245);
-  --accent: oklch(0.22 0.03 245);
-  --accent-foreground: oklch(0.95 0.005 245);
-  --destructive: oklch(0.63 0.24 25);
-  --border: oklch(0.25 0.03 245);
-  --input: oklch(0.25 0.03 245);
-  --ring: oklch(0.65 0.18 245);
+  /* Secondary/Badges: Soft Pink */
+  --secondary: #F472B6;
+  --secondary-foreground: #FFFFFF;
   
-  --chart-1: oklch(0.65 0.18 245);
-  --chart-2: oklch(0.72 0.16 190);
-  --chart-3: oklch(0.75 0.15 150);
-  --chart-4: oklch(0.68 0.18 280);
-  --chart-5: oklch(0.80 0.16 60);
+  --muted: #374151;
+  --muted-foreground: #9CA3AF;
+  --accent: #374151;
+  --accent-foreground: #F5F5F7;
+  --destructive: #EF4444;
+  --border: #374151;
+  --input: #374151;
+  --ring: #8B5CF6;
   
-  --sidebar: oklch(0.16 0.02 245);
-  --sidebar-foreground: oklch(0.97 0.005 245);
-  --sidebar-primary: oklch(0.65 0.18 245);
-  --sidebar-primary-foreground: oklch(0.99 0.005 245);
-  --sidebar-accent: oklch(0.22 0.03 245);
-  --sidebar-accent-foreground: oklch(0.95 0.005 245);
-  --sidebar-border: oklch(0.25 0.03 245);
-  --sidebar-ring: oklch(0.65 0.18 245);
+  --chart-1: #8B5CF6;
+  --chart-2: #F472B6;
+  --chart-3: #10B981;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
+  
+  --sidebar: #111827;
+  --sidebar-foreground: #F5F5F7;
+  --sidebar-primary: #8B5CF6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1F2937;
+  --sidebar-accent-foreground: #F5F5F7;
+  --sidebar-border: #374151;
+  --sidebar-ring: #8B5CF6;
 }
 
 @layer base {

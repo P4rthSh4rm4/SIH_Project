@@ -21,8 +21,120 @@ export interface Curriculum {
 }
 
 export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
+  "Full-Stack Engineer Bootcamp": {
+    overview: "Master full-stack development with MERN stack.",
+    difficulty: "Advanced",
+    estimated_duration: "10 hr 0 min",
+    instructor: "SkillSetu Academy",
+    modules: [
+      {
+        id: "fsb-m1",
+        title: "Frontend with React",
+        lessons: [
+          { id: "fsb-l1", title: "React JS Crash Course", description: "Learn React.", duration: "1 hr 48 min", youtube_url: "https://www.youtube.com/embed/w7ejDZ8SWv8" }
+        ]
+      },
+      {
+        id: "fsb-m2",
+        title: "Backend with Node & MongoDB",
+        lessons: [
+          { id: "fsb-l2", title: "Node.js & Express", description: "Learn Node.js", duration: "1 hr 30 min", youtube_url: "https://www.youtube.com/embed/fBNz5xF-Kx4" }
+        ]
+      }
+    ]
+  },
+  "Data Scientist Certification Course": {
+    overview: "Complete Data Science Certification.",
+    difficulty: "Intermediate",
+    estimated_duration: "8 hr 0 min",
+    instructor: "SkillSetu Data School",
+    modules: [
+      {
+        id: "dsc-m1",
+        title: "Data Science with Python",
+        lessons: [
+          { id: "dsc-l1", title: "Python for Data Science", description: "Learn Python.", duration: "1 hr 0 min", youtube_url: "https://www.youtube.com/embed/kqtD5dpn9C8" }
+        ]
+      }
+    ]
+  },
+  "DevOps Engineer Masterclass": {
+    overview: "Master Docker, Kubernetes, and CI/CD.",
+    difficulty: "Advanced",
+    estimated_duration: "5 hr 0 min",
+    instructor: "SkillSetu Cloud",
+    modules: [
+      {
+        id: "dem-m1",
+        title: "Docker & Kubernetes",
+        lessons: [
+          { id: "dem-l1", title: "Docker Crash Course", description: "Learn Docker.", duration: "1 hr 11 min", youtube_url: "https://www.youtube.com/embed/pTFZFxd4hOI" },
+          { id: "dem-l2", title: "Kubernetes Tutorial", description: "Learn K8s.", duration: "3 hr 42 min", youtube_url: "https://www.youtube.com/embed/X48VuDVv0do" }
+        ]
+      }
+    ]
+  },
+  "AI Engineer Professional Certificate": {
+    overview: "Learn PyTorch, LLMs, and Generative AI.",
+    difficulty: "Advanced",
+    estimated_duration: "15 hr 0 min",
+    instructor: "SkillSetu AI Lab",
+    modules: [
+      {
+        id: "aie-m1",
+        title: "Deep Learning with PyTorch",
+        lessons: [
+          { id: "aie-l1", title: "PyTorch Full Course", description: "Learn PyTorch.", duration: "25 hr 11 min", youtube_url: "https://www.youtube.com/embed/V_xro1bcAuA" }
+        ]
+      }
+    ]
+  },
+  "Cyber Security Analyst Training": {
+    overview: "Master Ethical Hacking and Network Security.",
+    difficulty: "Intermediate",
+    estimated_duration: "12 hr 0 min",
+    instructor: "SkillSetu Security",
+    modules: [
+      {
+        id: "csa-m1",
+        title: "Ethical Hacking Basics",
+        lessons: [
+          { id: "csa-l1", title: "Ethical Hacking Full Course", description: "Learn ethical hacking.", duration: "10 hr 0 min", youtube_url: "https://www.youtube.com/embed/inWWhwg4Q14" }
+        ]
+      }
+    ]
+  },
+  "Mobile App Developer with React Native": {
+    overview: "Build cross-platform mobile apps.",
+    difficulty: "Intermediate",
+    estimated_duration: "6 hr 0 min",
+    instructor: "SkillSetu Mobile",
+    modules: [
+      {
+        id: "mad-m1",
+        title: "React Native",
+        lessons: [
+          { id: "mad-l1", title: "React Native Tutorial", description: "Learn React Native.", duration: "2 hr 0 min", youtube_url: "https://www.youtube.com/embed/0-S5a0eXPoc" }
+        ]
+      }
+    ]
+  },
+  "UI/UX Designer Fundamentals": {
+    overview: "Learn User Research, Prototyping, and Figma.",
+    difficulty: "Beginner",
+    estimated_duration: "4 hr 0 min",
+    instructor: "SkillSetu Design",
+    modules: [
+      {
+        id: "uix-m1",
+        title: "Figma & UI Design",
+        lessons: [
+          { id: "uix-l1", title: "Figma Tutorial", description: "Learn Figma.", duration: "1 hr 0 min", youtube_url: "https://www.youtube.com/embed/c9Wg6Cb_YlU" }
+        ]
+      }
+    ]
+  },
   // ═══════════════════════════════════════════════════
-  // FULL-STACK ENGINEER ROADMAP
   // ═══════════════════════════════════════════════════
   "Frontend Fundamentals": {
     overview: "Master the building blocks of the web: HTML5, CSS3, and JavaScript.",

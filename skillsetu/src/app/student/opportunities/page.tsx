@@ -140,10 +140,12 @@ export default function OpportunitiesPage() {
                         </div>
                         
                         <div className="flex sm:flex-col items-center sm:items-end gap-2">
-                          <Badge variant="outline" className={`flex items-center gap-1 text-xs py-1 ${matchColor}`}>
-                            <MatchIcon className="w-3 h-3" />
-                            {opp.matchScore}% Match
-                          </Badge>
+                          {opp.matchScore > 0 && (
+                            <Badge variant="outline" className={`flex items-center gap-1 text-xs py-1 ${matchColor}`}>
+                              <MatchIcon className="w-3 h-3" />
+                              {opp.matchScore}% Match
+                            </Badge>
+                          )}
                           <Badge variant="secondary" className="capitalize">
                             {opp.type}
                           </Badge>

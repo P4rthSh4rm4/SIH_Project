@@ -14,6 +14,62 @@ export const MOCK_PROGRAMS = [
     url: "https://www.youtube.com/watch?v=8hly31xKli0"
   },
   {
+    id: "mock-fs-1",
+    title: "Full-Stack Engineer Bootcamp",
+    provider: "SkillSetu Academy",
+    type: "tech",
+    skills_covered: ["HTML5", "CSS3", "JavaScript", "Web APIs", "React", "Next.js", "Redux", "Tailwind CSS", "Node.js", "Express", "REST API", "GraphQL", "PostgreSQL", "MongoDB", "Redis", "System Design", "Docker", "AWS", "CI/CD", "Vercel", "WebSockets", "Microservices", "Kafka", "Performance Optimization"],
+    url: "https://www.youtube.com/watch?v=8hly31xKli0"
+  },
+  {
+    id: "mock-ds-1",
+    title: "Data Scientist Certification Course",
+    provider: "SkillSetu Data School",
+    type: "tech",
+    skills_covered: ["Python", "Linear Algebra", "Statistics", "Calculus", "Pandas", "NumPy", "SQL", "Data Cleaning", "Matplotlib", "Seaborn", "Tableau", "PowerBI", "Scikit-Learn", "Regression", "Classification", "XGBoost", "TensorFlow", "PyTorch", "NLP", "Computer Vision", "MLflow", "FastAPI", "Docker", "Model Monitoring"],
+    url: "https://www.youtube.com/watch?v=ua-CiDNNj30"
+  },
+  {
+    id: "mock-do-1",
+    title: "DevOps Engineer Masterclass",
+    provider: "SkillSetu Cloud",
+    type: "tech",
+    skills_covered: ["Linux Admin", "Bash Scripting", "TCP/IP", "DNS", "Git", "GitHub Actions", "Jenkins", "GitLab CI", "Docker", "Docker Compose", "Container Registry", "Terraform", "Ansible", "CloudFormation", "Kubernetes", "Helm", "Istio", "EKS/GKE", "Prometheus", "Grafana", "ELK Stack", "Datadog"],
+    url: "https://www.youtube.com/watch?v=hQcFE0RD0cQ"
+  },
+  {
+    id: "mock-ai-1",
+    title: "AI Engineer Professional Certificate",
+    provider: "SkillSetu AI Lab",
+    type: "tech",
+    skills_covered: ["Transformers", "Attention Mechanism", "Embeddings", "OpenAI API", "HuggingFace", "Prompt Engineering", "Pinecone", "ChromaDB", "LangChain", "LlamaIndex", "LoRA", "QLoRA", "vLLM", "Ollama"],
+    url: "https://www.youtube.com/watch?v=zjkBMFhNj_g"
+  },
+  {
+    id: "mock-sec-1",
+    title: "Cyber Security Analyst Training",
+    provider: "SkillSetu Security",
+    type: "tech",
+    skills_covered: ["Wireshark", "TCP/IP", "Nmap", "Linux Security", "Windows Active Directory", "IAM", "Nessus", "Burp Suite", "OWASP Top 10", "Splunk", "SIEM", "Digital Forensics"],
+    url: "https://www.youtube.com/watch?v=inWWhwg4Q14"
+  },
+  {
+    id: "mock-mob-1",
+    title: "Mobile App Developer with React Native",
+    provider: "SkillSetu Mobile",
+    type: "tech",
+    skills_covered: ["Figma", "UI/UX", "Mobile Patterns", "React Native", "Flutter", "Dart", "Redux", "REST APIs", "GraphQL", "App Store Connect", "Google Play Console", "Native Code (Swift/Kotlin)"],
+    url: "https://www.youtube.com/watch?v=0-S5a0eXPoc"
+  },
+  {
+    id: "mock-uiux-1",
+    title: "UI/UX Designer Fundamentals",
+    provider: "SkillSetu Design",
+    type: "design",
+    skills_covered: ["Color Theory", "Typography", "Grid Systems", "User Interviews", "Personas", "Journey Mapping", "Figma", "Adobe XD", "Interactive Prototyping", "Component Variants", "Auto Layout", "Design Tokens"],
+    url: "https://www.youtube.com/watch?v=c9Wg6Cb_YlU"
+  },
+  {
     id: "mock-apti-1",
     title: "Quantitative Aptitude Mastery",
     provider: "SkillSetu Prep",
@@ -133,7 +189,9 @@ export function useLearningHub() {
             program: { 
               id: programId, 
               title: mockProgram?.title || "Mock Program", 
-              provider: mockProgram?.provider || "Mock Provider" 
+              provider: mockProgram?.provider || "Mock Provider",
+              type: mockProgram?.type || "tech",
+              skills_covered: mockProgram?.skills_covered || []
             }
           };
 
@@ -178,7 +236,8 @@ export function useLearningHub() {
   const updateProgress = useCallback(
     async (
       enrollmentId: string,
-      progressPct: number
+      progressPct: number,
+      lessonProgressJson?: Record<string, any>
     ): Promise<{ success: boolean; error?: string }> => {
       try {
         const supabase = createClient();
@@ -188,11 +247,15 @@ export function useLearningHub() {
         if (progressPct >= 100) {
           updateData.completed_at = new Date().toISOString();
         }
+        if (lessonProgressJson !== undefined) {
+          updateData.lesson_progress_json = lessonProgressJson;
+        }
 
         if (enrollmentId.startsWith("mock-")) {
           console.log("[useLearningHub] Intercepting mock program update for:", enrollmentId);
-          await new Promise(r => setTimeout(r, 800)); // Simulate network delay
+          await new Promise(r => setTimeout(r, 400)); // Simulating network delay (shorter for progress saves)
           
+          let finalUpdateData = { ...updateData };
           try {
             if (typeof window !== "undefined") {
               const stored = localStorage.getItem("mock_enrollments");
@@ -200,7 +263,12 @@ export function useLearningHub() {
                 const parsed = JSON.parse(stored);
                 const updated = parsed.map((e: any) => {
                   if (e.id === enrollmentId) {
-                    return { ...e, progress_pct: progressPct, completed_at: updateData.completed_at as string || e.completed_at };
+                    return { 
+                      ...e, 
+                      progress_pct: progressPct, 
+                      completed_at: updateData.completed_at as string || e.completed_at,
+                      ...(lessonProgressJson ? { lesson_progress_json: lessonProgressJson } : {})
+                    };
                   }
                   return e;
                 });
@@ -211,7 +279,12 @@ export function useLearningHub() {
 
           setEnrollments(prev => prev.map(e => {
             if (e.id === enrollmentId) {
-              return { ...e, progress_pct: progressPct, completed_at: updateData.completed_at as string || e.completed_at };
+              return { 
+                ...e, 
+                progress_pct: progressPct, 
+                completed_at: updateData.completed_at as string || e.completed_at,
+                ...(lessonProgressJson ? { lesson_progress_json: lessonProgressJson } : {})
+              };
             }
             return e;
           }));
@@ -224,7 +297,19 @@ export function useLearningHub() {
           .eq("id", enrollmentId);
 
         if (error) throw error;
-        await fetchData();
+        // Optimization: Do NOT trigger a full fetchData() refetch for every single progress update! 
+        // We will optimistically update the local state to avoid UI flashing and excessive DB calls.
+        setEnrollments(prev => prev.map(e => {
+            if (e.id === enrollmentId) {
+              return { 
+                ...e, 
+                progress_pct: progressPct, 
+                completed_at: updateData.completed_at as string || e.completed_at,
+                ...(lessonProgressJson ? { lesson_progress_json: lessonProgressJson } : {})
+              };
+            }
+            return e;
+        }));
         return { success: true };
       } catch (err) {
         return {

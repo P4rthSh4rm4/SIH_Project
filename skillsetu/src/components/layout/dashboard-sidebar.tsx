@@ -163,7 +163,7 @@ export function DashboardSidebar({
     <>
       {/* Desktop sidebar */}
       <aside className={cn(
-        "hidden md:flex flex-col border-r border-border/40 bg-sidebar transition-all duration-300 shrink-0",
+        "hidden md:flex flex-col border-r border-border/40 bg-sidebar transition-all duration-300 shrink-0 sticky top-0 h-screen",
         collapsed ? "w-[76px]" : "w-72"
       )}>
         <SidebarContent />

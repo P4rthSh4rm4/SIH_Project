@@ -351,6 +351,12 @@ export interface LearningEnrollment {
   progress_pct: number;
   enrolled_at: string;
   completed_at: string | null;
+  lesson_progress_json?: Record<string, {
+    duration: number;
+    last_position: number;
+    watched_ranges: [number, number][];
+    completed: boolean;
+  }>;
   program?: LearningProgram;
 }
 

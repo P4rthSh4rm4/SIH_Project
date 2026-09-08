@@ -57,7 +57,14 @@ function LearningHubContent() {
   const completedEnrollments = enrollments.filter((e) => e.progress_pct === 100);
 
   const enrolledIds = new Set(enrollments.map((e) => e.program_id));
-  const allPrograms = programs.length > 0 ? programs : (MOCK_PROGRAMS as any[]);
+  
+  // Always include MOCK_PROGRAMS that aren't already fetched from the DB
+  const allPrograms = [...programs];
+  MOCK_PROGRAMS.forEach(mock => {
+    if (!allPrograms.some(p => p.id === mock.id || p.title === mock.title)) {
+      allPrograms.push(mock as any);
+    }
+  });
   
   let exactMatches: any[] = [];
   let similarMatches: any[] = [];
