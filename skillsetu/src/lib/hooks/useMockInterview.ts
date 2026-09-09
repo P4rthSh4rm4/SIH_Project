@@ -188,12 +188,25 @@ export function useMockInterview() {
 
   const getStats = () => {
     const completed = interviews.filter(i => i.status === 'Completed');
+    const evaluated = completed.filter(i => i.overall_score !== null && i.overall_score !== undefined);
+    
+    let bestScore: string | number = "N/A";
+    let averageScore: string | number = "N/A";
+    
+    if (evaluated.length > 0) {
+      bestScore = Math.max(...evaluated.map(i => i.overall_score!));
+      const totalScore = evaluated.reduce((sum, i) => sum + i.overall_score!, 0);
+      averageScore = Math.round(totalScore / evaluated.length);
+    } else if (completed.length > 0) {
+      bestScore = "Pending AI Evaluation";
+      averageScore = "Pending AI Evaluation";
+    }
+
     return {
       total: interviews.length,
       completed: completed.length,
-      // For now, these are null because scoring isn't implemented
-      bestScore: completed.length > 0 ? "Pending AI Evaluation" : "N/A",
-      averageScore: completed.length > 0 ? "Pending AI Evaluation" : "N/A",
+      bestScore,
+      averageScore,
       latest: interviews[0] || null
     };
   };

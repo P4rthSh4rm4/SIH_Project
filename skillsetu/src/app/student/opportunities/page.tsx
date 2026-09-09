@@ -15,6 +15,45 @@ import { toast } from "sonner";
 import { awardXp } from "@/lib/supabase/queries";
 import { OpportunityAnalyzerModal } from "@/components/opportunities/opportunity-analyzer-modal";
 
+const PREMIUM_OPPS = [
+  { id: "p1", company: "Google", role: "SDE-1 Off-Campus", type: "Full-time", location: "Bangalore", stipend: "₹24 LPA", gradient: "from-blue-500/20 to-red-500/20", border: "border-blue-500/30", link: "https://careers.google.com/students/" },
+  { id: "p2", company: "Amazon", role: "SDE Intern", type: "Internship", location: "Hyderabad", stipend: "₹80k/mo", gradient: "from-orange-500/20 to-amber-500/20", border: "border-orange-500/30", link: "https://www.amazon.jobs/en/teams/internships-for-students" },
+  { id: "p3", company: "Meta", role: "Open Source Hackathon", type: "Hackathon", location: "Online", stipend: "$10k Pool", gradient: "from-blue-600/20 to-indigo-500/20", border: "border-blue-600/30", link: "https://www.metacareers.com/students_and_grads/" },
+  { id: "p4", company: "Microsoft", role: "Cloud Advocate", type: "Project", location: "Remote", stipend: "Unpaid", gradient: "from-green-500/20 to-emerald-500/20", border: "border-green-500/30", link: "https://careers.microsoft.com/v2/global/en/students_and_graduates" },
+  { id: "p5", company: "Apple", role: "Hardware Eng Intern", type: "Internship", location: "Bangalore", stipend: "₹1L/mo", gradient: "from-slate-500/20 to-gray-500/20", border: "border-slate-500/30", link: "https://www.apple.com/careers/us/students.html" },
+];
+
+function PremiumNewsBoard() {
+  return (
+    <div className="mb-2 animate-slide-up">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="p-1.5 bg-amber-500/10 rounded-lg">
+          <Sparkles className="w-5 h-5 text-amber-500" />
+        </div>
+        <h2 className="text-xl font-bold tracking-tight">Premium Opportunities Board</h2>
+      </div>
+      <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
+        {PREMIUM_OPPS.map((opp) => (
+          <a href={opp.link} target="_blank" rel="noopener noreferrer" key={opp.id} className={`snap-start shrink-0 w-[280px] rounded-2xl border ${opp.border} bg-gradient-to-br ${opp.gradient} p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative overflow-hidden block`}>
+             <div className="absolute top-0 right-0 p-16 bg-background/20 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+             <div className="flex justify-between items-start mb-4 relative z-10">
+                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] uppercase font-bold tracking-wider">{opp.type}</Badge>
+                <div className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center font-bold text-lg group-hover:scale-110 transition-transform text-foreground">
+                  {opp.company[0]}
+                </div>
+             </div>
+             <h3 className="font-bold text-lg leading-tight mb-1 relative z-10 text-foreground">{opp.company}</h3>
+             <p className="text-sm font-medium text-foreground/80 mb-4 relative z-10">{opp.role}</p>
+             <div className="flex items-center gap-3 text-xs font-semibold text-foreground/80 bg-background/60 backdrop-blur-sm py-1.5 px-3 rounded-lg w-max relative z-10">
+               <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {opp.location}</span>
+               <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5" /> {opp.stipend}</span>
+             </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function OpportunitiesPage() {
   const { opportunities, loading, applyToOpportunity } = useOpportunities();
@@ -66,11 +105,13 @@ export default function OpportunitiesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-6 pb-10">
+      <PremiumNewsBoard />
+      
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-4 border-t border-border/50">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Opportunities</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold tracking-tight">All Opportunities</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Discover internships and jobs matched to your verified skills.
           </p>
         </div>

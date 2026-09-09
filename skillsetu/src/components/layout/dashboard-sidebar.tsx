@@ -9,16 +9,17 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import {
   Network, Menu, LogOut, Moon, Sun, Bell,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, ChevronDown,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 
 export interface NavItem {
   label: string;
-  href: string;
+  href?: string;
   icon: React.ElementType;
   badge?: string;
+  subItems?: Omit<NavItem, "subItems">[];
 }
 
 interface DashboardSidebarProps {
@@ -39,6 +40,66 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
+
+  const NavGroup = ({ item, mobile, collapsed, setCollapsed, pathname }: any) => {
+    const isActive = item.subItems?.some((sub: any) => sub.href && (pathname === sub.href || pathname.startsWith(sub.href + "/")));
+    const [isOpen, setIsOpen] = useState(isActive);
+
+    if (collapsed && !mobile) {
+      return (
+        <button
+          onClick={() => { setCollapsed(false); setIsOpen(true); }}
+          className={cn(
+            "w-full flex items-center justify-center py-3 rounded-xl transition-all duration-200 relative",
+            isActive ? "bg-primary/10 dark:bg-primary/15 text-primary shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+          )}
+          title={item.label}
+        >
+          {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-full bg-gradient-to-b from-primary to-chart-4" />}
+          <item.icon className="w-[22px] h-[22px]" />
+        </button>
+      );
+    }
+
+    return (
+      <div className="space-y-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-[0.9rem] font-medium transition-all duration-200 relative",
+            isActive
+              ? "bg-primary/5 dark:bg-primary/10 text-primary"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+          )}
+        >
+          {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-full bg-gradient-to-b from-primary to-chart-4" />}
+          <item.icon className={cn("w-[22px] h-[22px] shrink-0", isActive && "text-primary")} />
+          <span className="flex-1 text-left">{item.label}</span>
+          <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
+        </button>
+        {isOpen && (
+          <div className="pl-11 pr-2 pb-1 space-y-1 animate-in slide-in-from-top-2 fade-in duration-200">
+            {item.subItems?.map((sub: any) => {
+              const isSubActive = sub.href && (pathname === sub.href || pathname.startsWith(sub.href + "/"));
+              return (
+                <Link
+                  key={sub.label}
+                  href={sub.href || "#"}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
+                    isSubActive ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                  )}
+                >
+                  <span className="flex-1">{sub.label}</span>
+                  {sub.badge && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">{sub.badge}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex flex-col h-full">
@@ -78,11 +139,15 @@ export function DashboardSidebar({
       <ScrollArea className="flex-1 py-4">
         <nav className="px-3 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            if (item.subItems) {
+              return <NavGroup key={item.label} item={item} mobile={mobile} collapsed={collapsed} setCollapsed={setCollapsed} pathname={pathname} />;
+            }
+
+            const isActive = item.href && (pathname === item.href || pathname.startsWith(item.href + "/"));
             return (
               <Link
-                key={item.href}
-                href={item.href}
+                key={item.label}
+                href={item.href || "#"}
                 className={cn(
                   "flex items-center gap-3 px-3.5 py-3 rounded-xl text-[0.9rem] font-medium transition-all duration-200 relative",
                   isActive

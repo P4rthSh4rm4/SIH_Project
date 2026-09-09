@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Target, TrendingUp, Briefcase, Award, ArrowRight,
   BookOpen, Sparkles, Clock, CheckCircle2, Star,
-  AlertCircle, ChevronRight, Zap, TargetIcon, MapPin, DollarSign, Info, Video
+  AlertCircle, ChevronRight, Zap, TargetIcon, MapPin, DollarSign, Info, Video, Megaphone
 } from "lucide-react";
 import Link from "next/link";
 import { useUserProfile } from "@/lib/hooks/useUserProfile";
@@ -26,6 +26,60 @@ import { AnalyticsCharts } from "@/components/dashboard/analytics-charts";
 import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import { LeaderboardWidget } from "@/components/dashboard/leaderboard-widget";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+const NEWS_ITEMS = [
+  { text: "Google is hiring for SDE-1 Off-Campus Placements 2026 Batch!", type: "Off-Campus", logo: "G", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+  { text: "Meta Open Source Hackathon - $10k Prize Pool. Register now!", type: "Hackathon", logo: "M", color: "text-blue-600", bg: "bg-blue-600/10", border: "border-blue-600/20" },
+  { text: "Amazon 6-month Software Engineering Internship for Pre-final years", type: "Internship", logo: "A", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+  { text: "Microsoft is looking for Student Cloud Advocates", type: "Project", logo: "M", color: "text-emerald-600", bg: "bg-emerald-600/10", border: "border-emerald-600/20" },
+  { text: "Apple hardware engineering internship applications open", type: "Internship", logo: "", color: "text-slate-600 dark:text-slate-300", bg: "bg-slate-500/10", border: "border-slate-500/20" },
+];
+
+function NewsTicker() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % NEWS_ITEMS.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <Link href="/student/opportunities" className="block mt-6 group">
+      <div className="bg-background rounded-[14px] p-4 flex items-center gap-4 relative overflow-hidden h-[76px] border border-border/60 shadow-sm group-hover:shadow-md group-hover:border-primary/30 transition-all duration-300">
+        <div className="bg-blue-500/10 text-blue-600 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shrink-0 z-10 border border-blue-500/20">
+            <Megaphone className="w-4 h-4 animate-pulse" /> News Board
+          </div>
+          
+          <div className="flex-1 relative h-full">
+            {NEWS_ITEMS.map((item, idx) => (
+              <div 
+                key={idx}
+                className={`absolute inset-0 flex items-center gap-3 transition-all duration-500 ease-in-out ${
+                  idx === currentIndex 
+                    ? 'opacity-100 translate-y-0' 
+                    : idx < currentIndex || (currentIndex === 0 && idx === NEWS_ITEMS.length - 1)
+                      ? 'opacity-0 -translate-y-6'
+                      : 'opacity-0 translate-y-6'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg border ${item.bg} ${item.color} ${item.border} shrink-0`}>
+                  {item.logo}
+                </div>
+                <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider ${item.bg} ${item.color} border-transparent`}>{item.type}</Badge>
+                <span className="text-[15px] font-semibold truncate group-hover:text-blue-500 transition-colors">{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="shrink-0 flex items-center text-sm font-semibold text-muted-foreground group-hover:text-blue-500 transition-colors z-10 px-2">
+            View All <ChevronRight className="w-4 h-4 ml-0.5" />
+          </div>
+        </div>
+    </Link>
+  );
+}
 
 export default function StudentDashboard() {
   const { profile, loading: profileLoading } = useUserProfile();
@@ -98,6 +152,9 @@ export default function StudentDashboard() {
         <p className="text-muted-foreground mt-2 text-[0.95rem]">
           Here&apos;s your career readiness overview and actionable steps for today.
         </p>
+        
+        {/* News Ticker */}
+        <NewsTicker />
       </div>
 
       {/* Onboarding Strip */}

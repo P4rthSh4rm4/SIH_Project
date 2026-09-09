@@ -83,6 +83,10 @@ export interface Opportunity {
   deadline?: string;
   status: OpportunityStatus;
   created_at: string;
+  company?: string;
+  company_name?: string;
+  verifiedBy?: string;
+  sharedBy?: string;
 }
 
 // ─── Applications ──────────────────────────────────────────

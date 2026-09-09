@@ -167,187 +167,258 @@ export default function SkillAssessmentPage() {
 
   // ─── CATALOG VIEW ────────────────────────────────────────────
   if (view === "catalog") {
+    const totalAssessments = history.length;
+    const avgScore = totalAssessments > 0
+      ? Math.round(history.reduce((acc, a) => {
+          const profile = a.generated_profile_json as Record<string, unknown> | null;
+          return acc + ((profile?.score as number) ?? 0);
+        }, 0) / totalAssessments)
+      : 0;
+
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Skill Assessment</h1>
-          <p className="text-muted-foreground mt-1">
-            AI-powered assessments to map your proficiency across Coding, Aptitude & Soft Skills
-          </p>
+      <div className="space-y-8">
+        {/* Hero Section */}
+        <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+            <Target className="w-48 h-48 -mt-8 -mr-8" />
+          </div>
+          <div className="relative z-10 max-w-2xl">
+            <h1 className="text-3xl font-bold tracking-tight mb-3">Skill Assessment Hub</h1>
+            <p className="text-muted-foreground text-lg">
+              Challenge yourself with AI-powered assessments. Identify your strengths and pinpoint areas for growth across Coding, Aptitude, and Soft Skills.
+            </p>
+          </div>
         </div>
 
-        {/* Category Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {CATEGORIES.map((cat) => (
-            <Card
-              key={cat.id}
-              className={`border-border/50 cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                selectedCategory === cat.id
-                  ? "ring-2 ring-primary shadow-lg"
-                  : "hover:shadow-primary/5"
-              }`}
-              onClick={() => {
-                setSelectedCategory(cat.id);
-                setSelectedSubcategory(null);
-              }}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`p-2.5 rounded-xl ${cat.bg}`}>
-                    <cat.icon className={`w-5 h-5 ${cat.color}`} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Card className="border-border/50 bg-gradient-to-br from-primary/5 via-background to-background">
+                <CardContent className="p-6 flex items-center gap-5">
+                  <div className="p-4 rounded-2xl bg-primary/10 text-primary">
+                    <Target className="w-8 h-8" />
                   </div>
-                  <h3 className="font-semibold text-lg">{cat.label}</h3>
-                </div>
-                <div className="space-y-1.5">
-                  {cat.subcategories.map((sub) => (
-                    <div key={sub.id} className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3" />
-                      {sub.label}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Total Assessments Taken</p>
+                    <p className="text-3xl font-bold text-foreground">{historyLoading ? "-" : totalAssessments}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50 bg-gradient-to-br from-primary/5 via-background to-background">
+                <CardContent className="p-6 flex items-center gap-5">
+                  <div className="p-4 rounded-2xl bg-primary/10 text-primary">
+                    <Trophy className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
+                    <p className="text-3xl font-bold text-foreground">{historyLoading ? "-" : `${avgScore}%`}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Subcategory Selection */}
-        {currentCategory && (
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <currentCategory.icon className={`w-5 h-5 ${currentCategory.color}`} />
-                Choose a {currentCategory.label} Module
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {currentCategory.subcategories.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => setSelectedSubcategory(sub.id)}
-                    className={`p-3 rounded-xl border text-left transition-all duration-200 ${
-                      selectedSubcategory === sub.id
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border/50 hover:border-primary/30 hover:bg-accent/50"
+            {/* Category Selection */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Brain className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold">Select a Category</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {CATEGORIES.map((cat) => (
+                  <Card
+                    key={cat.id}
+                    className={`border-border/50 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                      selectedCategory === cat.id
+                        ? "ring-2 ring-primary shadow-lg scale-[1.02]"
+                        : "hover:shadow-primary/5 hover:scale-[1.01]"
                     }`}
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setSelectedSubcategory(null);
+                    }}
                   >
-                    <p className="font-medium text-sm">{sub.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{sub.description}</p>
-                  </button>
-                ))}
-              </div>
-
-              {/* Difficulty & Count */}
-              {selectedSubcategory && (
-                <div className="flex flex-wrap items-end gap-6 pt-2">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">Difficulty</p>
-                    <div className="flex gap-2">
-                      {DIFFICULTIES.map((d) => (
-                        <button
-                          key={d.id}
-                          onClick={() => setSelectedDifficulty(d.id)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            selectedDifficulty === d.id
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-secondary text-secondary-foreground hover:bg-accent"
-                          }`}
-                        >
-                          {d.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">Questions</p>
-                    <div className="flex gap-2">
-                      {QUESTION_COUNTS.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setQuestionCount(c)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            questionCount === c
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-secondary text-secondary-foreground hover:bg-accent"
-                          }`}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <Button onClick={handleStartAssessment} disabled={isGenerating} className="ml-auto">
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" /> Start Assessment
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Recent Assessments */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-5 h-5 text-muted-foreground" />
-              Recent Assessments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {historyLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />
-                ))}
-              </div>
-            ) : history.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No assessments taken yet. Choose a category above to get started!
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {history.slice(0, 5).map((a) => {
-                  const profile = a.generated_profile_json as Record<string, unknown> | null;
-                  const score = (profile?.score as number) ?? 0;
-                  const resp = a.responses_json as Record<string, string> | null;
-                  return (
-                    <div
-                      key={a.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Target className="w-4 h-4 text-primary" />
-                        <div>
-                          <p className="text-sm font-medium capitalize">
-                            {resp?.category ?? a.type} — {resp?.subcategory ?? "General"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(a.taken_at).toLocaleDateString()}
-                          </p>
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`p-2.5 rounded-xl ${cat.bg}`}>
+                          <cat.icon className={`w-5 h-5 ${cat.color}`} />
                         </div>
+                        <h3 className="font-semibold text-lg">{cat.label}</h3>
                       </div>
-                      <Badge
-                        variant={score >= 70 ? "default" : score >= 50 ? "secondary" : "destructive"}
-                        className="text-xs"
-                      >
-                        {score}%
-                      </Badge>
+                      <div className="space-y-1.5">
+                        {cat.subcategories.map((sub) => (
+                          <div key={sub.id} className="text-xs text-muted-foreground flex items-center gap-1.5 line-clamp-1">
+                            <ChevronRight className="w-3 h-3 shrink-0" />
+                            {sub.label}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Subcategory Selection */}
+            {currentCategory && (
+              <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="w-5 h-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Choose a {currentCategory.label} Module</h2>
+                </div>
+                <Card className="border-border/50">
+                  <CardContent className="p-6 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {currentCategory.subcategories.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => setSelectedSubcategory(sub.id)}
+                          className={`p-4 rounded-xl border text-left transition-all duration-200 flex flex-col h-full ${
+                            selectedSubcategory === sub.id
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border/50 hover:border-primary/30 hover:bg-accent/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-semibold">{sub.label}</p>
+                            {selectedSubcategory === sub.id && (
+                              <CheckCircle2 className="w-4 h-4 text-primary" />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{sub.description}</p>
+                        </button>
+                      ))}
                     </div>
-                  );
-                })}
+
+                    {/* Difficulty & Count */}
+                    {selectedSubcategory && (
+                      <div className="flex flex-wrap items-end gap-6 pt-4 border-t border-border/50 animate-in fade-in">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Difficulty</p>
+                          <div className="flex gap-2">
+                            {DIFFICULTIES.map((d) => (
+                              <button
+                                key={d.id}
+                                onClick={() => setSelectedDifficulty(d.id)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  selectedDifficulty === d.id
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "bg-secondary text-secondary-foreground hover:bg-accent"
+                                }`}
+                              >
+                                {d.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Questions</p>
+                          <div className="flex gap-2">
+                            {QUESTION_COUNTS.map((c) => (
+                              <button
+                                key={c}
+                                onClick={() => setQuestionCount(c)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  questionCount === c
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "bg-secondary text-secondary-foreground hover:bg-accent"
+                                }`}
+                              >
+                                {c}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <Button 
+                          size="lg"
+                          onClick={handleStartAssessment} 
+                          disabled={isGenerating} 
+                          className="ml-auto min-w-[200px]"
+                        >
+                          {isGenerating ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-5 h-5 mr-2" /> Start Assessment
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Recent Assessments */}
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-primary" />
+                  Recent Assessments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {historyLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />
+                    ))}
+                  </div>
+                ) : history.length === 0 ? (
+                  <div className="py-8 text-center bg-secondary/20 rounded-xl border border-dashed border-border/50">
+                    <Target className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                    <p className="text-sm text-muted-foreground">
+                      No assessments yet.
+                      <br />
+                      Take your first one to see stats!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {history.slice(0, 5).map((a) => {
+                      const profile = a.generated_profile_json as Record<string, unknown> | null;
+                      const score = (profile?.score as number) ?? 0;
+                      const resp = a.responses_json as Record<string, string> | null;
+                      return (
+                        <div
+                          key={a.id}
+                          className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-secondary/10 hover:bg-secondary/30 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${score >= 70 ? 'bg-emerald-500/10 text-emerald-500' : score >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'}`}>
+                              <Target className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold capitalize line-clamp-1">
+                                {resp?.subcategory?.replace("_", " ") ?? "Assessment"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(a.taken_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {resp?.category ?? a.type}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={score >= 70 ? "default" : score >= 50 ? "secondary" : "destructive"}
+                            className="font-bold"
+                          >
+                            {score}%
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }

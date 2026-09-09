@@ -105,6 +105,12 @@ Requirements:
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
+        safetySettings: [
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" }
+        ],
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 4096,
@@ -127,12 +133,28 @@ Requirements:
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "[]";
 
     // Parse the JSON response, stripping any accidental markdown fences
-    const cleaned = rawText
+    let cleaned = rawText
       .replace(/```json\s*/gi, "")
       .replace(/```\s*/g, "")
       .trim();
 
-    const questions = JSON.parse(cleaned);
+    // Extract just the array if Gemini included conversational text
+    const firstBracket = cleaned.indexOf("[");
+    const lastBracket = cleaned.lastIndexOf("]");
+    if (firstBracket !== -1 && lastBracket !== -1) {
+      cleaned = cleaned.substring(firstBracket, lastBracket + 1);
+    }
+
+    let questions;
+    try {
+      questions = JSON.parse(cleaned);
+    } catch (e) {
+      console.error("[generate-questions] JSON Parse Error. Raw text:", rawText);
+      return NextResponse.json(
+        { error: "Failed to parse questions from AI" },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({ questions, category, subcategory, difficulty });
   } catch (err) {

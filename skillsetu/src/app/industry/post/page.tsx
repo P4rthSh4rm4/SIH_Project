@@ -58,7 +58,8 @@ export default function PostOpportunity() {
       
     } catch (err) {
       console.error("Supabase insert error:", err);
-      toast.error(`Failed to post opportunity: ${err.message || "Unknown error"}`);
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Failed to post opportunity: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ export default function PostOpportunity() {
                 <label className="text-sm font-medium">Type</label>
                 <Select 
                   value={formData.type} 
-                  onValueChange={(val: OpportunityType) => setFormData({ ...formData, type: val })}
+                  onValueChange={(val) => setFormData({ ...formData, type: val as OpportunityType })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />

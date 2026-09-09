@@ -236,19 +236,56 @@ export default function PortfolioPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Achievements & Milestones (Full Width) */}
+      {(portfolio.achievements.length > 0 || portfolio.milestones.length > 0) && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-primary" /> Achievements & Milestones
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {/* Progress Milestones (Combined) */}
+            {portfolio.milestones.map((m) => {
+              const Icon = getTimelineIcon(m.icon) || Trophy;
+              const isComplete = m.isUnlocked;
+              return (
+                <div key={m.id} className={`group relative p-4 rounded-2xl border transition-all duration-500 overflow-hidden flex flex-col items-center text-center ${isComplete ? 'bg-card border-primary/20 shadow-lg shadow-primary/5 hover:-translate-y-1 hover:shadow-primary/10' : 'bg-muted/30 border-transparent opacity-70 grayscale-[50%]'}`}>
+                  {isComplete && <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />}
+                  
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 relative z-10 ${isComplete ? 'bg-primary/10 text-primary' : 'bg-muted-foreground/10 text-muted-foreground'}`}>
+                    <Icon className="w-6 h-6" />
+                    {isComplete && <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-card" />}
+                  </div>
+                  
+                  <h3 className={`font-bold text-sm leading-tight mb-1 relative z-10 ${!isComplete && 'text-muted-foreground'}`}>{m.title}</h3>
+                  
+                  {isComplete ? (
+                    <Badge variant="outline" className="mt-auto text-[10px] uppercase bg-background border-primary/20 text-primary">Unlocked</Badge>
+                  ) : (
+                    <div className="w-full mt-auto pt-2">
+                      <Progress value={(m.current / m.target) * 100} className="h-1" />
+                      <span className="text-[10px] text-muted-foreground mt-1 block">{m.current}/{m.target}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
         {/* Left Column: Summary & Skills */}
         <div className="lg:col-span-1 space-y-8">
           
           {/* Executive Summary */}
-          <Card className="border-none shadow-none bg-transparent">
-            <CardHeader className="px-0 pt-0 pb-4">
+          <Card className="border-border/50 bg-card/40 shadow-sm rounded-2xl overflow-hidden">
+            <CardHeader className="pb-4 border-b border-border/10 bg-card/50">
               <CardTitle className="text-xl font-bold flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-primary" /> Professional Summary
               </CardTitle>
             </CardHeader>
-            <CardContent className="px-0 space-y-6">
+            <CardContent className="p-6 space-y-6">
               <div>
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Executive Overview</h4>
                 <p className="text-base leading-relaxed text-foreground/90">
@@ -303,11 +340,14 @@ export default function PortfolioPage() {
           </Card>
 
           {/* Categorized Skills */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Code className="w-5 h-5 text-primary" /> Core Competencies
-            </h2>
+          <Card className="border-border/50 bg-card/40 shadow-sm rounded-2xl overflow-hidden">
+            <CardHeader className="pb-4 border-b border-border/10 bg-card/50">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <Code className="w-5 h-5 text-primary" /> Core Competencies
+              </CardTitle>
+            </CardHeader>
             
+            <CardContent className="p-6">
             {portfolio.skills.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">No skills mapped yet. Complete courses or add skills to your profile.</p>
             ) : (
@@ -347,30 +387,6 @@ export default function PortfolioPage() {
                 )}
               </div>
             )}
-          </div>
-          
-          {/* Quick Contact / Recruiter Card */}
-          <Card className="border-border/50 bg-card/40 shadow-sm print:hidden mt-8">
-            <CardContent className="p-6 text-center space-y-4">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Interested?</h3>
-                <p className="text-sm text-muted-foreground mt-1">Get in touch for opportunities or collaborations.</p>
-              </div>
-              <div className="pt-2 flex flex-col gap-2">
-                {email && (
-                  <Button variant="default" className="w-full" asChild>
-                    <a href={`mailto:${email}`}><Mail className="w-4 h-4 mr-2" /> Email Me</a>
-                  </Button>
-                )}
-                {linkedin && (
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={linkedin.startsWith('http') ? linkedin : `https://${linkedin}`} target="_blank" rel="noreferrer"><FaLinkedin className="w-4 h-4 mr-2" /> Connect on LinkedIn</a>
-                  </Button>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -476,49 +492,15 @@ export default function PortfolioPage() {
             </Card>
           )}
 
-        {/* Achievements & Milestones */}
-        {(portfolio.achievements.length > 0 || portfolio.milestones.length > 0) && (
-          <div className="mt-8 space-y-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-primary" /> Achievements & Milestones
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {/* Progress Milestones (Combined) */}
-              {portfolio.milestones.map((m) => {
-                const Icon = getTimelineIcon(m.icon) || Trophy;
-                const isComplete = m.isUnlocked;
-                return (
-                  <div key={m.id} className={`group relative p-4 rounded-2xl border transition-all duration-500 overflow-hidden flex flex-col items-center text-center ${isComplete ? 'bg-card border-primary/20 shadow-lg shadow-primary/5 hover:-translate-y-1 hover:shadow-primary/10' : 'bg-muted/30 border-transparent opacity-70 grayscale-[50%]'}`}>
-                    {isComplete && <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />}
-                    
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 relative z-10 ${isComplete ? 'bg-primary/10 text-primary' : 'bg-muted-foreground/10 text-muted-foreground'}`}>
-                      <Icon className="w-6 h-6" />
-                      {isComplete && <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-card" />}
-                    </div>
-                    
-                    <h3 className={`font-bold text-sm leading-tight mb-1 relative z-10 ${!isComplete && 'text-muted-foreground'}`}>{m.title}</h3>
-                    
-                    {isComplete ? (
-                      <Badge variant="outline" className="mt-auto text-[10px] uppercase bg-background border-primary/20 text-primary">Unlocked</Badge>
-                    ) : (
-                      <div className="w-full mt-auto pt-2">
-                        <Progress value={(m.current / m.target) * 100} className="h-1" />
-                        <span className="text-[10px] text-muted-foreground mt-1 block">{m.current}/{m.target}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Premium Projects Showcase */}
         {(portfolio.portfolioItems.length > 0 || isAdding) && (
-          <div className="mt-12 space-y-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Code className="w-5 h-5 text-primary" /> Projects Showcase
-            </h2>
+          <Card className="border-border/50 bg-card/40 shadow-sm rounded-2xl overflow-hidden mt-8">
+            <CardHeader className="pb-4 border-b border-border/10 bg-card/50">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <Code className="w-5 h-5 text-primary" /> Projects Showcase
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {portfolio.portfolioItems.map((item) => {
                   const Icon = getTypeIcon(item.type);
@@ -582,14 +564,18 @@ export default function PortfolioPage() {
                   );
                 })}
               </div>
-            </div>
+            </CardContent>
+          </Card>
           )}
 
           {/* Premium Learning Roadmap */}
-          <div className="mt-12">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Map className="w-5 h-5 text-primary" /> Career Roadmap
-            </h2>
+          <Card className="border-border/50 bg-card/40 shadow-sm rounded-2xl overflow-hidden mt-8">
+            <CardHeader className="pb-4 border-b border-border/10 bg-card/50">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <Map className="w-5 h-5 text-primary" /> Career Roadmap
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
             {portfolio.timeline.length === 0 ? (
               <Card className="border-dashed bg-secondary/20">
                 <CardContent className="p-12 text-center flex flex-col items-center">
@@ -627,7 +613,8 @@ export default function PortfolioPage() {
                 })}
               </div>
             )}
-          </div>
+            </CardContent>
+          </Card>
 
         </div>
       </div>

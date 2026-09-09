@@ -12,12 +12,19 @@ const studentNav: NavItem[] = [
   { label: "Skill Assessment", href: "/student/assessment", icon: Target, badge: "New" },
   { label: "AI Mock Interview", href: "/student/mock-interview", icon: Video, badge: "AI" },
   { label: "Skill Analysis", href: "/student/skill-analysis", icon: Activity },
-  { label: "Placement Readiness", href: "/student/placement-readiness", icon: TrendingUp },
   { label: "Career Guidance", href: "/student/career-guidance", icon: Compass },
   { label: "Learning Hub", href: "/student/learning-hub", icon: BookOpen },
   { label: "My Profile", href: "/student/profile", icon: User },
-  { label: "Opportunities", href: "/student/opportunities", icon: Briefcase },
-  { label: "Applications", href: "/student/applications", icon: FileText },
+  { 
+    label: "Placement", 
+    icon: Briefcase,
+    subItems: [
+      { label: "Resume Builder", href: "/student/resume-builder", icon: FileText },
+      { label: "Placement Readiness", href: "/student/placement-readiness", icon: TrendingUp },
+      { label: "Opportunities", href: "/student/opportunities", icon: Briefcase },
+      { label: "Applications", href: "/student/applications", icon: FileText },
+    ]
+  },
   { label: "Portfolio", href: "/student/portfolio", icon: FolderOpen },
   { label: "Certifications", href: "/student/certifications", icon: Award },
   { label: "Documents", href: "/student/documents", icon: FileArchive },
