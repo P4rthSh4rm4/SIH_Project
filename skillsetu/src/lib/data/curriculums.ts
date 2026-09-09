@@ -24,7 +24,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Full-Stack Engineer Bootcamp": {
     overview: "Master full-stack development with MERN stack.",
     difficulty: "Advanced",
-    estimated_duration: "10 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu Academy",
     modules: [
       {
@@ -46,7 +46,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Data Scientist Certification Course": {
     overview: "Complete Data Science Certification.",
     difficulty: "Intermediate",
-    estimated_duration: "8 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu Data School",
     modules: [
       {
@@ -61,7 +61,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "DevOps Engineer Masterclass": {
     overview: "Master Docker, Kubernetes, and CI/CD.",
     difficulty: "Advanced",
-    estimated_duration: "5 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu Cloud",
     modules: [
       {
@@ -77,7 +77,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "AI Engineer Professional Certificate": {
     overview: "Learn PyTorch, LLMs, and Generative AI.",
     difficulty: "Advanced",
-    estimated_duration: "15 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu AI Lab",
     modules: [
       {
@@ -92,14 +92,14 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Cyber Security Analyst Training": {
     overview: "Master Ethical Hacking and Network Security.",
     difficulty: "Intermediate",
-    estimated_duration: "12 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu Security",
     modules: [
       {
         id: "csa-m1",
         title: "Ethical Hacking Basics",
         lessons: [
-          { id: "csa-l1", title: "Ethical Hacking Full Course", description: "Learn ethical hacking.", duration: "10 hr 0 min", youtube_url: "https://www.youtube.com/embed/inWWhwg4Q14" }
+          { id: "csa-l1", title: "Ethical Hacking Full Course", description: "Learn ethical hacking.", duration: "10 hr 0 min", youtube_url: "https://www.youtube.com/embed/c9Wg6Cb_YlU" }
         ]
       }
     ]
@@ -107,7 +107,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Mobile App Developer with React Native": {
     overview: "Build cross-platform mobile apps.",
     difficulty: "Intermediate",
-    estimated_duration: "6 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu Mobile",
     modules: [
       {
@@ -122,7 +122,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "UI/UX Designer Fundamentals": {
     overview: "Learn User Research, Prototyping, and Figma.",
     difficulty: "Beginner",
-    estimated_duration: "4 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu Design",
     modules: [
       {
@@ -139,7 +139,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Frontend Fundamentals": {
     overview: "Master the building blocks of the web: HTML5, CSS3, and JavaScript.",
     difficulty: "Beginner",
-    estimated_duration: "4 hr 5 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Traversy Media",
     modules: [
       {
@@ -162,7 +162,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Modern Frontend Frameworks": {
     overview: "Learn to build modern, reactive user interfaces using React and Next.js.",
     difficulty: "Intermediate",
-    estimated_duration: "3 hr 13 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Traversy Media",
     modules: [
       {
@@ -184,7 +184,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Backend Development": {
     overview: "Build scalable and secure APIs using Node.js and Express.",
     difficulty: "Intermediate",
-    estimated_duration: "2 hr 44 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Traversy Media",
     modules: [
       {
@@ -206,7 +206,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Databases & Architecture": {
     overview: "Design robust database schemas with PostgreSQL and MongoDB.",
     difficulty: "Intermediate",
-    estimated_duration: "3 hr 37 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Amigoscode & Traversy Media",
     modules: [
       {
@@ -228,7 +228,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Deployment & DevOps": {
     overview: "Take your applications to production with Docker and CI/CD.",
     difficulty: "Advanced",
-    estimated_duration: "1 hr 11 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "TechWorld with Nana",
     modules: [
       {
@@ -243,7 +243,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Advanced Engineering": {
     overview: "Explore real-time communication, caching, and scalable enterprise architectures.",
     difficulty: "Advanced",
-    estimated_duration: "1 hr 45 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Web Dev Simplified & Traversy",
     modules: [
       {
@@ -263,7 +263,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Programming & Math": {
     overview: "Master Python programming and essential mathematics for data science.",
     difficulty: "Beginner",
-    estimated_duration: "1 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Programming with Mosh",
     modules: [
       {
@@ -278,7 +278,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Data Manipulation": {
     overview: "Learn to clean, process, and manipulate large datasets using NumPy and Pandas.",
     difficulty: "Intermediate",
-    estimated_duration: "3 hr 21 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "freeCodeCamp",
     modules: [
       {
@@ -300,7 +300,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Data Visualization": {
     overview: "Communicate insights effectively by building visual representations of data.",
     difficulty: "Intermediate",
-    estimated_duration: "1 hr 47 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Keith Galli & Kimberly Fessel",
     modules: [
       {
@@ -322,7 +322,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Machine Learning": {
     overview: "Train models to recognize patterns and make predictions using Scikit-Learn.",
     difficulty: "Advanced",
-    estimated_duration: "12 hr 7 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "freeCodeCamp",
     modules: [
       {
@@ -344,7 +344,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Deep Learning (Advanced)": {
     overview: "Dive into neural networks and deep learning architectures with PyTorch.",
     difficulty: "Advanced",
-    estimated_duration: "25 hr 30 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "freeCodeCamp & Daniel Bourke",
     modules: [
       {
@@ -360,7 +360,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Model Deployment (MLOps)": {
     overview: "Learn how to package, deploy, and monitor machine learning models in production.",
     difficulty: "Advanced",
-    estimated_duration: "1 hr 11 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "TechWorld with Nana",
     modules: [
       {
@@ -379,7 +379,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "OS & Networking": {
     overview: "Build a strong foundation in Linux administration and shell scripting.",
     difficulty: "Beginner",
-    estimated_duration: "1 hr 11 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "freeCodeCamp",
     modules: [
       {
@@ -394,7 +394,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Version Control & CI/CD": {
     overview: "Master Git for collaboration and automate your deployment pipelines.",
     difficulty: "Intermediate",
-    estimated_duration: "2 hr 30 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "freeCodeCamp",
     modules: [
       {
@@ -416,7 +416,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Containerization": {
     overview: "Package applications and dependencies into standard units with Docker.",
     difficulty: "Intermediate",
-    estimated_duration: "1 hr 11 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "TechWorld with Nana",
     modules: [
       {
@@ -431,7 +431,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Infrastructure as Code": {
     overview: "Provision and manage infrastructure programmatically using Terraform.",
     difficulty: "Advanced",
-    estimated_duration: "15 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "TechWorld with Nana",
     modules: [
       {
@@ -446,7 +446,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Container Orchestration": {
     overview: "Automate deployment, scaling, and management of containers with Kubernetes.",
     difficulty: "Advanced",
-    estimated_duration: "3 hr 42 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "TechWorld with Nana",
     modules: [
       {
@@ -461,7 +461,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Monitoring & Observability": {
     overview: "Keep your systems reliable with robust monitoring and logging stacks.",
     difficulty: "Advanced",
-    estimated_duration: "7 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "freeCodeCamp",
     modules: [
       {
@@ -480,7 +480,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Quantitative Aptitude": {
     overview: "Develop strong analytical and quantitative skills for competitive exams.",
     difficulty: "Beginner",
-    estimated_duration: "1 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Programming with Mosh",
     modules: [
       {
@@ -495,7 +495,7 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
   "Professional Communication": {
     overview: "Master professional communication, public speaking, and corporate etiquette.",
     difficulty: "Beginner",
-    estimated_duration: "58 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "Stanford GSB",
     modules: [
       {
@@ -545,7 +545,7 @@ export function getCurriculum(title: string): Curriculum {
   return {
     overview: "Comprehensive course covering " + title + ". Learn the core principles and practical applications required to master this domain.",
     difficulty: "Beginner",
-    estimated_duration: "1 hr 0 min",
+    estimated_duration: "Complete in 5 Days",
     instructor: "SkillSetu Expert",
     modules: [
       {

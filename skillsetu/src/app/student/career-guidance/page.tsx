@@ -38,13 +38,20 @@ export default function CareerGuidancePage() {
     if (enrollmentsLoading) return;
     const statuses: Record<string, "in_progress" | "assessment_unlocked" | "certified"> = {};
     for (const path of CAREER_PATHS) {
-      // Find completed phases using stable program IDs
+      // Find completed phases using stable program IDs, with title fallback
       const completedPhases = path.phases.filter((phase) => {
-        // If phase has a program_id, use it for robust matching. Otherwise it's incomplete.
         if (!("program_id" in phase)) return false;
-        return enrollments.some(
-          (e) => e.program_id === (phase as any).program_id && e.progress_pct === 100
+        // Try by program_id first
+        let match = enrollments.find(
+          (e) => e.program_id === (phase as any).program_id && Number(e.progress_pct) >= 100
         );
+        // Fallback: try by joined program title
+        if (!match) {
+          match = enrollments.find(
+            (e) => (e as any).program?.title === phase.title && Number(e.progress_pct) >= 100
+          );
+        }
+        return !!match;
       });
       
       const completedCount = completedPhases.length;
@@ -80,6 +87,55 @@ export default function CareerGuidancePage() {
       setPathStatuses({ ...statuses });
     });
   }, [enrollments, enrollmentsLoading, getCertificates, selectedPath.id]);
+
+  // Helper to dynamically check if a phase is completed based on the database
+  // Matches by program_id first, then falls back to title match via the joined program object
+  const isPhaseCompleted = (phase: any) => {
+    if (!("program_id" in phase)) {
+      return phase.completed;
+    }
+    
+    // Try matching by program_id first (exact UUID match)
+    let matchingEnrollment = enrollments.find(e => e.program_id === phase.program_id);
+    
+    // Fallback: match by the joined program title (handles pre-seed enrollments with different UUIDs)
+    if (!matchingEnrollment) {
+      matchingEnrollment = enrollments.find(
+        e => (e as any).program?.title === phase.title
+      );
+    }
+    
+    if (!matchingEnrollment) {
+      return false;
+    }
+    
+    const progress = Number(matchingEnrollment.progress_pct) || 0;
+    return progress >= 100;
+  };
+
+  // One-time diagnostic dump when enrollments change (temporary - remove after debugging)
+  useEffect(() => {
+    if (enrollmentsLoading || enrollments.length === 0) return;
+    console.log("=== ENROLLMENT DIAGNOSTIC DUMP ===");
+    console.log("Total enrollments:", enrollments.length);
+    enrollments.forEach((e: any) => {
+      console.log(`  Enrollment: program_id=${e.program_id}, progress=${e.progress_pct}%, title="${e.program?.title || 'N/A'}"`);
+    });
+    console.log("--- Phase-to-Enrollment mapping for:", selectedPath.title, "---");
+    selectedPath.phases.forEach((phase: any, i: number) => {
+      const byId = enrollments.find((e: any) => e.program_id === phase.program_id);
+      const byTitle = enrollments.find((e: any) => (e as any).program?.title === phase.title);
+      const completed = isPhaseCompleted(phase);
+      console.log(`  Phase ${i+1} "${phase.title}":`);
+      console.log(`    Expected program_id: ${phase.program_id}`);
+      console.log(`    Match by ID: ${byId ? `YES (progress=${byId.progress_pct}%)` : "NO"}`);
+      console.log(`    Match by Title: ${byTitle ? `YES (program_id=${byTitle.program_id}, progress=${byTitle.progress_pct}%)` : "NO"}`);
+      console.log(`    => isPhaseCompleted: ${completed}`);
+    });
+    const completedCount = selectedPath.phases.filter((p: any) => isPhaseCompleted(p)).length;
+    console.log(`Assessment Unlocked: ${completedCount === selectedPath.phases.length} (${completedCount}/${selectedPath.phases.length})`);
+    console.log("=== END DIAGNOSTIC DUMP ===");
+  }, [enrollments, enrollmentsLoading, selectedPath]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -206,7 +262,7 @@ export default function CareerGuidancePage() {
                   <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                     {/* Icon */}
                     <div className="flex items-center justify-center w-14 h-14 rounded-full border-4 border-background bg-secondary text-muted-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-xl z-10 transition-transform duration-300 group-hover:scale-110">
-                      {phase.completed ? (
+                      {isPhaseCompleted(phase) ? (
                         <CheckCircle2 className="w-7 h-7 text-emerald-500" />
                       ) : (
                         <Circle className="w-7 h-7 text-primary/40" />
@@ -220,7 +276,7 @@ export default function CareerGuidancePage() {
                         <span className="text-sm font-bold uppercase text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-full w-fit">
                           Phase {i + 1}
                         </span>
-                        {phase.completed && (
+                        {isPhaseCompleted(phase) && (
                           <Badge variant="outline" className="text-[10px] uppercase text-emerald-600 border-emerald-500/30 bg-emerald-500/10 py-1 px-3">
                             Completed
                           </Badge>
@@ -240,7 +296,7 @@ export default function CareerGuidancePage() {
                         ))}
                       </div>
 
-                      {!phase.completed && (
+                      {!isPhaseCompleted(phase) && (
                         <Button variant="default" size="sm" className="w-full sm:w-auto bg-primary/90 hover:bg-primary shadow-md hover:shadow-primary/25 transition-all" asChild>
                           <Link href={`/student/learning-hub?phase=${encodeURIComponent(phase.title)}&skills=${encodeURIComponent(phase.skills?.join(",") || "")}`}>
                             Find Courses <ArrowRight className="w-4 h-4 ml-2" />

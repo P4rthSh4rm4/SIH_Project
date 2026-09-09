@@ -51,7 +51,7 @@ export const MOCK_PROGRAMS = [
     provider: "SkillSetu Security",
     type: "tech",
     skills_covered: ["Wireshark", "TCP/IP", "Nmap", "Linux Security", "Windows Active Directory", "IAM", "Nessus", "Burp Suite", "OWASP Top 10", "Splunk", "SIEM", "Digital Forensics"],
-    url: "https://www.youtube.com/watch?v=inWWhwg4Q14"
+    url: "https://www.youtube.com/watch?v=c9Wg6Cb_YlU"
   },
   {
     id: "mock-mob-1",

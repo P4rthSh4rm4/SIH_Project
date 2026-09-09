@@ -77,8 +77,9 @@ export default function CertificationsPage() {
     }
   };
 
-  const verifiedSkills = skills.filter((s) => s.verified);
-  const unverifiedSkills = skills.filter((s) => !s.verified);
+  const isSkillVerified = (s: any) => s.verified || s.score >= 100;
+  const verifiedSkills = skills.filter(isSkillVerified);
+  const unverifiedSkills = skills.filter((s) => !isSkillVerified(s));
 
   const handleShare = (text: string) => {
     navigator.clipboard.writeText(text);

@@ -3,14 +3,16 @@
 import { DashboardSidebar, type NavItem } from "@/components/layout/dashboard-sidebar";
 import {
   LayoutDashboard, Target, User, Briefcase, FolderOpen,
-  MessageSquare, Award, FileText, Activity, Compass, BookOpen, FileArchive, Bell
+  MessageSquare, Award, FileText, Activity, Compass, BookOpen, FileArchive, Bell, TrendingUp, Video
 } from "lucide-react";
 import { useUserProfile } from "@/lib/hooks/useUserProfile";
 
 const studentNav: NavItem[] = [
   { label: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
   { label: "Skill Assessment", href: "/student/assessment", icon: Target, badge: "New" },
+  { label: "AI Mock Interview", href: "/student/mock-interview", icon: Video, badge: "AI" },
   { label: "Skill Analysis", href: "/student/skill-analysis", icon: Activity },
+  { label: "Placement Readiness", href: "/student/placement-readiness", icon: TrendingUp },
   { label: "Career Guidance", href: "/student/career-guidance", icon: Compass },
   { label: "Learning Hub", href: "/student/learning-hub", icon: BookOpen },
   { label: "My Profile", href: "/student/profile", icon: User },

@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Target, TrendingUp, Briefcase, Award, ArrowRight,
   BookOpen, Sparkles, Clock, CheckCircle2, Star,
-  AlertCircle, ChevronRight, Zap, TargetIcon, MapPin, DollarSign, Info
+  AlertCircle, ChevronRight, Zap, TargetIcon, MapPin, DollarSign, Info, Video
 } from "lucide-react";
 import Link from "next/link";
 import { useUserProfile } from "@/lib/hooks/useUserProfile";
@@ -107,6 +107,22 @@ export default function StudentDashboard() {
         assessmentsCount={growth.length}
         badgesCount={earnedBadges.length}
       />
+
+      {/* AI Mock Interview Banner */}
+      <div className="animate-slide-up bg-gradient-to-r from-primary/20 via-background to-secondary border border-primary/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg shadow-primary/5">
+        <div className="flex items-center gap-4">
+          <div className="p-4 bg-primary/20 text-primary rounded-xl shrink-0">
+            <Video className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold flex items-center gap-2">AI Mock Interview Engine <Badge className="bg-primary/20 text-primary">New</Badge></h3>
+            <p className="text-sm text-muted-foreground mt-1">Practice your interview skills with tailored, domain-specific AI mock interviews.</p>
+          </div>
+        </div>
+        <Button asChild className="shrink-0 font-bold shadow-md shadow-primary/20">
+          <Link href="/student/mock-interview">Start Practice</Link>
+        </Button>
+      </div>
 
       {/* Row 1: Actionable Priorities (Career Readiness & Weekly Plan) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up stagger-1">

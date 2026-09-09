@@ -322,20 +322,12 @@ export default function CourseViewerPage() {
       ? 1 // show 1% minimum if they've watched something
       : Math.min(100, Math.round(calcRawPct));
 
-  // Shared completion estimate
+  // Shared completion estimate (Dynamically read from the stored curriculum estimated_duration)
   const completionDays = (() => {
-    if (!curriculum.estimated_duration) return 2;
-    let hours = 0;
-    let mins = 0;
-    const hrMatch = curriculum.estimated_duration.match(/(\d+)\s*hr/);
-    if (hrMatch) hours = parseInt(hrMatch[1], 10);
-    const minMatch = curriculum.estimated_duration.match(/(\d+)\s*min/);
-    if (minMatch) mins = parseInt(minMatch[1], 10);
-    const totalHours = hours + (mins / 60);
-    if (totalHours < 2) return 2;
-    if (totalHours <= 4) return 3;
-    if (totalHours <= 6) return 5;
-    return 7;
+    if (!curriculum.estimated_duration) return 5;
+    const match = curriculum.estimated_duration.match(/\d+/);
+    if (match) return parseInt(match[0], 10);
+    return 5;
   })();
 
   const videoId = extractVideoId(activeLessonData.lesson.youtube_url);
