@@ -15,7 +15,7 @@ export class HREvaluator {
     const hrInputs = inputs.filter(i => i.question.type === "HR" || i.question.type === "Behavioral" || i.question.type === "Mixed");
 
     if (hrInputs.length === 0) {
-      return { score: 85, strengths, weaknesses };
+      return { score: null, strengths, weaknesses };
     }
 
     let starUsageCount = 0;

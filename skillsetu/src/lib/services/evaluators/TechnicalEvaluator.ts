@@ -17,7 +17,7 @@ export class TechnicalEvaluator {
     const techInputs = inputs.filter(i => i.question.type === "Technical" || i.question.type === "Aptitude");
     
     if (techInputs.length === 0) {
-      return { score: 85, problemSolving: 85, strengths, weaknesses }; // default if not tested
+      return { score: null, problemSolving: null, strengths, weaknesses };
     }
 
     techInputs.forEach(input => {

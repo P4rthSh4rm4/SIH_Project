@@ -71,7 +71,7 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
     }
   }, [id, interviews, fetchInterviews]);
 
-  if (!interview || !report) {
+  if (!interview || (!report && interview.status !== "Incomplete")) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-4">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
@@ -93,33 +93,94 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
     return "bg-destructive/10";
   };
 
+  const isIncomplete = interview.status === "Incomplete" || report?.status === "Incomplete";
+  const validReport = report!;
+
   return (
     <div className="max-w-6xl mx-auto py-8 space-y-8 animate-fade-in pb-20">
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <Button variant="ghost" asChild className="hover:bg-transparent -ml-4">
-          <Link href="/student/mock-interview">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
-          </Link>
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.print()}>
-            <Printer className="w-4 h-4 mr-2" /> Export PDF
-          </Button>
-          <Button variant="default" className="gap-2">
-            <Share2 className="w-4 h-4" /> Share Report
-          </Button>
+      {isIncomplete ? (
+        <div className="max-w-3xl mx-auto py-16 text-center space-y-8">
+          <AlertTriangle className="w-20 h-20 text-destructive mx-auto opacity-80" />
+          <div className="space-y-2">
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Interview Not Completed</h1>
+            <p className="text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed">
+              We couldn't evaluate your interview because no valid answers were submitted.
+            </p>
+          </div>
+          
+          <Card className="max-w-lg mx-auto bg-secondary/20 border-border/50 shadow-inner">
+            <CardContent className="p-8 grid grid-cols-2 gap-8 text-left">
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Answered</p>
+                <p className="text-3xl font-black">0 / {interview.questions.length}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Skipped</p>
+                <p className="text-3xl font-black text-destructive">{interview.questions.length}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Completion</p>
+                <p className="text-3xl font-black">0%</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Status</p>
+                <Badge variant="destructive" className="mt-1 text-sm px-3 py-1">Not Evaluated</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/student/mock-interview">
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
+              </Link>
+            </Button>
+            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+              <Link href="/student/mock-interview/setup">
+                <Target className="w-4 h-4 mr-2" /> Retake Interview
+              </Link>
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {validReport.status === "Partially Completed" && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-4">
+              <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-amber-600 dark:text-amber-500">Partially Completed Interview ({validReport.completionPercentage}%)</h3>
+                <p className="text-amber-600/80 dark:text-amber-500/80 text-sm mt-1">
+                  You answered only {validReport.answeredQuestions} of {validReport.totalQuestions} questions. This evaluation may not accurately represent your abilities. We recommend completing all questions for a highly accurate AI assessment.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Header Actions */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <Button variant="ghost" asChild className="hover:bg-transparent -ml-4">
+              <Link href="/student/mock-interview">
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
+              </Link>
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => window.print()}>
+                <Printer className="w-4 h-4 mr-2" /> Export PDF
+              </Button>
+              <Button variant="default" className="gap-2">
+                <Share2 className="w-4 h-4" /> Share Report
+              </Button>
+            </div>
+          </div>
 
       {/* Hero Overview */}
       <Card className="border-primary/20 overflow-hidden relative shadow-2xl shadow-primary/5">
         <div className="absolute top-0 right-0 p-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
         <CardContent className="p-8 sm:p-12 flex flex-col md:flex-row items-center gap-8 md:gap-16 relative z-10">
           <div className="shrink-0 flex flex-col items-center">
-            <CircularProgress value={report.overallScore} label="Overall Score" size={180} strokeWidth={14} colorClass={getScoreColor(report.overallScore)} />
-            <Badge variant="outline" className={`mt-4 px-4 py-1 text-sm font-bold uppercase tracking-wider ${getScoreBg(report.overallScore)} ${getScoreColor(report.overallScore)} border-${getScoreColor(report.overallScore).split('-')[1]}-500/50`}>
-              {report.overallScore >= 80 ? "Excellent" : report.overallScore >= 60 ? "Good" : "Needs Improvement"}
+            <CircularProgress value={validReport.overallScore || 0} label="Overall Score" size={180} strokeWidth={14} colorClass={getScoreColor(validReport.overallScore || 0)} />
+            <Badge variant="outline" className={`mt-4 px-4 py-1 text-sm font-bold uppercase tracking-wider ${getScoreBg(validReport.overallScore || 0)} ${getScoreColor(validReport.overallScore || 0)} border-${getScoreColor(validReport.overallScore || 0).split('-')[1]}-500/50`}>
+              {(validReport.overallScore || 0) >= 80 ? "Excellent" : (validReport.overallScore || 0) >= 60 ? "Good" : "Needs Improvement"}
             </Badge>
           </div>
           <div className="flex-1 space-y-6 text-center md:text-left">
@@ -131,22 +192,22 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
               </div>
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">AI Interview Evaluation</h1>
               <p className="text-muted-foreground text-lg mt-3 leading-relaxed">
-                {report.interviewSummary}
+                {validReport.interviewSummary}
               </p>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-border/50">
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Hiring Prob.</p>
-                <p className="text-2xl font-black text-primary">{report.hiringProbability}%</p>
+                <p className="text-2xl font-black text-primary">{validReport.hiringProbability || 0}%</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Readiness</p>
-                <p className="text-base font-bold text-foreground mt-1 truncate">{report.jobReadiness}</p>
+                <p className="text-base font-bold text-foreground mt-1 truncate">{validReport.jobReadiness}</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Recommendation</p>
-                <p className={`text-base font-bold mt-1 ${report.overallScore >= 65 ? 'text-emerald-500' : 'text-amber-500'}`}>{report.hiringRecommendation}</p>
+                <p className={`text-base font-bold mt-1 ${(validReport.overallScore || 0) >= 65 ? 'text-emerald-500' : 'text-amber-500'}`}>{validReport.hiringRecommendation}</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Questions</p>
@@ -167,10 +228,10 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
 
         <TabsContent value="metrics" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <MetricCard title="Technical Knowledge" score={report.technicalScore} icon={Code} desc="Relevance, keyword coverage, and depth." />
-            <MetricCard title="Communication" score={report.communicationScore} icon={MessageSquare} desc="Grammar, vocabulary, and conciseness." />
-            <MetricCard title="Problem Solving" score={report.problemSolvingScore} icon={Activity} desc="Reasoning, approach, and optimization." />
-            <MetricCard title="Confidence" score={report.confidenceScore} icon={Star} desc="Hesitation detection and action-language." />
+            <MetricCard title="Technical Knowledge" score={validReport.technicalScore || 0} icon={Code} desc="Relevance, keyword coverage, and depth." />
+            <MetricCard title="Communication" score={validReport.communicationScore || 0} icon={MessageSquare} desc="Grammar, vocabulary, and conciseness." />
+            <MetricCard title="Problem Solving" score={validReport.problemSolvingScore || 0} icon={Activity} desc="Reasoning, approach, and optimization." />
+            <MetricCard title="Confidence" score={validReport.confidenceScore || 0} icon={Star} desc="Hesitation detection and action-language." />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -180,27 +241,20 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
-                  {report.topStrengths.map((str, i) => (
-                    <li key={i} className="flex items-start gap-3 p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                      <span className="font-medium">{str}</span>
-                    </li>
+                  {validReport.topStrengths.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm leading-relaxed"><CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {s}</li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-amber-500" /> Areas to Improve</CardTitle>
+                <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-destructive" /> Improvement Areas</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
-                  {report.improvementAreas.map((area, i) => (
-                    <li key={i} className="flex items-start gap-3 p-3 bg-amber-500/5 rounded-lg border border-amber-500/10">
-                      <Target className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                      <span className="font-medium">{area}</span>
-                    </li>
+                  {validReport.topWeaknesses.map((w, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm leading-relaxed"><AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" /> {w}</li>
                   ))}
                 </ul>
               </CardContent>
@@ -211,12 +265,12 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
         <TabsContent value="answers" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Detailed Answer Breakdown</CardTitle>
-              <CardDescription>Review each question, your answer, and specific AI feedback.</CardDescription>
+              <CardTitle>Detailed Answer Analysis</CardTitle>
+              <CardDescription>Review each response and AI feedback.</CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {report.questionEvaluations.map((qe, index) => (
+                {validReport.questionEvaluations.map((qe, index) => (
                   <AccordionItem key={qe.questionId} value={`item-${index}`} className="border-border/50">
                     <AccordionTrigger className="hover:no-underline px-4 py-4 data-[state=open]:bg-secondary/10 rounded-t-lg transition-colors">
                       <div className="flex flex-col sm:flex-row sm:items-center text-left w-full gap-4 pr-4">
@@ -225,7 +279,9 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
                         </div>
                         <div className="flex-1 font-semibold text-base leading-snug">{qe.questionText}</div>
                         <div className="shrink-0">
-                          <Badge variant="outline" className={`${getScoreColor(qe.score)} border-current font-bold`}>Score: {qe.score}</Badge>
+                          <Badge variant="outline" className={`${qe.skipped ? 'text-destructive border-destructive' : getScoreColor(qe.score || 0)} border-current font-bold`}>
+                            {qe.skipped ? 'Skipped' : `Score: ${qe.score}`}
+                          </Badge>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -239,24 +295,30 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
                         </div>
                         <div className="space-y-2">
                           <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                            <SparklesIcon /> Ideal AI Approach
+                            <SparklesIcon /> Ideal Approach
                           </h4>
-                          <div className="p-4 bg-primary/5 rounded-xl text-[15px] leading-relaxed border border-primary/10 min-h-[120px]">
+                          <div className="p-4 bg-primary/5 rounded-xl text-[15px] leading-relaxed border border-primary/20 min-h-[120px]">
                             {qe.idealAnswer}
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-background rounded-xl border p-4 shadow-sm">
-                        <h4 className="font-bold text-sm mb-3">Feedback Summary</h4>
-                        <p className="text-sm text-muted-foreground mb-4">{qe.improvementSuggestion}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {qe.strengths.map((s, i) => (
-                            <Badge key={i} variant="secondary" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">{s}</Badge>
-                          ))}
-                          {qe.weaknesses.map((w, i) => (
-                            <Badge key={i} variant="secondary" className="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20">{w}</Badge>
-                          ))}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                          <h5 className="font-bold text-emerald-600 dark:text-emerald-500 mb-2 text-sm flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Strengths</h5>
+                          <ul className="space-y-1.5">
+                            {qe.strengths.length > 0 ? qe.strengths.map((s, i) => <li key={i} className="text-sm text-emerald-700/80 dark:text-emerald-400/80 flex items-start gap-1.5"><span className="mt-1 block w-1 h-1 rounded-full bg-current shrink-0" />{s}</li>) : <li className="text-sm italic opacity-50">None highlighted</li>}
+                          </ul>
+                        </div>
+                        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                          <h5 className="font-bold text-destructive mb-2 text-sm flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" /> Areas to Improve</h5>
+                          <ul className="space-y-1.5">
+                            {qe.weaknesses.length > 0 ? qe.weaknesses.map((w, i) => <li key={i} className="text-sm text-destructive/80 flex items-start gap-1.5"><span className="mt-1 block w-1 h-1 rounded-full bg-current shrink-0" />{w}</li>) : <li className="text-sm italic opacity-50">None highlighted</li>}
+                          </ul>
+                        </div>
+                        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                          <h5 className="font-bold text-blue-600 dark:text-blue-500 mb-2 text-sm flex items-center gap-1.5"><Activity className="w-4 h-4" /> Actionable Feedback</h5>
+                          <p className="text-sm text-blue-700/80 dark:text-blue-400/80 leading-relaxed">{qe.improvementSuggestion}</p>
                         </div>
                       </div>
                     </AccordionContent>
@@ -270,13 +332,13 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
         <TabsContent value="roadmap" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Personalized Improvement Roadmap</CardTitle>
-              <CardDescription>Generated based on your weaknesses and score gaps.</CardDescription>
+              <CardTitle>AI Generated Career Roadmap</CardTitle>
+              <CardDescription>Steps to improve your placement readiness based on this interview.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-                {report.roadmap.map((step, idx) => (
-                  <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+                {validReport.roadmap.map((step, index) => (
+                  <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                     <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-primary text-primary-foreground shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 font-bold">
                       {step.week}
                     </div>
@@ -299,7 +361,7 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
                 <CardTitle className="text-base">Recommended Courses</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
-                {report.recommendedCourses.map((c, i) => (
+                {validReport.recommendedCourses.map((c, i) => (
                   <Badge key={i} className="py-1.5 px-3">{c}</Badge>
                 ))}
               </CardContent>
@@ -309,7 +371,7 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
                 <CardTitle className="text-base">Recommended Skills to Map</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
-                {report.recommendedSkills.map((c, i) => (
+                {validReport.recommendedSkills.map((c, i) => (
                   <Badge key={i} variant="outline" className="py-1.5 px-3 border-primary text-primary">{c}</Badge>
                 ))}
               </CardContent>
@@ -355,6 +417,7 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
           </div>
         </TabsContent>
       </Tabs>
+      </>)}
     </div>
   );
 }

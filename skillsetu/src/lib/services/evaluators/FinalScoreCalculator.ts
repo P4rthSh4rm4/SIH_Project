@@ -6,27 +6,95 @@ import { HREvaluator } from "./HREvaluator";
 
 export class FinalScoreCalculator {
   public static generateReport(inputs: EvaluationInput[]): AIInterviewReport {
-    const techResult = TechnicalEvaluator.evaluate(inputs);
-    const commResult = CommunicationEvaluator.evaluate(inputs);
-    const confResult = ConfidenceEvaluator.evaluate(inputs);
-    const hrResult = HREvaluator.evaluate(inputs);
+    const isAnswerValid = (answer: string) => {
+      if (!answer) return false;
+      const trimmed = answer.trim();
+      return trimmed.length >= 5;
+    };
 
-    // Ensure all scores are at least 0 and max 100
+    const validInputs = inputs.filter(i => isAnswerValid(i.answer));
+    const answeredQuestions = validInputs.length;
+    const totalQuestions = inputs.length;
+    const completionPercentage = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+    
+    let status: AIInterviewReport["status"] = "Completed";
+    if (answeredQuestions === 0) status = "Incomplete";
+    else if (answeredQuestions < totalQuestions) status = "Partially Completed";
+
+    // 0% completion handling
+    if (answeredQuestions === 0) {
+      return {
+        overallScore: null,
+        technicalScore: null,
+        communicationScore: null,
+        confidenceScore: null,
+        hrReadiness: null,
+        problemSolvingScore: null,
+        professionalismScore: null,
+        topStrengths: [],
+        topWeaknesses: [],
+        improvementAreas: [],
+        recommendedCourses: [],
+        recommendedSkills: [],
+        recommendedMockInterviews: [],
+        careerAdvice: "No answers were submitted to evaluate.",
+        hiringRecommendation: "Not Evaluated",
+        interviewSummary: "The interview was not completed. Please retake it to receive a full AI evaluation.",
+        roadmap: [],
+        jobReadiness: "Not Evaluated",
+        hiringProbability: null,
+        status,
+        completionPercentage,
+        answeredQuestions,
+        totalQuestions,
+        questionEvaluations: inputs.map(input => ({
+          questionId: input.question.id,
+          questionText: input.question.question,
+          candidateAnswer: input.answer,
+          idealAnswer: "",
+          strengths: [],
+          weaknesses: [],
+          improvementSuggestion: "Question not answered.",
+          score: null,
+          skipped: true
+        }))
+      };
+    }
+
+    const techResult = TechnicalEvaluator.evaluate(validInputs);
+    const commResult = CommunicationEvaluator.evaluate(validInputs);
+    const confResult = ConfidenceEvaluator.evaluate(validInputs);
+    const hrResult = HREvaluator.evaluate(validInputs);
+
+    // Ensure all scores are at least 0 and max 100, if not null
     const technicalScore = techResult.score;
     const communicationScore = commResult.score;
     const confidenceScore = confResult.score;
     const hrReadiness = hrResult.score;
     const problemSolvingScore = techResult.problemSolving;
-    const professionalismScore = Math.round((commResult.score + hrResult.score) / 2);
+    const professionalismScore = (commResult.score !== null && hrResult.score !== null) 
+      ? Math.round((commResult.score + hrResult.score) / 2) 
+      : null;
 
     // Weighted average for overall score
-    const overallScore = Math.round(
-      (technicalScore * 0.3) +
-      (communicationScore * 0.2) +
-      (confidenceScore * 0.15) +
-      (hrReadiness * 0.15) +
-      (problemSolvingScore * 0.2)
-    );
+    const scores = [
+      { score: technicalScore, weight: 0.3 },
+      { score: communicationScore, weight: 0.2 },
+      { score: confidenceScore, weight: 0.15 },
+      { score: hrReadiness, weight: 0.15 },
+      { score: problemSolvingScore, weight: 0.2 }
+    ];
+
+    let totalWeight = 0;
+    let weightedSum = 0;
+    scores.forEach(s => {
+      if (s.score !== null) {
+        weightedSum += s.score * s.weight;
+        totalWeight += s.weight;
+      }
+    });
+
+    const overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : null;
 
     // Aggregate strengths & weaknesses
     let topStrengths = [
@@ -48,27 +116,48 @@ export class FinalScoreCalculator {
 
     // Generate Roadmap
     const roadmap = [];
-    if (technicalScore < 70) roadmap.push({ week: 1, title: "Technical Review", focus: "Deep dive into core domain concepts and system architecture." });
+    if (technicalScore !== null && technicalScore < 70) roadmap.push({ week: 1, title: "Technical Review", focus: "Deep dive into core domain concepts and system architecture." });
     else roadmap.push({ week: 1, title: "Advanced Technical Setup", focus: "Practice building scalable solutions and exploring edge cases." });
 
-    if (communicationScore < 70) roadmap.push({ week: 2, title: "Communication Drills", focus: "Practice speaking concisely without filler words." });
+    if (communicationScore !== null && communicationScore < 70) roadmap.push({ week: 2, title: "Communication Drills", focus: "Practice speaking concisely without filler words." });
     else roadmap.push({ week: 2, title: "Mock Interview Practice", focus: "Maintain your strong communication in high-pressure scenarios." });
 
-    if (hrReadiness < 70) roadmap.push({ week: 3, title: "Behavioral Structuring", focus: "Draft stories using the STAR method for past experiences." });
+    if (hrReadiness !== null && hrReadiness < 70) roadmap.push({ week: 3, title: "Behavioral Structuring", focus: "Draft stories using the STAR method for past experiences." });
     else roadmap.push({ week: 3, title: "Leadership Narratives", focus: "Focus on articulating your impact and quantifying results." });
 
     roadmap.push({ week: 4, title: "Full Mock Interview", focus: "Combine all skills into a full 45-minute timed mock interview." });
 
     // Job Readiness & Hiring Probability
     let jobReadiness: AIInterviewReport["jobReadiness"] = "Needs More Preparation";
-    if (overallScore >= 85) jobReadiness = "Junior Developer";
-    else if (overallScore >= 70) jobReadiness = "Entry Level";
-    else if (overallScore >= 50) jobReadiness = "Internships";
+    if (overallScore !== null) {
+      if (overallScore >= 85) jobReadiness = "Junior Developer";
+      else if (overallScore >= 70) jobReadiness = "Entry Level";
+      else if (overallScore >= 50) jobReadiness = "Internships";
+    }
 
-    const hiringProbability = Math.max(10, Math.min(99, overallScore - 5 + Math.floor(Math.random() * 10)));
+    let hiringProbability = overallScore !== null ? Math.max(10, Math.min(99, overallScore - 5 + Math.floor(Math.random() * 10))) : null;
+    if (hiringProbability !== null && status === "Partially Completed") {
+       hiringProbability = Math.round(hiringProbability * (completionPercentage / 100));
+       topWeaknesses.push(`Incomplete Interview (${completionPercentage}%)`);
+    }
 
     // Generate Question Evaluations (Detailed breakdown per answer)
     const questionEvaluations: QuestionEvaluation[] = inputs.map(input => {
+      const valid = isAnswerValid(input.answer);
+      if (!valid) {
+        return {
+          questionId: input.question.id,
+          questionText: input.question.question,
+          candidateAnswer: input.answer,
+          idealAnswer: "An ideal answer would systematically break down the problem, state assumptions, propose a solution, and evaluate trade-offs.",
+          strengths: [],
+          weaknesses: ["Question was skipped or answer was too short"],
+          improvementSuggestion: "Try to answer all questions to get an accurate evaluation.",
+          score: null,
+          skipped: true
+        };
+      }
+
       const isShort = input.answer.length < 50;
       const isStrong = input.answer.length > 150 && input.answer.toLowerCase().includes("achieved");
       
@@ -94,7 +183,8 @@ export class FinalScoreCalculator {
         strengths: qStrengths,
         weaknesses: qWeaknesses,
         improvementSuggestion: suggestion,
-        score: isShort ? 60 : (isStrong ? 95 : 80)
+        score: isShort ? 60 : (isStrong ? 95 : 80),
+        skipped: false
       };
     });
 
@@ -106,26 +196,25 @@ export class FinalScoreCalculator {
       hrReadiness,
       problemSolvingScore,
       professionalismScore,
-      
       topStrengths,
       topWeaknesses,
       improvementAreas: topWeaknesses.map(w => `Focus on improving: ${w}`),
-      
       recommendedCourses: ["Advanced System Design", "Effective Communication for Engineers"],
       recommendedSkills: ["System Architecture", "Public Speaking"],
       recommendedMockInterviews: ["Technical Deep Dive", "Behavioral Leadership"],
-      
-      careerAdvice: overallScore > 80 
+      careerAdvice: overallScore !== null && overallScore > 80 
         ? "You are highly competitive. Focus on negotiating and applying to top-tier roles." 
         : "Keep practicing. Focus heavily on your weak areas identified in this report before your next real interview.",
-      hiringRecommendation: overallScore > 80 ? "Strong Hire" : (overallScore > 65 ? "Hire" : "No Hire"),
-      interviewSummary: `The candidate performed ${overallScore > 80 ? 'exceptionally well' : (overallScore > 65 ? 'adequately' : 'poorly')}. Technical skills were scored at ${technicalScore}/100 and communication at ${communicationScore}/100.`,
-      
+      hiringRecommendation: overallScore !== null && overallScore > 80 ? "Strong Hire" : (overallScore !== null && overallScore > 65 ? "Hire" : "No Hire"),
+      interviewSummary: `The candidate performed ${overallScore !== null && overallScore > 80 ? 'exceptionally well' : (overallScore !== null && overallScore > 65 ? 'adequately' : 'poorly')}. Technical skills were scored at ${technicalScore}/100 and communication at ${communicationScore}/100.`,
       questionEvaluations,
-      
       roadmap,
       jobReadiness,
-      hiringProbability
+      hiringProbability,
+      status,
+      completionPercentage,
+      answeredQuestions,
+      totalQuestions
     };
   }
 }

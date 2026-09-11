@@ -4,7 +4,21 @@ import { useMemo } from "react";
 import { useDigitalPortfolio } from "./useDigitalPortfolio";
 import { useAssessments } from "./useAssessments";
 import { useMockInterview } from "./useMockInterview";
+import { useEducation } from "./useEducation";
+import { useExperience } from "./useExperience";
 import { CAREER_PATHS } from "@/lib/data/career-paths";
+
+import {
+  calculateTechnicalScore,
+  calculateSoftSkillsScore,
+  calculateAptitudeScore,
+  calculateResumeScore,
+  calculatePortfolioScore,
+  calculateGitHubScore,
+  calculateLinkedInScore,
+  calculateExperienceScore,
+  type ReadinessMetric,
+} from "@/lib/services/readiness";
 
 export interface CompanyEligibility {
   company: string;
@@ -13,91 +27,114 @@ export interface CompanyEligibility {
   reasons: string[];
 }
 
+// ── Overall Readiness Weights ──────────────────────────────
+const READINESS_WEIGHTS = {
+  technical:  0.25,
+  softSkills: 0.15,
+  aptitude:   0.15,
+  resume:     0.10,
+  portfolio:  0.10,
+  github:     0.10,
+  linkedin:   0.05,
+  experience: 0.10,
+} as const;
+
 export function usePlacementReadiness() {
   const portfolio = useDigitalPortfolio();
   const { history: assessmentHistory } = useAssessments();
   const { interviews } = useMockInterview();
+  const { education } = useEducation();
+  const { experiences } = useExperience();
 
-  const completedInterviews = useMemo(() => interviews.filter(i => i.status === 'Completed' && i.overall_score !== null), [interviews]);
+  const completedInterviews = useMemo(
+    () => interviews.filter(i => i.status === "Completed" && i.overall_score !== null),
+    [interviews]
+  );
 
-  // 1. Core Scores (0-100)
-  const technicalScore = useMemo(() => {
-    const verifiedSkillsCount = portfolio.skills.filter((s: any) => s.verified || s.proficiency_score >= 80).length;
-    let baseScore = Math.min(verifiedSkillsCount * 10, 60); // Max 60 from skills
-    baseScore += Math.min(portfolio.stats.projects * 10, 40); // Max 40 from projects
-    
-    // Blend with Mock Interview Technical Score
-    if (completedInterviews.length > 0) {
-      const avgMockTech = completedInterviews.reduce((acc, i) => acc + (i.technical_score || 0), 0) / completedInterviews.length;
-      return Math.round((baseScore * 0.4) + (avgMockTech * 0.6)); // Mock interview weighs heavily
-    }
-    return baseScore;
-  }, [portfolio.skills, portfolio.stats.projects, completedInterviews]);
+  // ─── 1. Service-driven Readiness Metrics ─────────────────
 
-  const softSkillsScore = useMemo(() => {
-    // Derived from communication skills if any, else default to 40 + courses
-    const commSkill = portfolio.skills.find((s: any) => s.skill?.name?.toLowerCase().includes("communication"));
-    let baseScore = commSkill ? commSkill.proficiency_score || 50 : 40;
-    baseScore += Math.min(portfolio.stats.courses * 2, 20); // active learning shows soft skills
-    
-    // Blend with Mock Interview Communication Score
-    if (completedInterviews.length > 0) {
-      const avgMockComm = completedInterviews.reduce((acc, i) => acc + (i.communication_score || 0), 0) / completedInterviews.length;
-      return Math.round((baseScore * 0.4) + (avgMockComm * 0.6));
-    }
-    return Math.min(baseScore, 100);
-  }, [portfolio.skills, portfolio.stats.courses, completedInterviews]);
+  const technicalMetric: ReadinessMetric = useMemo(
+    () => calculateTechnicalScore(portfolio.skills, completedInterviews),
+    [portfolio.skills, completedInterviews]
+  );
 
-  const aptitudeScore = useMemo(() => {
-    const aptAssessments = assessmentHistory.filter((a: any) => a.type === "aptitude" || a.title?.toLowerCase().includes("aptitude"));
-    if (aptAssessments.length === 0) return 0;
-    const avg = aptAssessments.reduce((acc, a: any) => acc + (a.score || 0), 0) / aptAssessments.length;
-    return Math.round(avg);
-  }, [assessmentHistory]);
+  const softSkillsMetric: ReadinessMetric = useMemo(
+    () => calculateSoftSkillsScore(portfolio.skills, completedInterviews),
+    [portfolio.skills, completedInterviews]
+  );
 
-  const atsScore = useMemo(() => {
-    let score = 0;
-    if (portfolio.profile?.resume_url) score += 40; // Having a resume is huge
-    if (portfolio.profile?.bio && portfolio.profile?.career_objective) score += 20;
-    score += Math.min(portfolio.skills.length * 2, 20); // Keywords
-    score += Math.min(portfolio.stats.projects * 5, 20); // Experience
-    return score;
-  }, [portfolio.profile, portfolio.skills.length, portfolio.stats.projects]);
+  const aptitudeMetric: ReadinessMetric = useMemo(
+    () => calculateAptitudeScore(assessmentHistory),
+    [assessmentHistory]
+  );
 
-  const githubScore = useMemo(() => {
-    let score = 0;
-    if (portfolio.profile?.github) score += 50;
-    if (portfolio.stats.projects > 0) score += 30;
-    if (portfolio.stats.projects > 2) score += 20;
-    return score;
-  }, [portfolio.profile?.github, portfolio.stats.projects]);
+  const resumeMetric: ReadinessMetric = useMemo(
+    () =>
+      calculateResumeScore(
+        portfolio.profile,
+        portfolio.skills.length,
+        education.length,
+        experiences.length,
+        portfolio.stats.projects,
+        portfolio.stats.certificates
+      ),
+    [portfolio.profile, portfolio.skills.length, education.length, experiences.length, portfolio.stats.projects, portfolio.stats.certificates]
+  );
 
-  const linkedinScore = useMemo(() => {
-    let score = 0;
-    if (portfolio.profile?.linkedin) score += 50;
-    if (portfolio.profile?.avatar_url) score += 20;
-    if (portfolio.profile?.career_objective) score += 15;
-    if (portfolio.profile?.bio) score += 15;
-    return score;
-  }, [portfolio.profile]);
+  const portfolioMetric: ReadinessMetric = useMemo(
+    () => calculatePortfolioScore(portfolio.portfolioItems),
+    [portfolio.portfolioItems]
+  );
+
+  const githubMetric: ReadinessMetric = useMemo(
+    () => calculateGitHubScore(portfolio.profile?.github, portfolio.portfolioItems),
+    [portfolio.profile?.github, portfolio.portfolioItems]
+  );
+
+  const linkedinMetric: ReadinessMetric = useMemo(
+    () =>
+      calculateLinkedInScore(
+        portfolio.profile,
+        portfolio.skills.length,
+        education.length,
+        experiences.length
+      ),
+    [portfolio.profile, portfolio.skills.length, education.length, experiences.length]
+  );
+
+  const experienceMetric: ReadinessMetric = useMemo(
+    () =>
+      calculateExperienceScore(
+        portfolio.portfolioItems,
+        portfolio.stats.certificates,
+        portfolio.certificates,
+        portfolio.stats.courses
+      ),
+    [portfolio.portfolioItems, portfolio.stats.certificates, portfolio.certificates, portfolio.stats.courses]
+  );
+
+  // ─── 2. Overall Score (weighted average) ──────────────────
 
   const overallScore = useMemo(() => {
-    const weights = [
-      { score: technicalScore, weight: 0.3 },
-      { score: atsScore, weight: 0.2 },
-      { score: portfolio.recruiterScore, weight: 0.2 },
-      { score: softSkillsScore, weight: 0.1 },
-      { score: githubScore, weight: 0.1 },
-      { score: linkedinScore, weight: 0.1 },
-    ];
-    let total = 0;
-    weights.forEach(w => {
-      total += w.score * w.weight;
-    });
-    return Math.round(total);
-  }, [technicalScore, atsScore, portfolio.recruiterScore, softSkillsScore, githubScore, linkedinScore]);
+    const total =
+      technicalMetric.score  * READINESS_WEIGHTS.technical +
+      softSkillsMetric.score * READINESS_WEIGHTS.softSkills +
+      aptitudeMetric.score   * READINESS_WEIGHTS.aptitude +
+      resumeMetric.score     * READINESS_WEIGHTS.resume +
+      portfolioMetric.score  * READINESS_WEIGHTS.portfolio +
+      githubMetric.score     * READINESS_WEIGHTS.github +
+      linkedinMetric.score   * READINESS_WEIGHTS.linkedin +
+      experienceMetric.score * READINESS_WEIGHTS.experience;
 
-  // Status mapping
+    return Math.round(total);
+  }, [
+    technicalMetric.score, softSkillsMetric.score, aptitudeMetric.score,
+    resumeMetric.score, portfolioMetric.score, githubMetric.score,
+    linkedinMetric.score, experienceMetric.score,
+  ]);
+
+  // ─── 3. Status ────────────────────────────────────────────
+
   const getReadinessStatus = (score: number) => {
     if (score >= 80) return "Excellent";
     if (score >= 60) return "Good";
@@ -107,130 +144,146 @@ export function usePlacementReadiness() {
 
   const status = getReadinessStatus(overallScore);
 
-  // 2. Strengths & Improvement Areas
+  // ─── 4. Strengths (derived from real metric data) ────────
+
   const strengths = useMemo(() => {
-    const s = [];
-    if (technicalScore >= 80) s.push("Strong Technical Skills");
-    if (portfolio.stats.projects >= 3) s.push("Excellent Project Portfolio");
-    if (portfolio.stats.certificates >= 1) s.push("Multiple Certifications");
-    if (atsScore >= 80) s.push("ATS-Optimized Resume");
+    const s: string[] = [];
+    if (technicalMetric.attempted && technicalMetric.score >= 70) s.push("Strong Technical Skills");
+    if (portfolioMetric.attempted && portfolioMetric.score >= 70) s.push("Excellent Project Portfolio");
+    if (experienceMetric.attempted && experienceMetric.score >= 60) s.push("Solid Experience & Certifications");
+    if (resumeMetric.attempted && resumeMetric.score >= 70) s.push("ATS-Optimized Resume");
     if (portfolio.completedRoadmaps.length > 0) s.push("Completed Career Roadmap");
     if (portfolio.skills.some((sk: any) => sk.verified)) s.push("Platform Verified Skills");
+    if (softSkillsMetric.attempted && softSkillsMetric.score >= 70) s.push("Strong Soft Skills");
+    if (githubMetric.attempted && githubMetric.score >= 60) s.push("Active GitHub Presence");
     return s;
-  }, [technicalScore, portfolio.stats, atsScore, portfolio.completedRoadmaps, portfolio.skills]);
+  }, [technicalMetric, portfolioMetric, experienceMetric, resumeMetric, portfolio.completedRoadmaps, portfolio.skills, softSkillsMetric, githubMetric]);
+
+  // ─── 5. Improvements (aggregated from all services) ──────
 
   const improvements = useMemo(() => {
-    const i = [];
-    if (!portfolio.profile?.resume_url) {
-      i.push({ title: "Upload Resume", priority: "High", impact: "+15% ATS Score", action: "Upload your resume in Profile settings." });
-    }
-    if (!portfolio.profile?.github) {
-      i.push({ title: "Link GitHub", priority: "High", impact: "+10% Portfolio Score", action: "Add your GitHub URL to your profile." });
-    }
-    if (!portfolio.profile?.linkedin) {
-      i.push({ title: "Link LinkedIn", priority: "High", impact: "+10% Profile Score", action: "Add your LinkedIn URL to your profile." });
-    }
-    if (portfolio.stats.projects === 0) {
-      i.push({ title: "Add Projects", priority: "High", impact: "+20% Technical Score", action: "Build and add a project to your portfolio." });
-    }
-    if (portfolio.stats.certificates === 0) {
-      i.push({ title: "Earn Certifications", priority: "Medium", impact: "+15% Recruiter Score", action: "Complete a career roadmap to earn a certificate." });
-    }
-    if (aptitudeScore === 0) {
-      i.push({ title: "Take Aptitude Test", priority: "Medium", impact: "Unlocks Aptitude Score", action: "Complete an aptitude assessment." });
-    }
-    return i;
-  }, [portfolio.profile, portfolio.stats, aptitudeScore]);
+    const allRecs: Array<{ title: string; priority: string; impact: string; action: string }> = [];
 
-  // 3. Placement Checklist
-  const checklist = useMemo(() => {
-    return [
-      { id: "resume", label: "Resume uploaded", done: !!portfolio.profile?.resume_url },
-      { id: "profile", label: "Profile completed", done: linkedinScore >= 80 },
-      { id: "portfolio", label: "Portfolio completed", done: portfolio.stats.projects > 0 && !!portfolio.profile?.bio },
-      { id: "github", label: "GitHub linked", done: !!portfolio.profile?.github },
-      { id: "linkedin", label: "LinkedIn linked", done: !!portfolio.profile?.linkedin },
-      { id: "cert", label: "Certificates Added", done: portfolio.stats.certificates > 0 },
-      { id: "skills", label: "Skills Verified", done: portfolio.skills.some((s: any) => s.verified) }
+    // Collect the top recommendations from each service that has missing items
+    const metricMap: Array<{ metric: ReadinessMetric; label: string; weight: number }> = [
+      { metric: technicalMetric, label: "Technical Skills", weight: READINESS_WEIGHTS.technical },
+      { metric: softSkillsMetric, label: "Soft Skills", weight: READINESS_WEIGHTS.softSkills },
+      { metric: aptitudeMetric, label: "Aptitude", weight: READINESS_WEIGHTS.aptitude },
+      { metric: resumeMetric, label: "Resume ATS", weight: READINESS_WEIGHTS.resume },
+      { metric: portfolioMetric, label: "Portfolio", weight: READINESS_WEIGHTS.portfolio },
+      { metric: githubMetric, label: "GitHub", weight: READINESS_WEIGHTS.github },
+      { metric: linkedinMetric, label: "LinkedIn", weight: READINESS_WEIGHTS.linkedin },
+      { metric: experienceMetric, label: "Experience", weight: READINESS_WEIGHTS.experience },
     ];
-  }, [portfolio.profile, linkedinScore, portfolio.stats, portfolio.skills]);
+
+    // Sort by weight descending so highest-impact recommendations come first
+    const sorted = [...metricMap].sort((a, b) => b.weight - a.weight);
+
+    for (const { metric, label, weight } of sorted) {
+      if (metric.recommendations.length > 0) {
+        const priority = weight >= 0.15 ? "High" : weight >= 0.10 ? "Medium" : "Low";
+        // Take only the first recommendation per service to avoid overwhelming the user
+        allRecs.push({
+          title: label,
+          priority,
+          impact: `${Math.round(weight * 100)}% of Overall Score`,
+          action: metric.recommendations[0],
+        });
+      }
+    }
+
+    return allRecs;
+  }, [technicalMetric, softSkillsMetric, aptitudeMetric, resumeMetric, portfolioMetric, githubMetric, linkedinMetric, experienceMetric]);
+
+  // ─── 6. Placement Checklist ───────────────────────────────
+
+  const checklist = useMemo(() => [
+    { id: "resume", label: "Resume uploaded", done: !!portfolio.profile?.resume_url },
+    { id: "profile", label: "Profile completed", done: linkedinMetric.score >= 70 },
+    { id: "portfolio", label: "Portfolio projects added", done: portfolioMetric.attempted },
+    { id: "github", label: "GitHub linked", done: githubMetric.attempted },
+    { id: "linkedin", label: "LinkedIn linked", done: !!portfolio.profile?.linkedin },
+    { id: "cert", label: "Certifications earned", done: portfolio.stats.certificates > 0 },
+    { id: "skills", label: "Skills verified", done: portfolio.skills.some((s: any) => s.verified) },
+    { id: "interview", label: "Mock interview completed", done: completedInterviews.length > 0 },
+  ], [portfolio.profile, linkedinMetric.score, portfolioMetric.attempted, githubMetric.attempted, portfolio.stats.certificates, portfolio.skills, completedInterviews.length]);
 
   const checklistProgress = Math.round((checklist.filter(c => c.done).length / checklist.length) * 100);
 
-  // 4. Industry Readiness (Domains)
+  // ─── 7. Industry Readiness (Domains) ──────────────────────
+
   const industryReadiness = useMemo(() => {
     const domains = [];
-    
-    // Check specific domains based on CAREER_PATHS or keywords
-    const hasData = portfolio.skills.some((s: any) => ['python', 'sql', 'data', 'pandas', 'machine learning'].includes(s.skill?.name?.toLowerCase()));
-    const hasFrontend = portfolio.skills.some((s: any) => ['react', 'html', 'css', 'javascript', 'frontend'].includes(s.skill?.name?.toLowerCase()));
-    const hasBackend = portfolio.skills.some((s: any) => ['node', 'express', 'python', 'java', 'backend', 'sql'].includes(s.skill?.name?.toLowerCase()));
-    
+    const hasData = portfolio.skills.some((s: any) => ["python", "sql", "data", "pandas", "machine learning"].includes(s.skill?.name?.toLowerCase()));
+    const hasFrontend = portfolio.skills.some((s: any) => ["react", "html", "css", "javascript", "frontend"].includes(s.skill?.name?.toLowerCase()));
+    const hasBackend = portfolio.skills.some((s: any) => ["node", "express", "python", "java", "backend", "sql"].includes(s.skill?.name?.toLowerCase()));
+
     domains.push({ name: "Software Engineer", score: Math.max(overallScore - 5, 0) });
-    domains.push({ name: "Data Analyst", score: hasData ? Math.max(overallScore + 5, 50) : Math.max(overallScore - 20, 10) });
-    domains.push({ name: "Frontend Developer", score: hasFrontend ? Math.max(overallScore + 10, 60) : Math.max(overallScore - 15, 20) });
-    domains.push({ name: "Backend Developer", score: hasBackend ? Math.max(overallScore + 10, 60) : Math.max(overallScore - 15, 20) });
-    domains.push({ name: "Full Stack Developer", score: (hasFrontend && hasBackend) ? Math.max(overallScore + 15, 70) : Math.max(overallScore - 10, 30) });
+    domains.push({ name: "Data Analyst", score: hasData ? Math.min(overallScore + 5, 100) : Math.max(overallScore - 20, 0) });
+    domains.push({ name: "Frontend Developer", score: hasFrontend ? Math.min(overallScore + 10, 100) : Math.max(overallScore - 15, 0) });
+    domains.push({ name: "Backend Developer", score: hasBackend ? Math.min(overallScore + 10, 100) : Math.max(overallScore - 15, 0) });
+    domains.push({ name: "Full Stack Developer", score: (hasFrontend && hasBackend) ? Math.min(overallScore + 15, 100) : Math.max(overallScore - 10, 0) });
 
     return domains;
   }, [overallScore, portfolio.skills]);
 
-  // 5. Company Eligibility Checker
-  const companyEligibility = useMemo(() => {
+  // ─── 8. Company Eligibility ───────────────────────────────
+
+  const companyEligibility = useMemo((): CompanyEligibility[] => {
     const companies: CompanyEligibility[] = [];
-    
-    // Example logic based on scores
+
     companies.push({
       company: "Top Tech (FAANG)",
       role: "SDE I",
       status: overallScore >= 90 && portfolio.stats.projects >= 2 ? "Eligible" : overallScore >= 75 ? "Nearly Eligible" : "Not Eligible",
-      reasons: overallScore < 90 ? ["Requires 90%+ Overall Readiness", "Needs strong DSA/Projects"] : []
+      reasons: overallScore < 90 ? ["Requires 90%+ Overall Readiness", "Needs strong DSA/Projects"] : [],
     });
 
     companies.push({
       company: "Startups",
       role: "Full Stack Developer",
-      status: portfolio.stats.projects >= 3 && technicalScore >= 70 ? "Eligible" : portfolio.stats.projects >= 1 ? "Nearly Eligible" : "Not Eligible",
-      reasons: portfolio.stats.projects < 3 ? ["Needs minimum 3 portfolio projects"] : []
+      status: portfolio.stats.projects >= 3 && technicalMetric.score >= 70 ? "Eligible" : portfolio.stats.projects >= 1 ? "Nearly Eligible" : "Not Eligible",
+      reasons: portfolio.stats.projects < 3 ? ["Needs minimum 3 portfolio projects"] : [],
     });
 
     companies.push({
       company: "Service Based IT",
       role: "Systems Engineer",
       status: overallScore >= 60 && !!portfolio.profile?.resume_url ? "Eligible" : "Not Eligible",
-      reasons: overallScore < 60 ? ["Requires 60%+ Overall Readiness"] : !portfolio.profile?.resume_url ? ["Resume upload required"] : []
+      reasons: overallScore < 60 ? ["Requires 60%+ Overall Readiness"] : !portfolio.profile?.resume_url ? ["Resume upload required"] : [],
     });
 
     return companies;
-  }, [overallScore, portfolio.stats, technicalScore, portfolio.profile]);
+  }, [overallScore, portfolio.stats, technicalMetric.score, portfolio.profile]);
 
-  // 6. Placement Timeline
-  const placementTimeline = useMemo(() => {
-    return [
-      { id: "t1", title: "Profile Created", status: "completed" },
-      { id: "t2", title: "Resume Uploaded", status: portfolio.profile?.resume_url ? "completed" : "pending" },
-      { id: "t3", title: "Skill Assessment", status: assessmentHistory.length > 0 ? "completed" : "pending" },
-      { id: "t4", title: "Project Added", status: portfolio.stats.projects > 0 ? "completed" : "pending" },
-      { id: "t5", title: "Certification Earned", status: portfolio.stats.certificates > 0 ? "completed" : "pending" },
-      { id: "t6", title: "Mock Interview", status: "pending" }, // Future feature placeholder
-      { id: "t7", title: "Placement Ready", status: overallScore >= 80 ? "completed" : "in-progress" },
-    ];
-  }, [portfolio.profile, assessmentHistory.length, portfolio.stats, overallScore]);
+  // ─── 9. Placement Timeline ────────────────────────────────
 
-  // 7. AI Insights (Dynamic based on data)
+  const placementTimeline = useMemo(() => [
+    { id: "t1", title: "Profile Created", status: "completed" },
+    { id: "t2", title: "Resume Uploaded", status: portfolio.profile?.resume_url ? "completed" : "pending" },
+    { id: "t3", title: "Skill Assessment", status: assessmentHistory.length > 0 ? "completed" : "pending" },
+    { id: "t4", title: "Project Added", status: portfolio.stats.projects > 0 ? "completed" : "pending" },
+    { id: "t5", title: "Certification Earned", status: portfolio.stats.certificates > 0 ? "completed" : "pending" },
+    { id: "t6", title: "Mock Interview", status: completedInterviews.length > 0 ? "completed" : "pending" },
+    { id: "t7", title: "Placement Ready", status: overallScore >= 80 ? "completed" : "in-progress" },
+  ], [portfolio.profile, assessmentHistory.length, portfolio.stats, completedInterviews.length, overallScore]);
+
+  // ─── 10. Dynamic Insights ─────────────────────────────────
+
   const placementInsights = useMemo(() => {
-    const insights = [];
-    if (technicalScore > softSkillsScore + 20) {
+    const insights: string[] = [];
+
+    if (technicalMetric.score > softSkillsMetric.score + 20) {
       insights.push("Your technical skills are strong, but improving communication and soft skills will dramatically increase your hiring chances.");
-    } else if (softSkillsScore > technicalScore + 20) {
+    } else if (softSkillsMetric.score > technicalMetric.score + 20) {
       insights.push("You have great soft skills. Focus on building more technical projects to balance your profile.");
     }
-    
+
     if (overallScore >= 80) {
       insights.push("Recruiters are highly likely to shortlist your profile. Keep your resume updated and start applying!");
     } else if (overallScore >= 60) {
       insights.push("You are on the right track. Focus on your improvement areas to reach the 'Excellent' readiness tier.");
-    } else {
+    } else if (overallScore > 0) {
       insights.push("You have just started your placement journey. Follow the checklist and timeline to build a strong profile.");
     }
 
@@ -238,20 +291,52 @@ export function usePlacementReadiness() {
       insights.push("You have practical experience through projects. Earning a certificate will validate those skills for recruiters.");
     }
 
+    if (!aptitudeMetric.attempted) {
+      insights.push("Take the Aptitude Assessment to unlock 15% of your overall readiness score.");
+    }
+
+    if (!githubMetric.attempted) {
+      insights.push("Link your GitHub profile and connect your repositories to improve your score.");
+    }
+
     return insights;
-  }, [technicalScore, softSkillsScore, overallScore, portfolio.stats]);
+  }, [technicalMetric.score, softSkillsMetric.score, overallScore, portfolio.stats, aptitudeMetric.attempted, githubMetric.attempted]);
+
+  // ─── 11. Probability ──────────────────────────────────────
+
+  const probability = useMemo(() => {
+    // Derived entirely from the overall score — no magic additions
+    return Math.min(overallScore, 98);
+  }, [overallScore]);
+
+  // ─── Return ───────────────────────────────────────────────
 
   return {
-    ...portfolio, // inherit all portfolio stuff
+    ...portfolio,
     readiness: {
       overallScore,
       status,
-      technicalScore,
-      softSkillsScore,
-      aptitudeScore,
-      atsScore,
-      githubScore,
-      linkedinScore,
+      // Detailed metric objects for the UI breakdown
+      metrics: {
+        technical: technicalMetric,
+        softSkills: softSkillsMetric,
+        aptitude: aptitudeMetric,
+        resume: resumeMetric,
+        portfolio: portfolioMetric,
+        github: githubMetric,
+        linkedin: linkedinMetric,
+        experience: experienceMetric,
+      },
+      // Convenience: raw scores for backward compatibility
+      technicalScore: technicalMetric.score,
+      softSkillsScore: softSkillsMetric.score,
+      aptitudeScore: aptitudeMetric.score,
+      atsScore: resumeMetric.score,
+      portfolioScore: portfolioMetric.score,
+      githubScore: githubMetric.score,
+      linkedinScore: linkedinMetric.score,
+      experienceBonus: experienceMetric.score,
+      // Data-driven aggregates
       strengths,
       improvements,
       checklist,
@@ -260,7 +345,8 @@ export function usePlacementReadiness() {
       companyEligibility,
       placementTimeline,
       placementInsights,
-      probability: Math.min(overallScore + (portfolio.stats.projects * 2), 98) // e.g. 87%
-    }
+      probability,
+      weights: READINESS_WEIGHTS,
+    },
   };
 }

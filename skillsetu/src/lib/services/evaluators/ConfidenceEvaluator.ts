@@ -10,7 +10,7 @@ export class ConfidenceEvaluator {
     const weaknesses: string[] = [];
     
     if (inputs.length === 0) {
-      return { score: 85, strengths, weaknesses };
+      return { score: null, strengths, weaknesses };
     }
 
     inputs.forEach(input => {

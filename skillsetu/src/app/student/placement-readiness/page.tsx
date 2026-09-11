@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePlacementReadiness } from "@/lib/hooks/usePlacementReadiness";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,13 +9,19 @@ import {
   TrendingUp, CheckCircle2, XCircle, AlertCircle, Briefcase, 
   Code, FileText, Award, Target, Cpu, MessageSquare, 
   Star, CheckSquare, BrainCircuit, Clock, Building2,
-  ChevronRight, ArrowRight, Lightbulb, Zap, ShieldCheck
+  ChevronRight, ChevronDown, ChevronUp, ArrowRight, Lightbulb, Zap, ShieldCheck,
+  FolderOpen, GraduationCap
 } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import Link from "next/link";
 
 export default function PlacementReadinessDashboard() {
   const { readiness, loading } = usePlacementReadiness();
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+
+  const toggleCard = (key: string) => {
+    setExpandedCards(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   if (loading) {
     return (
@@ -31,8 +38,8 @@ export default function PlacementReadinessDashboard() {
   }
 
   const {
-    overallScore, status, technicalScore, softSkillsScore, aptitudeScore,
-    atsScore, githubScore, linkedinScore, strengths, improvements,
+    overallScore, status, metrics, weights,
+    strengths, improvements,
     checklist, checklistProgress, industryReadiness, companyEligibility,
     placementTimeline, placementInsights, probability
   } = readiness;
@@ -96,30 +103,91 @@ export default function PlacementReadinessDashboard() {
           <BrainCircuit className="w-5 h-5 text-primary" /> Readiness Metrics
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: "Technical Skills", score: technicalScore, icon: Code, desc: "Verified coding & domain skills", max: 100 },
-            { label: "Soft Skills", score: softSkillsScore, icon: MessageSquare, desc: "Communication & collaboration", max: 100 },
-            { label: "Aptitude Readiness", score: aptitudeScore, icon: BrainCircuit, desc: "Quantitative & logical reasoning", max: 100 },
-            { label: "Resume ATS Score", score: atsScore, icon: FileText, desc: "Format, keywords & completeness", max: 100 },
-            { label: "GitHub & Portfolio", score: githubScore, icon: FaGithub, desc: "Open source & live projects", max: 100 },
-            { label: "LinkedIn Profile", score: linkedinScore, icon: FaLinkedin, desc: "Professional network presence", max: 100 },
-          ].map((metric, i) => (
-            <Card key={i} className="hover:border-primary/50 transition-colors">
-              <CardContent className="p-5 flex flex-col h-full">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-secondary rounded-lg text-primary">
-                    <metric.icon className="w-5 h-5" />
+          {([
+            { key: "technical", label: "Technical Skills", icon: Code, desc: "Verified coding & domain skills", metric: metrics.technical, weight: weights.technical },
+            { key: "softSkills", label: "Soft Skills", icon: MessageSquare, desc: "Communication & collaboration", metric: metrics.softSkills, weight: weights.softSkills },
+            { key: "aptitude", label: "Aptitude Readiness", icon: BrainCircuit, desc: "Quantitative & logical reasoning", metric: metrics.aptitude, weight: weights.aptitude },
+            { key: "resume", label: "Resume ATS Score", icon: FileText, desc: "Format, keywords & completeness", metric: metrics.resume, weight: weights.resume },
+            { key: "portfolio", label: "Portfolio Quality", icon: FolderOpen, desc: "Project count, quality & completeness", metric: metrics.portfolio, weight: weights.portfolio },
+            { key: "github", label: "GitHub Readiness", icon: FaGithub, desc: "GitHub repos & open source activity", metric: metrics.github, weight: weights.github },
+            { key: "linkedin", label: "LinkedIn Profile", icon: FaLinkedin, desc: "Professional profile completeness", metric: metrics.linkedin, weight: weights.linkedin },
+            { key: "experience", label: "Experience & Certs", icon: GraduationCap, desc: "Internships, courses & certifications", metric: metrics.experience, weight: weights.experience },
+          ] as const).map((item) => {
+            const isExpanded = expandedCards[item.key];
+            const m = item.metric;
+            return (
+              <Card key={item.key} className="hover:border-primary/50 transition-colors flex flex-col">
+                <CardContent className="p-5 flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2 bg-secondary rounded-lg text-primary">
+                      <item.icon className="w-5 h-5" />
+                    </div>
+                    {m.attempted ? (
+                      <span className={`text-xl font-bold ${m.score >= 70 ? 'text-emerald-500' : m.score >= 40 ? 'text-amber-500' : 'text-rose-500'}`}>
+                        {m.score}%
+                      </span>
+                    ) : (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">Not Attempted</Badge>
+                    )}
                   </div>
-                  <span className={`text-xl font-bold ${metric.score >= 80 ? 'text-emerald-500' : metric.score >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
-                    {metric.score}%
-                  </span>
-                </div>
-                <h3 className="font-semibold text-sm">{metric.label}</h3>
-                <p className="text-xs text-muted-foreground mb-4 flex-grow mt-1">{metric.desc}</p>
-                <Progress value={metric.score} className="h-1.5" />
-              </CardContent>
-            </Card>
-          ))}
+                  <h3 className="font-semibold text-sm">{item.label}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">{Math.round(item.weight * 100)}% of overall score</p>
+
+                  <Progress value={m.score} className="h-1.5 mt-3" />
+
+                  {/* View Breakdown Toggle */}
+                  <button
+                    onClick={() => toggleCard(item.key)}
+                    className="mt-3 text-xs text-primary font-medium flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    {isExpanded ? "Hide Breakdown" : "View Breakdown"}
+                  </button>
+
+                  {/* Expandable Breakdown */}
+                  {isExpanded && (
+                    <div className="mt-3 space-y-3 border-t pt-3 border-border/50 animate-in slide-in-from-top-1 duration-200">
+                      {/* Score Breakdown */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Calculation Breakdown</p>
+                        {m.breakdown.map((b, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs">
+                            <span className="flex items-center gap-1.5">
+                              {b.status === "present" ? (
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                              ) : b.status === "partial" ? (
+                                <AlertCircle className="w-3 h-3 text-amber-500 shrink-0" />
+                              ) : (
+                                <XCircle className="w-3 h-3 text-rose-400 shrink-0" />
+                              )}
+                              <span className="text-muted-foreground">{b.label}</span>
+                            </span>
+                            <span className="font-mono font-semibold tabular-nums">
+                              {b.value !== null ? b.value : "—"}<span className="text-muted-foreground/50">/{b.maxValue}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Improvement Tips */}
+                      {m.recommendations.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">How to Improve</p>
+                          {m.recommendations.map((rec, idx) => (
+                            <div key={idx} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                              <ArrowRight className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                              <span>{rec}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

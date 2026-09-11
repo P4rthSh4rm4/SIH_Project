@@ -88,6 +88,8 @@ function SessionContent() {
     }
   };
 
+  const [showEmptyWarning, setShowEmptyWarning] = useState(false);
+
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
@@ -95,11 +97,14 @@ function SessionContent() {
     }
   };
 
+  const validAnswers = Object.values(answers).filter(a => a && a.trim().length >= 5).length;
+
   const handleFinish = async () => {
+    if (validAnswers === 0) return;
     setIsSaving(true);
     try {
       await finishInterview(interview.id, answers, secondsElapsed);
-      await evaluateInterview(interview.id);
+      await evaluateInterview(interview.id, answers);
       router.push(`/student/mock-interview/report/${interview.id}`);
     } catch (err) {
       console.error(err);
@@ -201,19 +206,31 @@ function SessionContent() {
       <Dialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Submit Interview?</DialogTitle>
+            <DialogTitle>{validAnswers === 0 ? "Cannot Submit Interview" : "Submit Interview?"}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to finish this interview? Make sure you have answered all questions to the best of your ability.
-              <br/><br/>
-              Total answered: {Object.values(answers).filter(v => v.trim().length > 0).length} / {questions.length}
+              {validAnswers === 0 ? (
+                <span className="text-destructive font-medium block mt-2">
+                  You haven't answered any interview questions. Please answer at least one question before submitting.
+                </span>
+              ) : (
+                <>
+                  Are you sure you want to finish this interview? Make sure you have answered all questions to the best of your ability.
+                  <br/><br/>
+                  Total answered: {validAnswers} / {questions.length}
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowFinishDialog(false)}>Cancel</Button>
-            <Button onClick={handleFinish} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">
-              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Submit Answers
+            <Button variant="outline" onClick={() => setShowFinishDialog(false)}>
+              {validAnswers === 0 ? "Return to Interview" : "Cancel"}
             </Button>
+            {validAnswers > 0 && (
+              <Button onClick={handleFinish} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Submit Answers
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

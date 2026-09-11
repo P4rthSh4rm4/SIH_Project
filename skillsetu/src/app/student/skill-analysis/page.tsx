@@ -13,6 +13,9 @@ import {
   CartesianGrid, Tooltip, LineChart, Line,
 } from "recharts";
 import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
+import { AiRecommendations } from "./components/ai-recommendations";
+import { useDigitalPortfolio } from "@/lib/hooks/useDigitalPortfolio";
+import { useLearningHub } from "@/lib/hooks/useLearningHub";
 
 const TARGET_ROLES = [
   {
@@ -54,7 +57,10 @@ const TARGET_ROLES = [
 ];
 
 export default function SkillAnalysisPage() {
-  const { skills, growth, loading } = useSkillAnalytics();
+  const { skills, growth, loading: analyticsLoading } = useSkillAnalytics();
+  const portfolio = useDigitalPortfolio();
+  const { enrollments, loading: learningLoading } = useLearningHub();
+  const loading = analyticsLoading || learningLoading;
 
   const selectedRole = TARGET_ROLES[0];
 
@@ -301,6 +307,14 @@ export default function SkillAnalysisPage() {
               ))}
             </CardContent>
           </Card>
+          
+          <AiRecommendations 
+            gapData={gapData} 
+            matchPct={matchPct} 
+            role={selectedRole}
+            portfolioSkills={portfolio?.skills || []}
+            completedCourses={enrollments?.filter((e: any) => e.status === 'Completed' || e.progress === 100) || []}
+          />
         </>
       )}
     </div>

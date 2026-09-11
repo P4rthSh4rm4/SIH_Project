@@ -87,6 +87,17 @@ export interface Opportunity {
   company_name?: string;
   verifiedBy?: string;
   sharedBy?: string;
+  
+  // Advanced Recruitment Fields
+  work_mode?: "On-site" | "Hybrid" | "Remote";
+  duration?: string;
+  start_date?: string;
+  positions?: number;
+  preferred_skills?: string[]; // skill IDs
+  eligibility_requirements?: Record<string, unknown>;
+  assessment_requirements?: Record<string, unknown>;
+  hiring_process?: string[]; // Custom stages
+  smart_screening_requirements?: Record<string, unknown>;
 }
 
 // ─── Applications ──────────────────────────────────────────

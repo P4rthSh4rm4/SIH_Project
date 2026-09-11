@@ -15,7 +15,7 @@ export interface MockInterviewRecord {
   started_at: string;
   completed_at: string | null;
   time_taken: number;
-  status: 'In Progress' | 'Completed' | 'Abandoned';
+  status: 'In Progress' | 'Completed' | 'Abandoned' | 'Incomplete';
   technical_score: number | null;
   communication_score: number | null;
   confidence_score: number | null;
@@ -106,7 +106,7 @@ export function useMockInterview() {
     setInterviews(prev => prev.map(inv => inv.id === id ? { ...inv, answers, time_taken: timeTaken } : inv));
   };
 
-  const finishInterview = async (id: string, answers: Record<string, string>, timeTaken: number) => {
+  const finishInterview = async (id: string, answers: Record<string, string>, timeTaken: number, statusOverride?: string) => {
     const supabase = createClient();
     const completedAt = new Date().toISOString();
     
@@ -116,7 +116,7 @@ export function useMockInterview() {
         answers, 
         time_taken: timeTaken, 
         completed_at: completedAt,
-        status: 'Completed'
+        status: statusOverride || 'Completed'
       })
       .eq("id", id)
       .select()
@@ -145,33 +145,51 @@ export function useMockInterview() {
     setInterviews(prev => prev.map(inv => inv.id === id ? { ...inv, status: 'Abandoned' } : inv));
   };
 
-  const evaluateInterview = async (id: string) => {
+  const evaluateInterview = async (id: string, answersObj?: Record<string, string>) => {
     const interview = interviews.find(i => i.id === id);
     if (!interview) throw new Error("Interview not found in local state");
+
+    // Construct EvaluationInput[] using fresh answers
+    const currentAnswers = answersObj || interview.answers;
+    const inputs = interview.questions.map(q => ({
+      question: q,
+      answer: currentAnswers[q.id] || ""
+    }));
+
+    const isAnswerValid = (answer: string) => {
+      if (!answer) return false;
+      const trimmed = answer.trim();
+      return trimmed.length >= 5;
+    };
+
+    const answeredQuestions = inputs.filter(i => isAnswerValid(i.answer)).length;
+    if (answeredQuestions === 0) {
+      throw new Error("Cannot evaluate interview: 0 valid answers submitted.");
+    }
 
     // Dynamic import to avoid circular or SSR issues if any, but static is fine here since it's rule-based
     const { FinalScoreCalculator } = await import("@/lib/services/evaluators/FinalScoreCalculator");
     
-    // Construct EvaluationInput[]
-    const inputs = interview.questions.map(q => ({
-      question: q,
-      answer: interview.answers[q.id] || ""
-    }));
-
     const report = FinalScoreCalculator.generateReport(inputs);
+
+    const payload: any = {
+      technical_score: report.technicalScore,
+      communication_score: report.communicationScore,
+      confidence_score: report.confidenceScore,
+      problem_solving_score: report.problemSolvingScore,
+      grammar_score: report.communicationScore, // Using comm score for grammar proxy
+      overall_score: report.overallScore,
+      ai_feedback: report.status === "Incomplete" ? null : (report as any)
+    };
+
+    if (report.status === "Incomplete") {
+      payload.status = "Incomplete";
+    }
 
     const supabase = createClient();
     const { data, error } = await supabase
       .from("mock_interviews")
-      .update({
-        technical_score: report.technicalScore,
-        communication_score: report.communicationScore,
-        confidence_score: report.confidenceScore,
-        problem_solving_score: report.problemSolvingScore,
-        grammar_score: report.communicationScore, // Using comm score for grammar proxy
-        overall_score: report.overallScore,
-        ai_feedback: report as any
-      })
+      .update(payload)
       .eq("id", id)
       .select()
       .single();

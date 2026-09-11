@@ -16,7 +16,7 @@ export class CommunicationEvaluator {
     let totalProfessionalCount = 0;
 
     if (inputs.length === 0) {
-      return { score: 85, strengths, weaknesses };
+      return { score: null, strengths, weaknesses };
     }
 
     inputs.forEach(input => {
