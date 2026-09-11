@@ -29,6 +29,7 @@ function SessionContent() {
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [showFinishDialog, setShowFinishDialog] = useState(false);
+  const [showEmptyWarning, setShowEmptyWarning] = useState(false);
 
   // Load interview
   useEffect(() => {
@@ -36,15 +37,17 @@ function SessionContent() {
     const inv = interviews.find(i => i.id === id);
     if (inv) {
       setInterview(inv);
-      setAnswers(inv.answers || {});
-      setCurrentAnswer(inv.answers[inv.questions[currentIndex]?.id] || "");
-      setSecondsElapsed(inv.time_taken || 0);
-      setLoading(false);
+      if (loading) {
+        setAnswers(inv.answers || {});
+        setCurrentAnswer((inv.answers || {})[inv.questions[0]?.id] || "");
+        setSecondsElapsed(inv.time_taken || 0);
+        setLoading(false);
+      }
     } else {
       // Might not be in local state if refreshed, trigger fetch
       fetchInterviews();
     }
-  }, [id, interviews, currentIndex, fetchInterviews]);
+  }, [id, interviews, loading, fetchInterviews]);
 
   // Timer
   useEffect(() => {
@@ -83,21 +86,28 @@ function SessionContent() {
 
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setCurrentAnswer(answers[questions[currentIndex + 1].id] || "");
+      // Empty answer validation (requires at least 20 characters)
+      if (!currentAnswer || currentAnswer.trim().length < 20) {
+        setShowEmptyWarning(true);
+        return;
+      }
+      setShowEmptyWarning(false);
+      
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+      setCurrentAnswer(answers[questions[nextIndex].id] || "");
     }
   };
-
-  const [showEmptyWarning, setShowEmptyWarning] = useState(false);
 
   const handlePrev = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setCurrentAnswer(answers[questions[currentIndex - 1].id] || "");
+      const prevIndex = currentIndex - 1;
+      setCurrentIndex(prevIndex);
+      setCurrentAnswer(answers[questions[prevIndex].id] || "");
     }
   };
 
-  const validAnswers = Object.values(answers).filter(a => a && a.trim().length >= 5).length;
+  const validAnswers = Object.values(answers).filter(a => a && a.trim().length >= 20).length;
 
   const handleFinish = async () => {
     if (validAnswers === 0) return;
@@ -231,6 +241,21 @@ function SessionContent() {
                 Submit Answers
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Empty Warning Dialog */}
+      <Dialog open={showEmptyWarning} onOpenChange={setShowEmptyWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Answer Required</DialogTitle>
+            <DialogDescription>
+              Please enter an answer for this question before proceeding to the next one.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowEmptyWarning(false)}>Return</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
