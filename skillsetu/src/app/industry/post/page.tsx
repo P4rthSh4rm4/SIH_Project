@@ -56,7 +56,7 @@ export default function PostOpportunity() {
     min_technical_score: "",
     min_communication_score: "",
     min_placement_readiness: "",
-    resume_required: true,
+    resume_required: false,
   });
 
   useEffect(() => {

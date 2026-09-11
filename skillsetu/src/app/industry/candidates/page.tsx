@@ -4,13 +4,15 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Users, Search, GraduationCap, Briefcase, Mail, MapPin, CheckCircle2, FileText, Link as LinkIcon, Award, ExternalLink } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CheckCircle2, GraduationCap, Mail, MapPin, Search, Users, ExternalLink, Activity, Info, Check, X, Briefcase, Award, FileText, Link as LinkIcon } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { MultiSelect } from "@/components/ui/multi-select";
 
 // Pure Readiness Services
 import {
@@ -23,6 +25,8 @@ import {
   calculateLinkedInScore,
   calculateExperienceScore,
 } from "@/lib/services/readiness";
+import type { Opportunity } from "@/lib/types";
+import { calculateOpportunityMatch, type OpportunityMatchResult } from "@/lib/services/matching/OpportunityMatchService";
 import type { ProfileSkillEntry } from "@/lib/hooks/useProfileSkills";
 import type { MockInterviewRecord } from "@/lib/hooks/useMockInterview";
 
@@ -46,7 +50,6 @@ interface Education {
 export interface Candidate {
   id: string;
   name: string;
-  email: string;
   institution: string;
   education: Education[];
   skills: Skill[];
@@ -68,6 +71,7 @@ export interface Candidate {
   // Raw for mapping if needed
   rawSkills: ProfileSkillEntry[];
   rawInterviews: MockInterviewRecord[];
+  matchResult?: OpportunityMatchResult;
 }
 
 // ─── Weights from usePlacementReadiness ───────────────────────────────────
@@ -96,6 +100,10 @@ export default function CandidatesPage() {
   
   const [allSkills, setAllSkills] = useState<{label: string, value: string}[]>([]);
 
+  // Opportunity Matching
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [selectedOppId, setSelectedOppId] = useState<string>("none");
+
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   useEffect(() => {
@@ -104,59 +112,55 @@ export default function CandidatesPage() {
         setLoading(true);
         const supabase = createClient();
 
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+
         // 1. Fetch available skills for the filter
         const { data: skillsData } = await supabase.from("skills").select("id, name");
         if (skillsData) {
-          setAllSkills(skillsData.map(s => ({ label: s.name, value: s.name })));
+          setAllSkills(skillsData.map(s => ({ label: s.name, value: s.id })));
         }
 
-        // 2. Deep fetch candidates (omitting mock_interviews due to PostgREST auth.users relation limitation)
-        const { data, error } = await supabase
-          .from("users")
-          .select(`
-            id,
-            name,
-            email,
-            institutions (name),
-            student_profiles (bio, resume_url, portfolio_website, linkedin, github),
-            student_education (degree, branch, cgpa, start_year, end_year, institute),
-            student_skills (skill_id, proficiency_score, verified, skills (id, name, category)),
-            assessments (type, taken_at, generated_profile_json),
-            student_experience (id),
-            portfolio_items (id, type),
-            certifications (id, verified)
-          `)
-          .eq("role", "student");
+        // 1b. Fetch active opportunities for this industry user
+        if (currentUser) {
+          const { data: opps } = await supabase
+            .from("opportunities")
+            .select("*")
+            .eq("industry_id", currentUser.id)
+            .eq("status", "active");
+          if (opps) setOpportunities(opps);
+        }
+
+        // 2. Fetch candidates via secure RPC (bypasses RLS strictly for industry role)
+        const { data, error } = await supabase.rpc("get_talent_pool_candidates");
 
         if (error) {
-          console.error("Supabase Query Error:", error);
-          setErrorMsg(error.message || JSON.stringify(error));
+          console.error("Supabase Query Error:");
+          console.error("- Message:", error.message);
+          console.error("- Details:", error.details);
+          console.error("- Hint:", error.hint);
+          console.error("- Code:", error.code);
+          
+          setErrorMsg(error.message || "An unknown error occurred while fetching candidates.");
           throw error;
         }
 
-        // 3. Fetch mock_interviews separately if accessible (handles RLS policies safely)
-        const studentIds = (data || []).map((u: any) => u.id);
-        let allMockInterviews: any[] = [];
-        if (studentIds.length > 0) {
-          const { data: mockData } = await supabase
-            .from("mock_interviews")
-            .select("id, student_id, interview_type, career_path, difficulty, started_at, completed_at, time_taken, status, technical_score, communication_score, problem_solving_score, grammar_score, overall_score")
-            .in("student_id", studentIds);
-          
-          if (mockData) {
-            allMockInterviews = mockData;
-          }
+        // Temporary deep inspection of raw data as requested
+        if (data && data.length > 0) {
+          console.log("--- RAW SUPABASE RPC RESPONSE HEAD ---");
+          console.dir(data[0], { depth: null });
+          console.log("--------------------------------------");
         }
 
-        console.log("Supabase Query Success. Rows returned:", data?.length);
+        console.log("Supabase RPC Success. Rows returned:", data?.length);
 
-        // 4. Map to Candidate interface and calculate readiness
+        // 3. Map to Candidate interface and calculate readiness
+        // The RPC returns mock_interviews inside the user object just like other relations.
         const mappedCandidates: Candidate[] = (data || []).map((user: any) => {
           const profile = user.student_profiles?.[0] || user.student_profiles || {};
           const educationData = user.student_education || [];
           const rawSkillsData = user.student_skills || [];
           const assessmentsData = user.assessments || [];
-          const mockInterviewsData = allMockInterviews.filter(m => m.student_id === user.id);
+          const mockInterviewsData = user.mock_interviews || [];
           const experienceData = user.student_experience || [];
           const portfolioData = user.portfolio_items || [];
           const certificationsData = user.certifications || [];
@@ -207,22 +211,20 @@ export default function CandidatesPage() {
           const linkedinMetric = calculateLinkedInScore(profile, rawSkills.length, education.length, experienceData.length);
           const experienceMetric = calculateExperienceScore(portfolioData, certificationsData.length, certificationsData, 0);
 
-          let overallScore = 0;
+          const total = 
+            (technicalMetric.score || 0)  * READINESS_WEIGHTS.technical +
+            (softSkillsMetric.score || 0) * READINESS_WEIGHTS.softSkills +
+            (aptitudeMetric.score || 0)   * READINESS_WEIGHTS.aptitude +
+            (resumeMetric.score || 0)     * READINESS_WEIGHTS.resume +
+            (portfolioMetric.score || 0)  * READINESS_WEIGHTS.portfolio +
+            (githubMetric.score || 0)     * READINESS_WEIGHTS.github +
+            (linkedinMetric.score || 0)   * READINESS_WEIGHTS.linkedin +
+            (experienceMetric.score || 0) * READINESS_WEIGHTS.experience;
+          
+          let overallScore = Math.round(total) || 0;
           let readinessCategory: Candidate["readinessCategory"] = "Not Assessed";
 
-          if (completedInterviews.length > 0 || assessmentsData.length > 0) {
-            const total = 
-              technicalMetric.score  * READINESS_WEIGHTS.technical +
-              softSkillsMetric.score * READINESS_WEIGHTS.softSkills +
-              aptitudeMetric.score   * READINESS_WEIGHTS.aptitude +
-              resumeMetric.score     * READINESS_WEIGHTS.resume +
-              portfolioMetric.score  * READINESS_WEIGHTS.portfolio +
-              githubMetric.score     * READINESS_WEIGHTS.github +
-              linkedinMetric.score   * READINESS_WEIGHTS.linkedin +
-              experienceMetric.score * READINESS_WEIGHTS.experience;
-            
-            overallScore = Math.round(total);
-
+          if (overallScore > 0) {
             if (overallScore >= 85) readinessCategory = "Highly Ready";
             else if (overallScore >= 70) readinessCategory = "Job Ready";
             else if (overallScore >= 50) readinessCategory = "Developing";
@@ -232,7 +234,6 @@ export default function CandidatesPage() {
           return {
             id: user.id,
             name: user.name || "Unknown Student",
-            email: user.email,
             institution: user.institutions?.name || (education.length > 0 ? education[0].institute : "Unknown Institution"),
             education,
             skills,
@@ -271,39 +272,62 @@ export default function CandidatesPage() {
 
   // ─── Filtering Logic ──────────────────────────────────────────────────────
   const filteredCandidates = useMemo(() => {
-    return candidates.filter(c => {
-      // 1. Search Filter
-      const matchesSearch = 
-        c.name?.toLowerCase().includes(search.toLowerCase()) || 
-        c.institution.toLowerCase().includes(search.toLowerCase()) ||
-        c.education.some(e => e.branch?.toLowerCase().includes(search.toLowerCase()));
+    const selectedOpp = selectedOppId !== "none" ? opportunities.find(o => o.id === selectedOppId) : null;
 
-      if (!matchesSearch) return false;
+    return candidates
+      .filter(c => {
+        // 1. Search Filter
+        const matchesSearch = 
+          c.name?.toLowerCase().includes(search.toLowerCase()) || 
+          c.institution.toLowerCase().includes(search.toLowerCase()) ||
+          c.education.some(e => e.branch?.toLowerCase().includes(search.toLowerCase()));
 
-      // 2. Segment Filter
-      if (selectedSegment === "hire-ready") {
-        if (c.readinessCategory !== "Highly Ready" && c.readinessCategory !== "Job Ready") return false;
-      } else if (selectedSegment === "develop-talent") {
-        if (c.readinessCategory !== "Developing" && c.readinessCategory !== "Early Stage") return false;
-      } else if (selectedSegment === "not-assessed") {
-        if (c.readinessCategory !== "Not Assessed") return false;
-      }
+        if (!matchesSearch) return false;
 
-      // 3. Skills Filter
-      if (selectedSkills.length > 0) {
-        const candidateSkillNames = c.skills.map(s => s.name);
-        if (skillMatchMode === "ANY") {
-          const hasAny = selectedSkills.some(skill => candidateSkillNames.includes(skill));
-          if (!hasAny) return false;
-        } else {
-          const hasAll = selectedSkills.every(skill => candidateSkillNames.includes(skill));
-          if (!hasAll) return false;
+        // 2. Segment Filter
+        if (selectedSegment === "hire-ready") {
+          if (c.readinessCategory !== "Highly Ready" && c.readinessCategory !== "Job Ready") return false;
+        } else if (selectedSegment === "develop-talent") {
+          if (c.readinessCategory !== "Developing" && c.readinessCategory !== "Early Stage") return false;
+        } else if (selectedSegment === "not-assessed") {
+          if (c.readinessCategory !== "Not Assessed") return false;
         }
-      }
 
-      return true;
-    }).sort((a, b) => b.overallScore - a.overallScore); // Default sort by readiness
-  }, [candidates, search, selectedSegment, selectedSkills, skillMatchMode]);
+        // 3. Skills Filter
+        if (selectedSkills.length > 0) {
+          const candidateSkillIds = c.skills.map(s => s.id);
+          if (skillMatchMode === "ANY") {
+            const hasAny = selectedSkills.some(skillId => candidateSkillIds.includes(skillId));
+            if (!hasAny) return false;
+          } else {
+            const hasAll = selectedSkills.every(skillId => candidateSkillIds.includes(skillId));
+            if (!hasAll) return false;
+          }
+        }
+
+        return true;
+      })
+      .map(c => {
+        // Apply Smart Matching if an opportunity is selected
+        let matchResult: OpportunityMatchResult | undefined = undefined;
+        if (selectedOpp) {
+          matchResult = calculateOpportunityMatch(c, selectedOpp, allSkills);
+        }
+        return { ...c, matchResult };
+      })
+      .sort((a, b) => {
+        if (selectedOpp && a.matchResult && b.matchResult) {
+          // Sort by match score desc if determinable
+          if (a.matchResult.isDeterminable && b.matchResult.isDeterminable) {
+            return b.matchResult.score - a.matchResult.score;
+          }
+          if (a.matchResult.isDeterminable) return -1;
+          if (b.matchResult.isDeterminable) return 1;
+        }
+        // Default sort by readiness
+        return b.overallScore - a.overallScore;
+      });
+  }, [candidates, search, selectedSegment, selectedSkills, skillMatchMode, selectedOppId, opportunities, allSkills]);
 
 
   const getCategoryColor = (cat: Candidate["readinessCategory"]) => {
@@ -343,14 +367,34 @@ export default function CandidatesPage() {
               </TabsList>
             </Tabs>
 
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search name, institution, branch..." 
-                className="pl-9 bg-secondary/50 border-border/50"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            <div className="flex items-center gap-4 w-full md:w-auto flex-col md:flex-row">
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Search name, institution, branch..." 
+                  className="pl-9 bg-secondary/50 border-border/50"
+                  value={search}
+                  onChange={(e: any) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="w-full md:w-64">
+                <Select value={selectedOppId} onValueChange={(val: any) => setSelectedOppId(val?.value ? val.value[0] : (val || "none"))}>
+                  <SelectTrigger className="w-full bg-secondary/50 [&>span]:truncate [&>span]:text-left overflow-hidden">
+                    <SelectValue placeholder="Match Opportunity...">
+                      {selectedOppId !== "none" ? opportunities.find(o => o.id === selectedOppId)?.title || "Match Opportunity..." : "Match Opportunity..."}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Opportunity Selected</SelectItem>
+                    {opportunities.map(opp => (
+                      <SelectItem key={opp.id} value={opp.id}>
+                        {opp.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -422,6 +466,109 @@ export default function CandidatesPage() {
                         </div>
                       </div>
                     </div>
+                    {selectedOppId !== "none" && candidate.matchResult && (
+                      <div className="flex flex-col items-end gap-2">
+                        {candidate.matchResult.isDeterminable ? (
+                          <Badge variant="default" className={
+                            candidate.matchResult.category === "Excellent Match" ? "bg-emerald-500 hover:bg-emerald-600" :
+                            candidate.matchResult.category === "Strong Match" ? "bg-blue-500 hover:bg-blue-600" :
+                            candidate.matchResult.category === "Partial Match" ? "bg-amber-500 hover:bg-amber-600" :
+                            "bg-slate-500 hover:bg-slate-600"
+                          }>
+                            {candidate.matchResult.category} — {candidate.matchResult.score}%
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-dashed text-muted-foreground">
+                            Matching Unavailable
+                          </Badge>
+                        )}
+                        
+                        {candidate.matchResult.isDeterminable && (
+                          <Dialog>
+                            <DialogTrigger>
+                              <div role="button" className="text-xs text-blue-600 hover:underline cursor-pointer">
+                                Why this candidate?
+                              </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Match Breakdown</DialogTitle>
+                                <DialogDescription>How this candidate matches your opportunity</DialogDescription>
+                              </DialogHeader>
+                              
+                              <div className="space-y-4 mt-2">
+                                {candidate.matchResult.breakdown.matchedRequiredSkills.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold mb-1 text-emerald-700">Matched Required Skills</h4>
+                                    <div className="flex flex-wrap gap-1">
+                                      {candidate.matchResult.breakdown.matchedRequiredSkills.map(s => (
+                                        <Badge key={s.id} variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200"><Check className="w-3 h-3 mr-1"/>{s.name}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {candidate.matchResult.breakdown.missingRequiredSkills.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold mb-1 text-destructive">Missing Required Skills</h4>
+                                    <div className="flex flex-wrap gap-1">
+                                      {candidate.matchResult.breakdown.missingRequiredSkills.map(s => (
+                                        <Badge key={s.id} variant="outline" className="text-destructive border-destructive/30"><X className="w-3 h-3 mr-1"/>{s.name}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {candidate.matchResult.breakdown.matchedPreferredSkills.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold mb-1 text-blue-700">Matched Preferred Skills</h4>
+                                    <div className="flex flex-wrap gap-1">
+                                      {candidate.matchResult.breakdown.matchedPreferredSkills.map(s => (
+                                        <Badge key={s.id} variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200"><Check className="w-3 h-3 mr-1"/>{s.name}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {candidate.matchResult.breakdown.eligibility.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold mb-1">Eligibility</h4>
+                                    <ul className="text-sm space-y-1">
+                                      {candidate.matchResult.breakdown.eligibility.map((e, i) => (
+                                        <li key={i} className="flex items-center gap-2">
+                                          {e.passed ? <Check className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-destructive" />}
+                                          <span>{e.label}: {e.value} <span className="text-muted-foreground">(Req: {e.required})</span></span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {candidate.matchResult.breakdown.assessments.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold mb-1">Screening & Assessments</h4>
+                                    <ul className="text-sm space-y-1">
+                                      {candidate.matchResult.breakdown.assessments.map((a, i) => (
+                                        <li key={i} className="flex items-center gap-2">
+                                          {a.passed ? <Check className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-destructive" />}
+                                          <span>{a.label}: {a.value} <span className="text-muted-foreground">(Req: {a.required})</span></span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {candidate.matchResult.breakdown.experienceNotes.length > 0 && (
+                                  <div>
+                                    <h4 className="text-sm font-semibold mb-1">Experience Note</h4>
+                                    <ul className="text-sm space-y-1 list-disc pl-4 text-muted-foreground">
+                                      {candidate.matchResult.breakdown.experienceNotes.map((note, i) => (
+                                        <li key={i}>{note}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 

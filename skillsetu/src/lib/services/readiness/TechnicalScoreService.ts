@@ -72,7 +72,7 @@ export function calculateTechnicalScore(
   if (completedInterviews.length > 0) {
     const techScores = completedInterviews
       .map(i => i.technical_score)
-      .filter((s): s is number => s !== null);
+      .filter((s): s is number => s !== null && s !== undefined);
     if (techScores.length > 0) {
       mockTechAvg = Math.round(techScores.reduce((a, b) => a + b, 0) / techScores.length);
     }

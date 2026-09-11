@@ -41,7 +41,7 @@ export function calculateSoftSkillsScore(
   // ── Mock Interview Communication Score ──
   let mockCommAvg: number | null = null;
   if (completedInterviews.length > 0) {
-    const scores = completedInterviews.map(i => i.communication_score).filter((s): s is number => s !== null);
+    const scores = completedInterviews.map(i => i.communication_score).filter((s): s is number => s !== null && s !== undefined);
     if (scores.length > 0) mockCommAvg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   }
 
@@ -61,7 +61,7 @@ export function calculateSoftSkillsScore(
   // ── Mock Interview Confidence Score ──
   let mockConfAvg: number | null = null;
   if (completedInterviews.length > 0) {
-    const scores = completedInterviews.map(i => i.confidence_score).filter((s): s is number => s !== null);
+    const scores = completedInterviews.map(i => i.confidence_score).filter((s): s is number => s !== null && s !== undefined);
     if (scores.length > 0) mockConfAvg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   }
 
@@ -82,7 +82,7 @@ export function calculateSoftSkillsScore(
   if (completedInterviews.length > 0) {
     const hrScores = completedInterviews
       .map(i => i.ai_feedback?.hrReadiness ?? null)
-      .filter((s): s is number => s !== null);
+      .filter((s): s is number => s !== null && s !== undefined);
     if (hrScores.length > 0) hrAvg = Math.round(hrScores.reduce((a, b) => a + b, 0) / hrScores.length);
   }
 

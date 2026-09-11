@@ -160,6 +160,25 @@ export default function AnalyticsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Industry Feedback & Skill Gap Insights */}
+        <Card className="border-border/50 shadow-sm lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Industry Feedback & Skill Gap Insights</CardTitle>
+            <CardDescription>
+              Identify recurring skill and competency gaps observed during candidate interviews and recruitment.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Target className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">No feedback data yet</h3>
+            <p className="text-muted-foreground mt-2 max-w-md">
+              Insufficient data to generate meaningful skill gap insights. Begin leaving structured feedback on candidates during the interview and selection phases to populate this report.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
