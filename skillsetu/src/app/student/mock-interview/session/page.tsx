@@ -45,6 +45,7 @@ function SessionContent() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [fallbackMode, setFallbackMode] = useState(false); // If media fails, fallback to Text
+  const [isCameraActive, setIsCameraActive] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -106,7 +107,38 @@ function SessionContent() {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setIsCameraActive(false);
   };
+
+  // Initialize camera preview for Video Mode
+  useEffect(() => {
+    let mounted = true;
+    const currentMode = fallbackMode ? 'Text' : (interview?.mode || 'Text');
+    
+    if (currentMode === 'Video' && !streamRef.current) {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+          if (!mounted) {
+            stream.getTracks().forEach(t => t.stop());
+            return;
+          }
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+          setIsCameraActive(true);
+        })
+        .catch(err => {
+          console.error("Camera init error:", err);
+          if (mounted) {
+            toast.error("Camera access denied. Falling back to Text mode.");
+            setFallbackMode(true);
+          }
+        });
+    }
+
+    return () => { mounted = false; };
+  }, [interview?.mode, fallbackMode]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -137,15 +169,18 @@ function SessionContent() {
         return;
       }
 
-      // Request permissions
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: mode === 'Video'
-      });
-      streamRef.current = stream;
+      // Request permissions if not already active
+      if (!streamRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: mode === 'Video'
+        });
+        streamRef.current = stream;
+      }
 
-      if (mode === 'Video' && videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (mode === 'Video' && videoRef.current && videoRef.current.srcObject !== streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+        setIsCameraActive(true);
       }
 
       // Start Speech Recognition
@@ -207,7 +242,12 @@ function SessionContent() {
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
-    stopMediaTracks();
+    
+    // Only stop media tracks for Voice mode, keep camera on for Video mode preview
+    const currentMode = fallbackMode ? 'Text' : (interview?.mode || 'Text');
+    if (currentMode !== 'Video') {
+      stopMediaTracks();
+    }
 
     // Calculate basic metrics: words per minute based on recording duration
     const words = currentAnswer.trim().split(/\s+/).filter(w => w.length > 0).length;
@@ -325,10 +365,10 @@ function SessionContent() {
         <CardContent className="flex-1 pt-6 flex flex-col gap-4">
           
           {mode === 'Video' && (
-            <div className={`w-full max-w-sm mx-auto aspect-video bg-black rounded-lg overflow-hidden relative border shadow-sm ${!isRecording ? 'opacity-50 grayscale' : ''}`}>
+            <div className={`w-full max-w-sm mx-auto aspect-video bg-black rounded-lg overflow-hidden relative border shadow-sm ${!isCameraActive ? 'opacity-50 grayscale' : ''}`}>
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100"></video>
-              {!isRecording && (
-                <div className="absolute inset-0 flex items-center justify-center text-white/70 flex-col gap-2">
+              {!isCameraActive && (
+                <div className="absolute inset-0 flex items-center justify-center text-white/70 flex-col gap-2 bg-black/50">
                   <Video className="w-8 h-8" />
                   <span className="text-sm font-medium">Camera Off</span>
                 </div>

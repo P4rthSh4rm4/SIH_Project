@@ -262,6 +262,7 @@ export interface ProfileFormData {
   role: UserRole;
   avatar_url?: string;
   institution_id?: string;
+  onboarding_completed?: boolean;
   // From student_profiles table
   student_profile_id?: string;
   bio?: string;

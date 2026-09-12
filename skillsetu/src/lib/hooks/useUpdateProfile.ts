@@ -66,6 +66,8 @@ export function useUpdateProfile(): UseUpdateProfileResult {
         if (avatarUrl !== undefined) userFields.avatar_url = avatarUrl;
         if (data.institution_id !== undefined)
           userFields.institution_id = data.institution_id;
+        if (data.onboarding_completed !== undefined)
+          userFields.onboarding_completed = data.onboarding_completed;
 
         if (data.bio !== undefined) profileFields.bio = data.bio;
         if (data.career_objective !== undefined)

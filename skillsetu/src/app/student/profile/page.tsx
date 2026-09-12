@@ -101,7 +101,13 @@ export default function ProfilePage() {
   const handleSave = useCallback(async () => {
     if (!formData) return;
 
-    const result = await updateProfile(formOverrides, avatarFile);
+    // If profile reaches 100%, automatically mark onboarding as completed
+    const payload = { ...formOverrides };
+    if (completion.percentage === 100 && !formData.onboarding_completed) {
+      payload.onboarding_completed = true;
+    }
+
+    const result = await updateProfile(payload, avatarFile);
 
     if (result.success) {
       toast.success("Profile updated successfully", {
@@ -115,7 +121,7 @@ export default function ProfilePage() {
         description: result.error,
       });
     }
-  }, [formData, formOverrides, avatarFile, updateProfile, refetchProfile]);
+  }, [formData, formOverrides, avatarFile, updateProfile, refetchProfile, completion.percentage]);
 
   // ─── Loading State ────────────────────────────────────────
   if (profileLoading) {
