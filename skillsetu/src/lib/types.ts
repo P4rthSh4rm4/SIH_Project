@@ -128,6 +128,11 @@ export interface LearningProgram {
   type: string;
   skills_covered: string[];
   url?: string;
+  status?: string;
+  duration?: string;
+  capacity?: number;
+  description?: string;
+  enrolled_count?: number;
 }
 
 // ─── Certifications ────────────────────────────────────────

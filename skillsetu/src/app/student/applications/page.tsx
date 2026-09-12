@@ -6,11 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Briefcase, Building2, MapPin, Clock, CheckCircle2,
-  XCircle, Clock3, AlertCircle, RefreshCw, Eye, X, Loader2
+  XCircle, Clock3, AlertCircle, RefreshCw, Eye, X, Loader2, Calendar, FileText
 } from "lucide-react";
 import { useApplications } from "@/lib/hooks/useApplications";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/lib/supabase/client";
 
 
 const STATUS_CONFIG = {
@@ -25,10 +29,115 @@ const STATUS_CONFIG = {
 };
 
 export default function ApplicationsPage() {
-  const { applications, loading, withdrawApplication } = useApplications();
+  const { applications, loading, withdrawApplication, refetch } = useApplications();
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [viewingOfferApp, setViewingOfferApp] = useState<any | null>(null);
+  const [isDeclining, setIsDeclining] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const allApplications = applications;
+
+  const handleAcceptOffer = async (app: any) => {
+    if (!confirm("Are you sure you want to accept this offer?")) return;
+    setProcessingId(app.id);
+    try {
+      const supabase = createClient();
+      
+      const offer = Array.isArray(app.application_offers) 
+        ? app.application_offers[0] 
+        : app.application_offers;
+
+      if (!offer) throw new Error("Offer not found");
+
+      // 1. Update Offer Status
+      const { error: updateError } = await supabase
+        .from("application_offers")
+        .update({ 
+          offer_status: "accepted", 
+          accepted_at: new Date().toISOString() 
+        })
+        .eq("id", offer.id);
+
+      if (updateError) throw updateError;
+
+      // 2. Insert into placement_records
+      const { error: placementError } = await supabase
+        .from("placement_records")
+        .insert({
+          student_id: app.student_id,
+          opportunity_id: app.opportunity_id,
+          outcome: "placed",
+          package: offer.salary_package,
+          date: new Date().toISOString().split('T')[0]
+        });
+
+      if (placementError) throw placementError;
+
+      // 3. Notify Industry user
+      await supabase.from("notifications").insert({
+        user_id: app.opportunity.industry_id,
+        type: "offer_accepted",
+        payload_json: {
+          application_id: app.id,
+          student_name: app.student_name || "A candidate",
+          opportunity_title: app.opportunity.title
+        }
+      });
+
+      toast.success("Offer accepted successfully! Congratulations!");
+      refetch();
+      setViewingOfferApp(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to accept offer");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleDeclineOffer = async (app: any) => {
+    setProcessingId(app.id);
+    try {
+      const supabase = createClient();
+      const offer = Array.isArray(app.application_offers) 
+        ? app.application_offers[0] 
+        : app.application_offers;
+
+      if (!offer) throw new Error("Offer not found");
+
+      const { error: updateError } = await supabase
+        .from("application_offers")
+        .update({ 
+          offer_status: "declined", 
+          declined_at: new Date().toISOString(),
+          decline_reason: declineReason
+        })
+        .eq("id", offer.id);
+
+      if (updateError) throw updateError;
+
+      await supabase.from("notifications").insert({
+        user_id: app.opportunity.industry_id,
+        type: "offer_declined",
+        payload_json: {
+          application_id: app.id,
+          student_name: app.student_name || "A candidate",
+          opportunity_title: app.opportunity.title,
+          reason: declineReason
+        }
+      });
+
+      toast.success("Offer declined");
+      refetch();
+      setIsDeclining(false);
+      setDeclineReason("");
+      setViewingOfferApp(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to decline offer");
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const handleWithdraw = async (id: string) => {
     if (!confirm("Are you sure you want to withdraw this application? This action cannot be undone.")) return;
@@ -163,11 +272,134 @@ export default function ApplicationsPage() {
                     </Button>
                   </CardFooter>
                 )}
+                
+                {app.status === 'offer' && (
+                  <CardFooter className="pt-0 justify-end bg-emerald-50/50 mt-2 border-t border-emerald-100 rounded-b-xl py-3">
+                    <Button 
+                      variant="outline" 
+                      className="bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => setViewingOfferApp(app)}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      View Job Offer
+                    </Button>
+                  </CardFooter>
+                )}
               </Card>
             );
           })}
         </div>
       )}
+
+      {/* View Offer Modal */}
+      <Dialog open={!!viewingOfferApp} onOpenChange={(open) => {
+        if (!open) {
+          setViewingOfferApp(null);
+          setIsDeclining(false);
+          setDeclineReason("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Job Offer Details</DialogTitle>
+            <DialogDescription>
+              {viewingOfferApp?.opportunity?.title} at {viewingOfferApp?.opportunity?.company_name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingOfferApp && (
+            (() => {
+              const offer = Array.isArray(viewingOfferApp.application_offers) 
+                ? viewingOfferApp.application_offers[0] 
+                : viewingOfferApp.application_offers;
+
+              if (!offer || offer.offer_status === 'draft') return <div className="py-4">No finalized offer found.</div>;
+
+              return (
+                <div className="grid gap-4 py-4">
+                  <div className="bg-muted/30 p-4 rounded-lg space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-muted-foreground">Position</div>
+                      <div className="font-medium">{offer.position_title}</div>
+                      
+                      <div className="text-muted-foreground">Employment Type</div>
+                      <div className="font-medium">{offer.employment_type}</div>
+                      
+                      <div className="text-muted-foreground">Salary / Package</div>
+                      <div className="font-medium text-emerald-600">{offer.salary_package}</div>
+                      
+                      <div className="text-muted-foreground">Joining Date</div>
+                      <div className="font-medium">{offer.joining_date}</div>
+
+                      <div className="text-muted-foreground">Offer Expires</div>
+                      <div className="font-medium">{offer.offer_expiry_date}</div>
+                    </div>
+
+                    {offer.additional_terms && (
+                      <div className="pt-2 border-t border-border/50">
+                        <div className="text-xs text-muted-foreground mb-1">Additional Terms</div>
+                        <div className="text-sm">{offer.additional_terms}</div>
+                      </div>
+                    )}
+                    
+                    {offer.recruiter_message && (
+                      <div className="pt-2 border-t border-border/50">
+                        <div className="text-xs text-muted-foreground mb-1">Message from Recruiter</div>
+                        <div className="text-sm italic">"{offer.recruiter_message}"</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {offer.offer_status === 'sent' && !isDeclining && (
+                    <div className="flex gap-2 justify-end mt-2">
+                      <Button variant="outline" className="text-red-600 hover:bg-red-50 border-red-200" onClick={() => setIsDeclining(true)}>
+                        Decline Offer
+                      </Button>
+                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleAcceptOffer(viewingOfferApp)} disabled={!!processingId}>
+                        {processingId === viewingOfferApp.id && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Accept Offer
+                      </Button>
+                    </div>
+                  )}
+
+                  {offer.offer_status === 'sent' && isDeclining && (
+                    <div className="space-y-3 mt-2 border border-red-200 rounded-lg p-3 bg-red-50/50">
+                      <div className="text-sm font-medium text-red-800">Why are you declining this offer?</div>
+                      <Textarea 
+                        placeholder="Optional reason (e.g., accepted another offer, compensation mismatch...)" 
+                        className="text-sm bg-white"
+                        value={declineReason}
+                        onChange={(e) => setDeclineReason(e.target.value)}
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="ghost" size="sm" onClick={() => setIsDeclining(false)}>Cancel</Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeclineOffer(viewingOfferApp)} disabled={!!processingId}>
+                          {processingId === viewingOfferApp.id && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          Confirm Decline
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {offer.offer_status === 'accepted' && (
+                    <div className="bg-emerald-100 text-emerald-800 p-3 rounded-lg flex items-center text-sm font-medium">
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      You accepted this offer on {new Date(offer.accepted_at).toLocaleDateString()}
+                    </div>
+                  )}
+
+                  {offer.offer_status === 'declined' && (
+                    <div className="bg-red-100 text-red-800 p-3 rounded-lg flex items-center text-sm font-medium">
+                      <XCircle className="w-5 h-5 mr-2" />
+                      You declined this offer on {new Date(offer.declined_at).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

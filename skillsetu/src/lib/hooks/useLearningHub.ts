@@ -102,10 +102,7 @@ export function useLearningHub() {
       if (!user) return;
 
       const [programsRes, enrollmentsRes] = await Promise.all([
-        supabase
-          .from("learning_programs")
-          .select("*")
-          .order("title", { ascending: true }),
+        supabase.rpc("get_published_programs_with_counts"),
         supabase
           .from("learning_enrollments")
           .select("*, program:learning_programs(*)")
@@ -113,10 +110,21 @@ export function useLearningHub() {
           .order("enrolled_at", { ascending: false }),
       ]);
 
-      if (programsRes.error) throw programsRes.error;
+      let finalProgramsData = programsRes.data;
+      if (programsRes.error) {
+        // Fallback to standard fetch if RPC is not deployed yet
+        const fallbackRes = await supabase
+          .from("learning_programs")
+          .select("*")
+          .eq("status", "published")
+          .order("title", { ascending: true });
+        if (fallbackRes.error) throw fallbackRes.error;
+        finalProgramsData = fallbackRes.data;
+      }
+      
       if (enrollmentsRes.error) throw enrollmentsRes.error;
 
-      const loadedPrograms = (programsRes.data as LearningProgram[]) ?? [];
+      const loadedPrograms = (finalProgramsData as LearningProgram[]) ?? [];
       const loadedEnrollments = (enrollmentsRes.data as LearningEnrollment[]) ?? [];
 
       // Deduplicate programs by title (seed script may have created duplicates)
@@ -206,21 +214,27 @@ export function useLearningHub() {
           setEnrollments(prev => [newEnrollment, ...prev]);
           return { success: true };
         }
-        
-        const payload = {
-          student_id: user.id,
-          program_id: programId,
-          progress_pct: 0,
-        };
-        console.log("[useLearningHub] Exact Supabase insert payload:", payload);
-
-        const { data, error } = await supabase.from("learning_enrollments").insert(payload).select();
+        const { data, error } = await supabase.rpc("enroll_in_program", { p_program_id: programId });
         console.log("[useLearningHub] Complete Supabase response:", { data, error });
 
         if (error) {
           console.error("[useLearningHub] enroll Supabase error object:", JSON.stringify(error, null, 2));
-          throw new Error(error.message || error.details || "Supabase insert failed");
+          // If RPC is missing, fallback to direct insert
+          if (error.code === '42883' || error.message.includes('function enroll_in_program does not exist')) {
+             const payload = {
+               student_id: user.id,
+               program_id: programId,
+               progress_pct: 0,
+             };
+             const { error: insertError } = await supabase.from("learning_enrollments").insert(payload);
+             if (insertError) throw new Error(insertError.message || "Failed to enroll");
+          } else {
+             throw new Error(error.message || error.details || "Supabase enroll failed");
+          }
+        } else if (data && data.success === false) {
+           throw new Error(data.error || "Failed to enroll");
         }
+        
         await fetchData();
         return { success: true };
       } catch (err) {

@@ -19,7 +19,7 @@ export function useApplications() {
 
       const { data, error } = await supabase
         .from("applications")
-        .select("*, opportunity:opportunities(*)")
+        .select("*, opportunity:opportunities(*), application_offers(*)")
         .eq("student_id", user.id)
         .order("applied_at", { ascending: false });
 

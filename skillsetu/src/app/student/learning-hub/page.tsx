@@ -345,13 +345,23 @@ function LearningHubContent() {
                     <div className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                       <Award className="w-3.5 h-3.5 text-primary" /> Certificate
                     </div>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleEnroll(program.id)}
-                      disabled={isEnrolling || isAlreadyEnrolled}
-                    >
-                      {isEnrolling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : isAlreadyEnrolled ? "Enrolled" : "Enroll Now"}
-                    </Button>
+                    {(() => {
+                      const capacity = program.capacity ?? 0;
+                      const enrolledCount = program.enrolled_count ?? 0;
+                      const isFull = capacity > 0 && enrolledCount >= capacity;
+                      return (
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleEnroll(program.id)}
+                          disabled={isEnrolling || isAlreadyEnrolled || isFull}
+                          variant={isFull && !isAlreadyEnrolled ? "secondary" : "default"}
+                        >
+                          {isEnrolling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 
+                           isAlreadyEnrolled ? "Enrolled" : 
+                           isFull ? "Full" : "Enroll Now"}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </CardFooter>
               </Card>

@@ -91,7 +91,7 @@ export default function CandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [invited, setInvited] = useState<string[]>([]);
+  const [existingApplications, setExistingApplications] = useState<{ opportunity_id: string, student_id: string, status: string }[]>([]);
   
   // Filters
   const [selectedSegment, setSelectedSegment] = useState("all");
@@ -127,7 +127,23 @@ export default function CandidatesPage() {
             .select("*")
             .eq("industry_id", currentUser.id)
             .eq("status", "active");
-          if (opps) setOpportunities(opps);
+            
+          if (opps) {
+            setOpportunities(opps);
+            
+            // 1c. Fetch existing applications for these opportunities
+            const oppIds = opps.map(o => o.id);
+            if (oppIds.length > 0) {
+              const { data: appsData } = await supabase
+                .from("applications")
+                .select("opportunity_id, student_id, status")
+                .in("opportunity_id", oppIds);
+                
+              if (appsData) {
+                setExistingApplications(appsData);
+              }
+            }
+          }
         }
 
         // 2. Fetch candidates via secure RPC (bypasses RLS strictly for industry role)
@@ -265,9 +281,66 @@ export default function CandidatesPage() {
     fetchCandidates();
   }, []);
 
-  const handleInvite = (id: string, name: string) => {
-    setInvited(prev => [...prev, id]);
-    toast.success(`Candidate ${name} shortlisted!`);
+  const handleInvite = async (candidateId: string, name: string, matchScore: number | null) => {
+    if (selectedOppId === "none") {
+      toast.error("Please select an opportunity to shortlist candidates.");
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+      
+      const { data: existing, error: checkError } = await supabase
+        .from("applications")
+        .select("id, status")
+        .eq("opportunity_id", selectedOppId)
+        .eq("student_id", candidateId)
+        .maybeSingle();
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      if (existing) {
+        if (existing.status === "shortlisted") {
+          toast.info(`Candidate ${name} is already shortlisted.`);
+          return;
+        }
+        
+        const updateData: any = { status: "shortlisted" };
+        if (matchScore !== null) {
+          updateData.match_score = matchScore;
+        }
+
+        const { error: updateError } = await supabase
+          .from("applications")
+          .update(updateData)
+          .eq("id", existing.id);
+          
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("applications")
+          .insert({
+            opportunity_id: selectedOppId,
+            student_id: candidateId,
+            status: "shortlisted",
+            match_score: matchScore
+          });
+          
+        if (insertError) throw insertError;
+      }
+
+      setExistingApplications(prev => [
+        ...prev.filter(a => !(a.opportunity_id === selectedOppId && a.student_id === candidateId)),
+        { opportunity_id: selectedOppId, student_id: candidateId, status: "shortlisted" }
+      ]);
+      
+      toast.success(`Candidate ${name} shortlisted!`);
+    } catch (err: any) {
+      console.error("Error shortlisting candidate:", err);
+      toast.error("Failed to shortlist candidate.");
+    }
   };
 
   // ─── Filtering Logic ──────────────────────────────────────────────────────
@@ -444,7 +517,11 @@ export default function CandidatesPage() {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
           {filteredCandidates.map((candidate) => {
-             const isInvited = invited.includes(candidate.id);
+             const isInvited = existingApplications.some(
+               app => app.opportunity_id === selectedOppId && 
+                      app.student_id === candidate.id && 
+                      ["shortlisted", "interview", "offer", "hired"].includes(app.status)
+             );
              const topEdu = candidate.education[0];
 
              return (
@@ -653,7 +730,7 @@ export default function CandidatesPage() {
                         <CheckCircle2 className="w-4 h-4 mr-2" /> Shortlisted
                       </Button>
                     ) : (
-                      <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => handleInvite(candidate.id, candidate.name)}>
+                      <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => handleInvite(candidate.id, candidate.name, candidate.matchResult?.isDeterminable ? candidate.matchResult.score : null)}>
                         <Mail className="w-4 h-4 mr-2" /> Shortlist
                       </Button>
                     )}
@@ -774,13 +851,13 @@ export default function CandidatesPage() {
                    <Button variant="outline" onClick={() => setSelectedCandidate(null)}>Close</Button>
                    <Button 
                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                     disabled={invited.includes(selectedCandidate.id)}
+                     disabled={existingApplications.some(app => app.opportunity_id === selectedOppId && app.student_id === selectedCandidate.id && ["shortlisted", "interview", "offer", "hired"].includes(app.status))}
                      onClick={() => {
-                       handleInvite(selectedCandidate.id, selectedCandidate.name);
+                       handleInvite(selectedCandidate.id, selectedCandidate.name, selectedCandidate.matchResult?.isDeterminable ? selectedCandidate.matchResult.score : null);
                        setSelectedCandidate(null);
                      }}
                    >
-                     {invited.includes(selectedCandidate.id) ? (
+                     {existingApplications.some(app => app.opportunity_id === selectedOppId && app.student_id === selectedCandidate.id && ["shortlisted", "interview", "offer", "hired"].includes(app.status)) ? (
                        <><CheckCircle2 className="w-4 h-4 mr-2" /> Shortlisted</>
                      ) : (
                        <><Mail className="w-4 h-4 mr-2" /> Shortlist Candidate</>
