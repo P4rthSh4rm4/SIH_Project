@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMockInterview, MockInterviewRecord } from "@/lib/hooks/useMockInterview";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -9,8 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Loader2, Clock, ChevronRight, ChevronLeft, CheckCircle2, Save, FastForward } from "lucide-react";
+import { Loader2, Clock, ChevronRight, ChevronLeft, CheckCircle2, Save, FastForward, Mic, Square, Video, AlertCircle, Type } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+
+// Type definition for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 function SessionContent() {
   const router = useRouter();
@@ -25,11 +34,22 @@ function SessionContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [mediaMetrics, setMediaMetrics] = useState<Record<string, any>>({});
   
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [showFinishDialog, setShowFinishDialog] = useState(false);
   const [showEmptyWarning, setShowEmptyWarning] = useState(false);
+
+  // Multimodal states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [fallbackMode, setFallbackMode] = useState(false); // If media fails, fallback to Text
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load interview
   useEffect(() => {
@@ -41,15 +61,15 @@ function SessionContent() {
         setAnswers(inv.answers || {});
         setCurrentAnswer((inv.answers || {})[inv.questions[0]?.id] || "");
         setSecondsElapsed(inv.time_taken || 0);
+        setMediaMetrics(inv.media_metrics || {});
         setLoading(false);
       }
     } else {
-      // Might not be in local state if refreshed, trigger fetch
       fetchInterviews();
     }
   }, [id, interviews, loading, fetchInterviews]);
 
-  // Timer
+  // Main Timer
   useEffect(() => {
     if (!interview || interview.status !== 'In Progress') return;
     const interval = setInterval(() => {
@@ -67,6 +87,27 @@ function SessionContent() {
     return () => clearInterval(interval);
   }, [interview, answers, secondsElapsed, saveProgress]);
 
+  // Cleanup media on unmount
+  useEffect(() => {
+    return () => {
+      stopMediaTracks();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
+      if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
+    };
+  }, []);
+
+  const stopMediaTracks = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
@@ -75,6 +116,7 @@ function SessionContent() {
     return <div className="text-center py-20">Interview not found.</div>;
   }
 
+  const mode = fallbackMode ? 'Text' : (interview.mode || 'Text');
   const questions = interview.questions;
   const currentQ = questions[currentIndex];
   const progressPct = ((currentIndex + 1) / questions.length) * 100;
@@ -84,9 +126,108 @@ function SessionContent() {
     setAnswers(prev => ({ ...prev, [currentQ.id]: val }));
   };
 
+  const startRecording = async () => {
+    try {
+      if (mode === 'Text') return;
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        toast.error("Speech recognition is not supported in your browser. Falling back to Text mode.");
+        setFallbackMode(true);
+        return;
+      }
+
+      // Request permissions
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: mode === 'Video'
+      });
+      streamRef.current = stream;
+
+      if (mode === 'Video' && videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+
+      // Start Speech Recognition
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      // Keep previous answer if appending, but here we overwrite or append?
+      // Better to start fresh for a clean recording, or append? Let's just append.
+      let finalTranscript = currentAnswer ? currentAnswer + " " : "";
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        let newFinal = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            newFinal += transcript + " ";
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        finalTranscript += newFinal;
+        handleAnswerChange((finalTranscript + interimTranscript).trim());
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        if (event.error === 'not-allowed') {
+          toast.error("Microphone access denied. Falling back to Text mode.");
+          stopMediaTracks();
+          setFallbackMode(true);
+          setIsRecording(false);
+          if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingSeconds(prev => prev + 1);
+      }, 1000);
+
+    } catch (err: any) {
+      console.error("Media error:", err);
+      toast.error("Failed to access camera/microphone. Falling back to Text mode.");
+      setFallbackMode(true);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    setIsRecording(false);
+    if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+    }
+    stopMediaTracks();
+
+    // Calculate basic metrics: words per minute based on recording duration
+    const words = currentAnswer.trim().split(/\s+/).filter(w => w.length > 0).length;
+    const minutes = recordingSeconds / 60;
+    const wpm = minutes > 0 ? Math.round(words / minutes) : 0;
+    
+    // Store in mediaMetrics
+    setMediaMetrics(prev => ({
+      ...prev,
+      [currentQ.id]: {
+        durationSeconds: recordingSeconds,
+        wpm: wpm
+      }
+    }));
+  };
+
   const handleNext = async () => {
+    if (isRecording) stopRecording();
+
     if (currentIndex < questions.length - 1) {
-      // Empty answer validation (requires at least 20 characters)
       if (!currentAnswer || currentAnswer.trim().length < 20) {
         setShowEmptyWarning(true);
         return;
@@ -100,6 +241,8 @@ function SessionContent() {
   };
 
   const handlePrev = () => {
+    if (isRecording) stopRecording();
+
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
@@ -110,10 +253,11 @@ function SessionContent() {
   const validAnswers = Object.values(answers).filter(a => a && a.trim().length >= 20).length;
 
   const handleFinish = async () => {
+    if (isRecording) stopRecording();
     if (validAnswers === 0) return;
     setIsSaving(true);
     try {
-      await finishInterview(interview.id, answers, secondsElapsed);
+      await finishInterview(interview.id, answers, secondsElapsed, 'Completed', mediaMetrics);
       await evaluateInterview(interview.id, answers);
       router.push(`/student/mock-interview/report/${interview.id}`);
     } catch (err) {
@@ -150,6 +294,10 @@ function SessionContent() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
             <Badge variant="outline">{interview.career_path}</Badge>
             <Badge variant="outline">{interview.difficulty}</Badge>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              {mode === 'Voice' ? <Mic className="w-3 h-3" /> : mode === 'Video' ? <Video className="w-3 h-3" /> : <Type className="w-3 h-3" />}
+              {mode} Mode
+            </Badge>
           </div>
         </div>
         <div className="flex items-center gap-2 font-mono text-xl font-bold bg-background px-4 py-2 rounded-lg border shadow-sm">
@@ -174,19 +322,68 @@ function SessionContent() {
           </div>
           <CardTitle className="text-2xl leading-relaxed">{currentQ.question}</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 pt-6 flex flex-col">
-          <Label className="mb-2 text-muted-foreground font-semibold flex justify-between">
-            Your Answer
-            <span className="text-xs font-normal opacity-50 flex items-center gap-1">
-              <Save className="w-3 h-3" /> Auto-saving
-            </span>
-          </Label>
-          <Textarea 
-            value={currentAnswer}
-            onChange={(e) => handleAnswerChange(e.target.value)}
-            placeholder="Type your answer here. Be detailed and structured..."
-            className="flex-1 min-h-[200px] text-base resize-none bg-secondary/10 border-border/50 focus-visible:ring-primary/30"
-          />
+        <CardContent className="flex-1 pt-6 flex flex-col gap-4">
+          
+          {mode === 'Video' && (
+            <div className={`w-full max-w-sm mx-auto aspect-video bg-black rounded-lg overflow-hidden relative border shadow-sm ${!isRecording ? 'opacity-50 grayscale' : ''}`}>
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100"></video>
+              {!isRecording && (
+                <div className="absolute inset-0 flex items-center justify-center text-white/70 flex-col gap-2">
+                  <Video className="w-8 h-8" />
+                  <span className="text-sm font-medium">Camera Off</span>
+                </div>
+              )}
+              {isRecording && (
+                <div className="absolute top-2 right-2 flex items-center gap-2 bg-black/50 px-2 py-1 rounded text-xs text-white font-medium">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                  REC {formatTime(recordingSeconds)}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col flex-1">
+            <Label className="mb-2 text-muted-foreground font-semibold flex justify-between">
+              Your Answer Transcript
+              {mode !== 'Text' && isRecording ? (
+                <span className="text-xs font-normal text-red-500 flex items-center gap-1 animate-pulse">
+                  <Mic className="w-3 h-3" /> Listening...
+                </span>
+              ) : (
+                <span className="text-xs font-normal opacity-50 flex items-center gap-1">
+                  <Save className="w-3 h-3" /> Auto-saving
+                </span>
+              )}
+            </Label>
+            <Textarea 
+              value={currentAnswer}
+              onChange={(e) => handleAnswerChange(e.target.value)}
+              placeholder={mode === 'Text' ? "Type your answer here. Be detailed and structured..." : "Your spoken answer will appear here..."}
+              className={`flex-1 min-h-[200px] text-base resize-none bg-secondary/10 border-border/50 focus-visible:ring-primary/30 ${isRecording ? 'border-red-300 bg-red-50/50' : ''}`}
+            />
+          </div>
+
+          {(mode === 'Voice' || mode === 'Video') && (
+            <div className="flex justify-center mt-2">
+              {!isRecording ? (
+                <Button onClick={startRecording} className="bg-red-500 hover:bg-red-600 text-white rounded-full px-6 h-12 shadow-lg hover:shadow-xl transition-all">
+                  <Mic className="w-5 h-5 mr-2" /> Start Recording Answer
+                </Button>
+              ) : (
+                <Button onClick={stopRecording} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 rounded-full px-6 h-12">
+                  <Square className="w-4 h-4 mr-2" /> Stop Recording
+                </Button>
+              )}
+            </div>
+          )}
+
+          {fallbackMode && mode !== 'Text' && (
+            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg text-sm mt-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>Media capabilities unavailable. You have been switched to Text mode.</span>
+            </div>
+          )}
+
         </CardContent>
         <CardFooter className="bg-secondary/20 p-4 flex justify-between border-t border-border/50">
           <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0}>
@@ -199,12 +396,12 @@ function SessionContent() {
                 <Button variant="ghost" onClick={handleNext} className="text-muted-foreground hidden sm:flex">
                   Skip <FastForward className="w-4 h-4 ml-2" />
                 </Button>
-                <Button onClick={handleNext} className="min-w-[120px]">
+                <Button onClick={handleNext} className="min-w-[120px]" disabled={isRecording}>
                   Next <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setShowFinishDialog(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]">
+              <Button onClick={() => setShowFinishDialog(true)} disabled={isRecording} className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]">
                 Finish Interview <CheckCircle2 className="w-4 h-4 ml-2" />
               </Button>
             )}

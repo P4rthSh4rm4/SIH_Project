@@ -116,21 +116,47 @@ export function usePlacementReadiness() {
   // ─── 2. Overall Score (weighted average) ──────────────────
 
   const overallScore = useMemo(() => {
-    const total =
-      technicalMetric.score  * READINESS_WEIGHTS.technical +
-      softSkillsMetric.score * READINESS_WEIGHTS.softSkills +
-      aptitudeMetric.score   * READINESS_WEIGHTS.aptitude +
-      resumeMetric.score     * READINESS_WEIGHTS.resume +
-      portfolioMetric.score  * READINESS_WEIGHTS.portfolio +
-      githubMetric.score     * READINESS_WEIGHTS.github +
-      linkedinMetric.score   * READINESS_WEIGHTS.linkedin +
-      experienceMetric.score * READINESS_WEIGHTS.experience;
+    let weightedSum = 0;
+    let totalWeight = 0;
 
-    return Math.round(total);
+    if (technicalMetric.attempted) {
+      weightedSum += technicalMetric.score * READINESS_WEIGHTS.technical;
+      totalWeight += READINESS_WEIGHTS.technical;
+    }
+    if (softSkillsMetric.attempted) {
+      weightedSum += softSkillsMetric.score * READINESS_WEIGHTS.softSkills;
+      totalWeight += READINESS_WEIGHTS.softSkills;
+    }
+    if (aptitudeMetric.attempted) {
+      weightedSum += aptitudeMetric.score * READINESS_WEIGHTS.aptitude;
+      totalWeight += READINESS_WEIGHTS.aptitude;
+    }
+    if (resumeMetric.attempted) {
+      weightedSum += resumeMetric.score * READINESS_WEIGHTS.resume;
+      totalWeight += READINESS_WEIGHTS.resume;
+    }
+    if (portfolioMetric.attempted) {
+      weightedSum += portfolioMetric.score * READINESS_WEIGHTS.portfolio;
+      totalWeight += READINESS_WEIGHTS.portfolio;
+    }
+    if (githubMetric.attempted) {
+      weightedSum += githubMetric.score * READINESS_WEIGHTS.github;
+      totalWeight += READINESS_WEIGHTS.github;
+    }
+    if (linkedinMetric.attempted) {
+      weightedSum += linkedinMetric.score * READINESS_WEIGHTS.linkedin;
+      totalWeight += READINESS_WEIGHTS.linkedin;
+    }
+    if (experienceMetric.attempted) {
+      weightedSum += experienceMetric.score * READINESS_WEIGHTS.experience;
+      totalWeight += READINESS_WEIGHTS.experience;
+    }
+
+    return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
   }, [
-    technicalMetric.score, softSkillsMetric.score, aptitudeMetric.score,
-    resumeMetric.score, portfolioMetric.score, githubMetric.score,
-    linkedinMetric.score, experienceMetric.score,
+    technicalMetric, softSkillsMetric, aptitudeMetric,
+    resumeMetric, portfolioMetric, githubMetric,
+    linkedinMetric, experienceMetric,
   ]);
 
   // ─── 3. Status ────────────────────────────────────────────

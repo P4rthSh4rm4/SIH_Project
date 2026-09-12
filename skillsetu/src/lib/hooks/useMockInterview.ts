@@ -10,6 +10,8 @@ export interface MockInterviewRecord {
   interview_type: string;
   career_path: string;
   difficulty: string;
+  mode: string;
+  media_metrics?: Record<string, any>;
   questions: InterviewQuestion[];
   answers: Record<string, string>;
   started_at: string;
@@ -59,7 +61,7 @@ export function useMockInterview() {
     fetchInterviews();
   }, [fetchInterviews]);
 
-  const startNewInterview = async (type: InterviewType, careerPath: string, difficulty: InterviewDifficulty) => {
+  const startNewInterview = async (type: InterviewType, careerPath: string, difficulty: InterviewDifficulty, mode: string = 'Text') => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
@@ -74,6 +76,8 @@ export function useMockInterview() {
         interview_type: type,
         career_path: careerPath,
         difficulty: difficulty,
+        mode: mode,
+        media_metrics: {},
         questions: questions,
         answers: {},
         status: 'In Progress'
@@ -106,18 +110,23 @@ export function useMockInterview() {
     setInterviews(prev => prev.map(inv => inv.id === id ? { ...inv, answers, time_taken: timeTaken } : inv));
   };
 
-  const finishInterview = async (id: string, answers: Record<string, string>, timeTaken: number, statusOverride?: string) => {
+  const finishInterview = async (id: string, answers: Record<string, string>, timeTaken: number, statusOverride?: string, mediaMetrics?: Record<string, any>) => {
     const supabase = createClient();
     const completedAt = new Date().toISOString();
     
-    const { data, error } = await supabase
-      .from("mock_interviews")
-      .update({ 
+    const updatePayload: any = { 
         answers, 
         time_taken: timeTaken, 
         completed_at: completedAt,
         status: statusOverride || 'Completed'
-      })
+    };
+    if (mediaMetrics) {
+      updatePayload.media_metrics = mediaMetrics;
+    }
+
+    const { data, error } = await supabase
+      .from("mock_interviews")
+      .update(updatePayload)
       .eq("id", id)
       .select()
       .single();

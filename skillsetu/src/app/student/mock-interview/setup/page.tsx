@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { CAREER_PATHS } from "@/lib/data/career-paths";
-import { InterviewType, InterviewDifficulty } from "@/lib/data/mock-interview-questions";
-import { Video, ChevronLeft, Loader2, Play } from "lucide-react";
+import { InterviewType, InterviewDifficulty, InterviewMode } from "@/lib/data/mock-interview-questions";
+import { Video, ChevronLeft, Loader2, Play, Mic, Type } from "lucide-react";
 import Link from "next/link";
 
 export default function MockInterviewSetupPage() {
@@ -19,13 +19,14 @@ export default function MockInterviewSetupPage() {
   const [type, setType] = useState<InterviewType>("Mixed");
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>("Medium");
   const [careerPath, setCareerPath] = useState<string>(CAREER_PATHS[0].title);
+  const [mode, setMode] = useState<InterviewMode>("Text");
   
   const [isStarting, setIsStarting] = useState(false);
 
   const handleStart = async () => {
     setIsStarting(true);
     try {
-      const interview = await startNewInterview(type, careerPath, difficulty);
+      const interview = await startNewInterview(type, careerPath, difficulty, mode);
       if (interview && interview.id) {
         router.push(`/student/mock-interview/session?id=${interview.id}`);
       }
@@ -92,6 +93,34 @@ export default function MockInterviewSetupPage() {
                   }`}
                 >
                   {d}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Interview Mode */}
+          <div className="space-y-3">
+            <Label className="text-base font-bold">Interview Mode</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { id: 'Text', icon: Type, desc: 'Type your answers' },
+                { id: 'Voice', icon: Mic, desc: 'Speak into microphone' },
+                { id: 'Video', icon: Video, desc: 'Webcam + Microphone' }
+              ].map((m) => (
+                <div 
+                  key={m.id}
+                  onClick={() => setMode(m.id as InterviewMode)}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-2 ${
+                    mode === m.id 
+                      ? 'border-primary bg-primary/10 text-primary' 
+                      : 'border-border hover:border-primary/50 text-muted-foreground hover:bg-secondary/50'
+                  }`}
+                >
+                  <m.icon className="w-6 h-6" />
+                  <div>
+                    <div className="font-bold">{m.id} Mode</div>
+                    <div className="text-xs opacity-70 font-medium">{m.desc}</div>
+                  </div>
                 </div>
               ))}
             </div>

@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, ArrowLeft, Download, Award, TrendingUp, AlertTriangle, Target, MessageSquare, Video, Mic, CheckCircle2, ChevronRight, Activity, Code, Star, Briefcase, Printer, Share2 } from "lucide-react";
+import { Loader2, ArrowLeft, Download, Award, TrendingUp, AlertTriangle, Target, MessageSquare, Video, Mic, CheckCircle2, ChevronRight, Activity, Code, Star, Briefcase, Printer, Share2, Type } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const CircularProgress = ({ value, label, size = 120, strokeWidth = 10, colorClass = "text-primary" }: { value: number, label: string, size?: number, strokeWidth?: number, colorClass?: string }) => {
   const radius = (size - strokeWidth) / 2;
@@ -80,6 +81,35 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
       </div>
     );
   }
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My AI Mock Interview Report',
+          text: 'Check out my AI Mock Interview Evaluation on SkillSetU!',
+          url: url,
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          return; // User cancelled
+        }
+        console.error('Web Share failed, falling back to clipboard:', err);
+      }
+    }
+    
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Report link copied to clipboard!");
+    } catch (err) {
+      console.error('Clipboard copy failed:', err);
+      toast.error("Failed to copy link. Please copy the URL from your browser address bar.");
+    }
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-emerald-500";
@@ -167,7 +197,7 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
               <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="w-4 h-4 mr-2" /> Export PDF
               </Button>
-              <Button variant="default" className="gap-2">
+              <Button variant="default" className="gap-2" onClick={handleShare}>
                 <Share2 className="w-4 h-4" /> Share Report
               </Button>
             </div>
@@ -380,41 +410,103 @@ export default function MockInterviewReportPage({ params }: { params: Promise<{ 
         </TabsContent>
 
         <TabsContent value="media" className="mt-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {interview.mode === 'Text' || !interview.mode ? (
             <Card className="opacity-80 border-dashed border-2">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center shrink-0">
-                  <Video className="w-6 h-6 text-muted-foreground" />
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center mb-4">
+                  <Type className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <div>
-                  <CardTitle>Body Language Analysis</CardTitle>
-                  <CardDescription>Eye contact, posture, and expressions.</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-6 bg-secondary/10 rounded-xl">
-                  <p className="font-semibold text-muted-foreground">Requires webcam analysis in future version.</p>
-                </div>
+                <h3 className="text-xl font-bold mb-2">Text Only Mode</h3>
+                <p className="text-muted-foreground max-w-md text-center">
+                  This interview was completed in text mode. Audio and visual delivery indicators are unavailable.
+                </p>
               </CardContent>
             </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-4 border-b pb-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                    <Mic className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle>Interview Delivery Indicator</CardTitle>
+                    <CardDescription>Based on speaking pace and response duration.</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  {(() => {
+                    const metrics = interview.media_metrics || {};
+                    const questionsWithMetrics = Object.keys(metrics).length;
+                    
+                    if (questionsWithMetrics === 0) {
+                      return <p className="text-muted-foreground text-sm">No vocal delivery data recorded.</p>;
+                    }
 
-            <Card className="opacity-80 border-dashed border-2">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center shrink-0">
-                  <Mic className="w-6 h-6 text-muted-foreground" />
-                </div>
-                <div>
-                  <CardTitle>Voice Analysis</CardTitle>
-                  <CardDescription>Pace, volume, and clarity.</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-6 bg-secondary/10 rounded-xl">
-                  <p className="font-semibold text-muted-foreground">Voice analysis unavailable for text-only sessions.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    let totalDuration = 0;
+                    let totalWpm = 0;
+                    
+                    Object.values(metrics).forEach((m: any) => {
+                      totalDuration += m.durationSeconds || 0;
+                      totalWpm += m.wpm || 0;
+                    });
+                    
+                    const avgWpm = Math.round(totalWpm / questionsWithMetrics);
+                    let paceLabel = "Optimal";
+                    let paceColor = "text-emerald-500";
+                    if (avgWpm < 100) { paceLabel = "Too Slow"; paceColor = "text-amber-500"; }
+                    else if (avgWpm > 160) { paceLabel = "Too Fast"; paceColor = "text-rose-500"; }
+
+                    return (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-secondary/30 p-4 rounded-xl border border-border/50 text-center">
+                          <p className="text-sm font-bold text-muted-foreground uppercase">Average Pace</p>
+                          <p className={`text-2xl font-black mt-1 ${paceColor}`}>{avgWpm} <span className="text-sm">WPM</span></p>
+                          <p className="text-xs text-muted-foreground mt-1">{paceLabel}</p>
+                        </div>
+                        <div className="bg-secondary/30 p-4 rounded-xl border border-border/50 text-center">
+                          <p className="text-sm font-bold text-muted-foreground uppercase">Total Speech Time</p>
+                          <p className="text-2xl font-black mt-1 text-foreground">
+                            {Math.floor(totalDuration / 60)}m {totalDuration % 60}s
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">across all answers</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-4 border-b pb-4">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+                    <Video className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle>Video Analysis</CardTitle>
+                    <CardDescription>Visual presence and engagement.</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {interview.mode === 'Video' ? (
+                    <div className="text-center py-6 bg-secondary/10 rounded-xl border border-border/50 space-y-3 px-4">
+                      <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
+                        <CheckCircle2 className="w-6 h-6" />
+                      </div>
+                      <p className="font-semibold">Webcam Captured</p>
+                      <p className="text-sm text-muted-foreground">
+                        Your visual presence was captured during the interview. Note that advanced visual analysis (body language, eye contact, emotion detection) is not currently performed to ensure objective, measurable scoring.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-secondary/10 rounded-xl border-dashed border-2">
+                      <p className="font-semibold text-muted-foreground">Video disabled for this session.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
       </>)}

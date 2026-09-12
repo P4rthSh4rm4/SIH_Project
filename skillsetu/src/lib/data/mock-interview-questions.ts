@@ -1,5 +1,6 @@
 export type InterviewType = 'HR' | 'Technical' | 'Behavioral' | 'Aptitude' | 'Mixed';
 export type InterviewDifficulty = 'Easy' | 'Medium' | 'Hard';
+export type InterviewMode = 'Text' | 'Voice' | 'Video';
 
 export interface InterviewQuestion {
   id: string;

@@ -864,7 +864,9 @@ export default function ApplicantsPage() {
               <Label>Evaluated Skill *</Label>
               <Select value={feedbackData.skill_id} onValueChange={(val) => setFeedbackData({...feedbackData, skill_id: val || ""})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a skill to rate" />
+                  <SelectValue placeholder="Select a skill to rate">
+                    {feedbackData.skill_id ? appSkills.find(s => s.id === feedbackData.skill_id)?.name : "Select a skill to rate"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {appSkills.map(s => (

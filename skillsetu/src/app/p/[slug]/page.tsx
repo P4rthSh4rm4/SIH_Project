@@ -9,11 +9,12 @@ import { CAREER_PATHS } from "@/lib/data/career-paths";
 import { QRCodeSVG } from "qrcode.react";
 
 // Server Component fetching from the DB securely
-export default async function PublicPortfolioPage({ params }: { params: { slug: string } }) {
+export default async function PublicPortfolioPage({ params }: { params: Promise<{ slug: string }> }) {
   // We use the anon client. The RPC function `get_public_portfolio` is SECURITY DEFINER,
   // meaning it safely bypasses RLS inside Postgres to return only the public JSON.
+  const resolvedParams = await params;
   const supabase = createClient();
-  const { data, error } = await supabase.rpc("get_public_portfolio", { p_slug: params.slug });
+  const { data, error } = await supabase.rpc("get_public_portfolio", { p_slug: resolvedParams.slug });
 
   if (error || !data) {
     return (
@@ -173,7 +174,7 @@ export default async function PublicPortfolioPage({ params }: { params: { slug: 
 
   // Public URL for QR Code
   // Note: headers() could be used to get origin, but we can't always rely on it. We'll use a relative path trick or placeholder.
-  const publicUrl = `https://skillsetu.com/p/${params.slug}`;
+  const publicUrl = `https://skillsetu.com/p/${resolvedParams.slug}`;
 
   return (
     <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 print:py-0 print:bg-white portfolio-container">
