@@ -14,6 +14,8 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { UserProfile } from "@/lib/types";
 import { sendNotificationAction } from "./actions";
+import { useStudentSkillPassport } from "@/lib/hooks/useStudentSkillPassport";
+import { Loader2, Star, Target, ShieldAlert } from "lucide-react";
 
 export default function MentorshipPage() {
   const [students, setStudents] = useState<UserProfile[]>([]);
@@ -24,6 +26,9 @@ export default function MentorshipPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  // Skill Passport Data
+  const passport = useStudentSkillPassport(selectedStudent?.id);
 
   useEffect(() => {
     async function fetchStudents() {
@@ -151,37 +156,106 @@ export default function MentorshipPage() {
             </Card>
           ) : (
             <>
-              {/* Progress Overview (Mocked Data based on selected student) */}
+              {/* Progress Overview (Real Data from Skill Passport) */}
               <Card className="border-border/50 shadow-sm shrink-0">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-xl">{selectedStudent.name}'s Progress</CardTitle>
-                      <CardDescription>B.Tech Computer Science (3rd Year)</CardDescription>
+                      <CardTitle className="text-xl">{selectedStudent.name}'s Skill Passport</CardTitle>
+                      <CardDescription>{selectedStudent.email}</CardDescription>
                     </div>
-                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                      <TrendingUp className="w-3 h-3 mr-1" /> Top 10%
-                    </Badge>
+                    {passport.loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <TrendingUp className="w-3 h-3 mr-1" /> {passport.metrics.overallScore}% Readiness
+                      </Badge>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500 mb-1" />
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Courses</span>
-                      <span className="text-xl font-bold">14</span>
+                  {passport.loading ? (
+                    <div className="h-24 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
                     </div>
-                    <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
-                      <Activity className="w-6 h-6 text-blue-500 mb-1" />
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Verified Skills</span>
-                      <span className="text-xl font-bold">8</span>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Metric Breakdown */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 mb-1" />
+                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Tech</span>
+                          <span className="text-lg font-bold">
+                            {passport.metrics.technical.attempted ? `${passport.metrics.technical.score}%` : '--'}
+                          </span>
+                        </div>
+                        <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
+                          <Activity className="w-5 h-5 text-blue-500 mb-1" />
+                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Soft Skills</span>
+                          <span className="text-lg font-bold">
+                            {passport.metrics.softSkills.attempted ? `${passport.metrics.softSkills.score}%` : '--'}
+                          </span>
+                        </div>
+                        <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
+                          <Briefcase className="w-5 h-5 text-amber-500 mb-1" />
+                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Projects</span>
+                          <span className="text-lg font-bold">
+                            {passport.data.portfolioItems.filter((p: any) => p.type === 'project').length}
+                          </span>
+                        </div>
+                        <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
+                          <Target className="w-5 h-5 text-purple-500 mb-1" />
+                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Aptitude</span>
+                          <span className="text-lg font-bold">
+                            {passport.metrics.aptitude.attempted ? `${passport.metrics.aptitude.score}%` : '--'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Skills & Gaps */}
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                          <Star className="w-4 h-4 text-amber-500" /> Verified Skills
+                        </h4>
+                        {passport.data.skills.length === 0 ? (
+                          <p className="text-sm text-muted-foreground italic">No skills documented yet.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {passport.data.skills.map((s: any, index: number) => (
+                              <Badge key={s.skill_id || index} variant="secondary" className={s.proficiency < 3 ? "border-amber-300 bg-amber-50 text-amber-800" : ""}>
+                                {s.skills?.name || 'Unknown Skill'} {s.proficiency < 3 && <ShieldAlert className="w-3 h-3 ml-1 text-amber-600" />}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Industry Feedback */}
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4 text-blue-500" /> Industry Feedback
+                        </h4>
+                        {passport.data.industryFeedback.length === 0 ? (
+                          <p className="text-sm text-muted-foreground italic">No industry feedback received yet.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {passport.data.industryFeedback.map((fb: any) => (
+                              <div key={fb.id} className="p-3 rounded-lg border border-border/50 bg-muted/20">
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="text-sm font-medium">{fb.skill?.name}</span>
+                                  <Badge variant="outline" className="text-[10px]">{fb.gap_indicator}</Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-2">"{fb.comment}"</p>
+                                <p className="text-[10px] text-muted-foreground mt-1 text-right">
+                                  — {fb.application?.opportunity?.industry?.name || 'Industry'}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
-                      <Briefcase className="w-6 h-6 text-amber-500 mb-1" />
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Projects</span>
-                      <span className="text-xl font-bold">3</span>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 

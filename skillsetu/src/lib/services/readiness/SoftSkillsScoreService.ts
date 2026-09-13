@@ -17,7 +17,7 @@ export function calculateSoftSkillsScore(
   const breakdown = [];
   const missingItems: string[] = [];
   const recommendations: string[] = [];
-  let components: number[] = [];
+  const components: number[] = [];
 
   // ── Communication from skills ──
   const commSkills = skills.filter(s => s.skill?.name?.toLowerCase().includes("communication"));

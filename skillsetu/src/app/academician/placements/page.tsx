@@ -38,7 +38,10 @@ export default function AcademicianPlacementsPage() {
         .from("applications")
         .select(`
           *,
-          opportunity:opportunities(title),
+          opportunity:opportunities(
+            title,
+            industry:users(name)
+          ),
           student:users(name)
         `)
         .eq("status", "pending_faculty")
@@ -150,7 +153,7 @@ export default function AcademicianPlacementsPage() {
                       <div>
                         <CardTitle className="text-lg line-clamp-1">{opp.title}</CardTitle>
                         <p className="text-sm text-muted-foreground">
-                          {opp.industry?.name || opp.company_name || "Unknown Company"}
+                          {opp.industry?.name || "Unknown Company"}
                         </p>
                       </div>
                     </div>
@@ -160,8 +163,11 @@ export default function AcademicianPlacementsPage() {
                       <div><span className="font-medium text-foreground">Type:</span> <span className="capitalize">{opp.type}</span></div>
                       <div><span className="font-medium text-foreground">Location:</span> {opp.location || "N/A"}</div>
                       <div><span className="font-medium text-foreground">Stipend:</span> {opp.stipend || "N/A"}</div>
-                      <div><span className="font-medium text-foreground">Posted:</span> {new Date(opp.created_at).toLocaleDateString()}</div>
+                      <div><span className="font-medium text-foreground">Deadline:</span> {opp.deadline ? new Date(opp.deadline).toLocaleDateString() : "Rolling"}</div>
                     </div>
+                    {opp.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{opp.description}</p>
+                    )}
                     <div className="flex gap-2 pt-2">
                       <Button 
                         className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white" 
@@ -209,7 +215,7 @@ export default function AcademicianPlacementsPage() {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Applying for <span className="font-medium text-foreground">{app.opportunity?.title}</span> at {app.opportunity?.company_name || "Unknown Company"}
+                          Applying for <span className="font-medium text-foreground">{app.opportunity?.title}</span> at {app.opportunity?.industry?.name || "Unknown Company"}
                         </p>
                         <p className="text-xs text-muted-foreground pt-1">
                           Applied on {new Date(app.applied_at).toLocaleDateString()}

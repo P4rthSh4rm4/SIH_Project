@@ -237,7 +237,7 @@ export default function CandidatesPage() {
             (linkedinMetric.score || 0)   * READINESS_WEIGHTS.linkedin +
             (experienceMetric.score || 0) * READINESS_WEIGHTS.experience;
           
-          let overallScore = Math.round(total) || 0;
+          const overallScore = Math.round(total) || 0;
           let readinessCategory: Candidate["readinessCategory"] = "Not Assessed";
 
           if (overallScore > 0) {

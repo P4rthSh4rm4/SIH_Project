@@ -1,68 +1,194 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   BookOpen, ExternalLink, Calendar, MapPin, 
-  Clock, Users, Presentation, Sparkles, CheckCircle2, Download
+  Clock, Presentation, Sparkles, CheckCircle2, Download, Plus, Loader2
 } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { FDPCertificateView } from "@/components/dashboard/fdp-certificate-view";
 import { useUserProfile } from "@/lib/hooks/useUserProfile";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-const UPCOMING_WORKSHOPS = [
-  {
-    id: 1,
-    title: "Advanced Pedagogy in AI & Machine Learning",
-    date: "Oct 15 - Oct 17, 2026",
-    duration: "3 Days",
-    mode: "Offline",
-    location: "Main Auditorium",
-    instructor: "Dr. A. Sharma",
-    capacity: 50,
-    enrolled: 34,
-    tags: ["AI", "Pedagogy"],
-  },
-  {
-    id: 2,
-    title: "Effective Research Methodology & Publication",
-    date: "Nov 02, 2026",
-    duration: "1 Day",
-    mode: "Online",
-    location: "Zoom",
-    instructor: "Prof. S. Gupta",
-    capacity: 100,
-    enrolled: 89,
-    tags: ["Research", "Publishing"],
-  },
-  {
-    id: 3,
-    title: "Next-Gen Cloud Computing Architectures",
-    date: "Nov 20 - Nov 25, 2026",
-    duration: "5 Days",
-    mode: "Hybrid",
-    location: "Lab 4 / Teams",
-    instructor: "Industry Expert (AWS)",
-    capacity: 40,
-    enrolled: 12,
-    tags: ["Cloud", "AWS"],
-  },
-];
+// We'll define the types here to match the DB
+type FDP = {
+  id: string;
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  duration: string | null;
+  mode: string | null;
+  location: string | null;
+  instructor: string | null;
+  capacity: number | null;
+  status: string;
+  created_by: string | null;
+};
+
+type FDPCount = {
+  opportunity_id: string;
+  enrolled_count: number;
+};
 
 export default function FDPsPage() {
   const { profile } = useUserProfile();
-  const [enrolledWorkshops, setEnrolledWorkshops] = useState<number[]>([]);
-  const certificateRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const [fdps, setFdps] = useState<FDP[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [enrolledIds, setEnrolledIds] = useState<Record<string, string>>({}); // FDP ID -> status
+  const [loading, setLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const certificateRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const handleEnroll = (id: number) => {
-    setEnrolledWorkshops((prev) => [...prev, id]);
-    toast.success("Successfully enrolled in the workshop!");
+  const supabase = createClient();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [defaultTitle, setDefaultTitle] = useState("");
+  const [defaultDescription, setDefaultDescription] = useState("");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    fetchFDPs();
+    
+    // Check for new_skill parameter to auto-open FDP creation
+    const newSkill = searchParams.get("new_skill");
+    if (newSkill) {
+      setDefaultTitle(`FDP on ${newSkill}`);
+      setDefaultDescription(`This Faculty Development Program addresses a critical industry skill gap identified in our students regarding ${newSkill}.`);
+      setIsDialogOpen(true);
+    }
+  }, [profile?.id, searchParams]);
+
+  const fetchFDPs = async () => {
+    try {
+      setLoading(true);
+      // 1. Fetch FDPs
+      const { data: fdpData, error: fdpError } = await supabase
+        .from("academician_opportunities")
+        .select("*")
+        .eq("type", "FDP")
+        .order("start_date", { ascending: true });
+
+      if (fdpError) throw fdpError;
+
+      // 2. Fetch capacities via RPC safely
+      const { data: countData, error: countError } = await supabase
+        .rpc("get_fdp_enrollment_counts");
+
+      if (countError) throw countError;
+
+      const countsMap: Record<string, number> = {};
+      if (countData) {
+        countData.forEach((row: FDPCount) => {
+          countsMap[row.opportunity_id] = row.enrolled_count;
+        });
+      }
+
+      // 3. Fetch user's enrollments
+      let userEnrollments: Record<string, string> = {};
+      if (profile?.id) {
+        const { data: enrollData, error: enrollError } = await supabase
+          .from("academician_opportunity_enrollments")
+          .select("opportunity_id, status")
+          .eq("user_id", profile.id);
+
+        if (enrollError) throw enrollError;
+        
+        if (enrollData) {
+          enrollData.forEach(row => {
+            userEnrollments[row.opportunity_id] = row.status;
+          });
+        }
+      }
+
+      setFdps(fdpData || []);
+      setCounts(countsMap);
+      setEnrolledIds(userEnrollments);
+    } catch (err) {
+      console.error("Error fetching FDPs:", err);
+      toast.error("Failed to load Faculty Development Programs");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDownload = async (workshopId: number) => {
+  const handleEnroll = async (id: string) => {
+    if (!profile?.id) {
+      toast.error("You must be logged in to enroll");
+      return;
+    }
+
+    const toastId = toast.loading("Enrolling...");
+    try {
+      const { error } = await supabase
+        .from("academician_opportunity_enrollments")
+        .insert({
+          opportunity_id: id,
+          user_id: profile.id,
+          status: "enrolled"
+        });
+
+      if (error) throw error;
+
+      toast.success("Successfully enrolled in the FDP!", { id: toastId });
+      fetchFDPs(); // Refresh to update capacity and status
+    } catch (err: any) {
+      console.error("Enrollment error:", err);
+      toast.error(err.message || "Failed to enroll. The FDP might be full or closed.", { id: toastId });
+    }
+  };
+
+  const handleCreateFDP = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!profile?.id) return;
+    setIsCreating(true);
+
+    const formData = new FormData(e.currentTarget);
+    const capacityStr = formData.get("capacity") as string;
+
+    try {
+      const { error } = await supabase
+        .from("academician_opportunities")
+        .insert({
+          type: "FDP",
+          title: formData.get("title") as string,
+          description: formData.get("description") as string || "FDP Workshop",
+          start_date: formData.get("start_date") as string || null,
+          end_date: formData.get("end_date") as string || null,
+          duration: formData.get("duration") as string || null,
+          mode: formData.get("mode") as string,
+          location: formData.get("location") as string || null,
+          instructor: formData.get("instructor") as string || null,
+          capacity: capacityStr ? parseInt(capacityStr, 10) : null,
+          created_by: profile.id,
+          status: "upcoming"
+        });
+
+      if (error) throw error;
+      toast.success("FDP created successfully!");
+      fetchFDPs();
+      // Reset form via uncontrolled nature or close modal
+      const closeButton = document.getElementById("close-dialog-btn");
+      if (closeButton) closeButton.click();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to create FDP");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDownload = async (workshopId: string, workshopTitle: string) => {
     const element = certificateRefs.current[workshopId];
     if (!element) {
       toast.error("Certificate element not found. Please try refreshing.");
@@ -93,7 +219,7 @@ export default function FDPsPage() {
       });
 
       pdf.addImage(imgData, "PNG", 0, 0, 297, 210);
-      pdf.save(`SkillSetu_FDP_Certificate_${workshopId}.pdf`);
+      pdf.save(`SkillSetu_Certificate_${workshopId.substring(0, 8)}.pdf`);
       
       toast.success("Certificate downloaded successfully!", { id: toastId });
     } catch (err) {
@@ -102,17 +228,95 @@ export default function FDPsPage() {
     }
   };
 
+  const formatDate = (start?: string | null, end?: string | null) => {
+    if (!start) return "TBA";
+    if (!end) return new Date(start).toLocaleDateString();
+    return `${new Date(start).toLocaleDateString()} - ${new Date(end).toLocaleDateString()}`;
+  };
+
   return (
     <div className="space-y-8 animate-fade-in pb-10 relative">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <BookOpen className="w-8 h-8 text-emerald-500" />
-          Faculty Development Programs
-        </h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">
-          Enhance your teaching methodologies, research capabilities, and technical skills through ATAL FDPs and internal college workshops.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <BookOpen className="w-8 h-8 text-emerald-500" />
+            Faculty Development Programs
+          </h1>
+          <p className="text-muted-foreground mt-2 max-w-2xl">
+            Enhance your teaching methodologies, research capabilities, and technical skills through ATAL FDPs and internal college workshops.
+          </p>
+        </div>
+
+        {/* FDP Creation Dialog (Only academicians or admins) */}
+        {(profile?.role?.toLowerCase() === "academician" || profile?.role?.toLowerCase() === "institution_admin" || profile?.role?.toLowerCase() === "super_admin") && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger 
+              render={
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Post FDP
+                </Button>
+              } 
+            />
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Post new FDP</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateFDP} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Title *</label>
+                  <input name="title" required defaultValue={defaultTitle} className="w-full p-2 border rounded-md" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Description</label>
+                  <textarea name="description" rows={3} defaultValue={defaultDescription} className="w-full p-2 border rounded-md" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Start Date *</label>
+                    <input name="start_date" type="date" required className="w-full p-2 border rounded-md" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">End Date *</label>
+                    <input name="end_date" type="date" required className="w-full p-2 border rounded-md" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Mode</label>
+                    <select name="mode" className="w-full p-2 border rounded-md">
+                      <option value="Offline">Offline</option>
+                      <option value="Online">Online</option>
+                      <option value="Hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Capacity</label>
+                    <input name="capacity" type="number" min="1" placeholder="Optional" className="w-full p-2 border rounded-md" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Location</label>
+                  <input name="location" placeholder="e.g., Main Auditorium or Zoom link" className="w-full p-2 border rounded-md" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Instructor</label>
+                  <input name="instructor" className="w-full p-2 border rounded-md" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Duration Text</label>
+                  <input name="duration" placeholder="e.g., 3 Days" className="w-full p-2 border rounded-md" />
+                </div>
+                <Button type="submit" className="w-full bg-emerald-600" disabled={isCreating}>
+                  {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Create FDP
+                </Button>
+                <DialogTrigger render={<button type="button" id="close-dialog-btn" className="hidden" />} />
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* ATAL FDP Featured Section */}
@@ -158,94 +362,126 @@ export default function FDPsPage() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold tracking-tight">Internal College Workshops</h2>
-          <Button variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50">
-            View Past Workshops
+          <Button variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={fetchFDPs}>
+            Refresh
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {UPCOMING_WORKSHOPS.map((workshop) => (
-            <Card key={workshop.id} className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex gap-2">
-                    {workshop.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">
-                        {tag}
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+          </div>
+        ) : fdps.length === 0 ? (
+          <div className="text-center py-12 bg-muted/20 rounded-lg border border-dashed">
+            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+            <h3 className="text-lg font-medium">No Workshops Found</h3>
+            <p className="text-muted-foreground">There are currently no internal FDPs posted.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {fdps.map((workshop) => {
+              const enrolledCount = counts[workshop.id] || 0;
+              const userEnrollStatus = enrolledIds[workshop.id];
+              const isEnrolled = !!userEnrollStatus;
+              const isCompleted = userEnrollStatus === 'completed';
+              const isFull = workshop.capacity ? enrolledCount >= workshop.capacity : false;
+              const isClosed = workshop.status === 'cancelled' || workshop.status === 'completed';
+
+              return (
+                <Card key={workshop.id} className="group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
+                  <CardHeader className="pb-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex gap-2">
+                        {workshop.status !== 'upcoming' && (
+                          <Badge variant="secondary" className="capitalize bg-muted">
+                            {workshop.status}
+                          </Badge>
+                        )}
+                      </div>
+                      <Badge variant="outline" className={
+                        workshop.mode === "Offline" ? "border-amber-200 text-amber-700 bg-amber-50" : 
+                        workshop.mode === "Online" ? "border-blue-200 text-blue-700 bg-blue-50" : 
+                        "border-purple-200 text-purple-700 bg-purple-50"
+                      }>
+                        {workshop.mode || "Unspecified"}
                       </Badge>
-                    ))}
-                  </div>
-                  <Badge variant="outline" className={
-                    workshop.mode === "Offline" ? "border-amber-200 text-amber-700 bg-amber-50" : 
-                    workshop.mode === "Online" ? "border-blue-200 text-blue-700 bg-blue-50" : 
-                    "border-purple-200 text-purple-700 bg-purple-50"
-                  }>
-                    {workshop.mode}
-                  </Badge>
-                </div>
-                <CardTitle className="text-xl leading-snug group-hover:text-emerald-600 transition-colors">
-                  {workshop.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 mb-6 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{workshop.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{workshop.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{workshop.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Presentation className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{workshop.instructor}</span>
-                  </div>
-                </div>
+                    </div>
+                    <CardTitle className="text-xl leading-snug group-hover:text-emerald-600 transition-colors">
+                      {workshop.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 mb-6 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>{formatDate(workshop.start_date, workshop.end_date)}</span>
+                      </div>
+                      {workshop.duration && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>{workshop.duration}</span>
+                        </div>
+                      )}
+                      {workshop.location && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>{workshop.location}</span>
+                        </div>
+                      )}
+                      {workshop.instructor && (
+                        <div className="flex items-center gap-2">
+                          <Presentation className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>{workshop.instructor}</span>
+                        </div>
+                      )}
+                    </div>
 
-                {/* Capacity Bar */}
-                <div className="space-y-1.5 mb-6">
-                  <div className="flex justify-between text-xs font-medium">
-                    <span className="text-muted-foreground">Capacity</span>
-                    <span>{workshop.enrolled} / {workshop.capacity}</span>
-                  </div>
-                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out" 
-                      style={{ width: `${((workshop.enrolled + (enrolledWorkshops.includes(workshop.id) ? 1 : 0)) / workshop.capacity) * 100}%` }}
-                    />
-                  </div>
-                </div>
+                    {/* Capacity Bar */}
+                    {workshop.capacity && (
+                      <div className="space-y-1.5 mb-6">
+                        <div className="flex justify-between text-xs font-medium">
+                          <span className="text-muted-foreground">Capacity</span>
+                          <span>{enrolledCount} / {workshop.capacity}</span>
+                        </div>
+                        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out" 
+                            style={{ width: `${Math.min((enrolledCount / workshop.capacity) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
-                {enrolledWorkshops.includes(workshop.id) ? (
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1 border-emerald-500/30 text-emerald-600 bg-emerald-50 cursor-default hover:bg-emerald-50">
-                      <CheckCircle2 className="w-4 h-4 mr-2" /> Enrolled
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
-                      onClick={() => handleDownload(workshop.id)}
-                    >
-                      <Download className="w-4 h-4 mr-2" /> Certificate
-                    </Button>
-                  </div>
-                ) : (
-                  <Button 
-                    className="w-full bg-secondary text-foreground hover:bg-emerald-600 hover:text-white transition-colors border border-border/50"
-                    onClick={() => handleEnroll(workshop.id)}
-                  >
-                    Enroll Now
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    {isEnrolled ? (
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1 border-emerald-500/30 text-emerald-600 bg-emerald-50 cursor-default hover:bg-emerald-50">
+                          <CheckCircle2 className="w-4 h-4 mr-2" /> Enrolled
+                        </Button>
+                        <Button 
+                          variant="default" 
+                          className="flex-1 bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50"
+                          onClick={() => handleDownload(workshop.id, workshop.title)}
+                          disabled={!isCompleted}
+                          title={!isCompleted ? "FDP must be completed to download certificate" : "Download Certificate"}
+                        >
+                          <Download className="w-4 h-4 mr-2" /> Cert
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        className="w-full bg-secondary text-foreground hover:bg-emerald-600 hover:text-white transition-colors border border-border/50 disabled:opacity-50"
+                        onClick={() => handleEnroll(workshop.id)}
+                        disabled={isClosed || isFull}
+                      >
+                        {isClosed ? "Closed" : isFull ? "Full" : "Enroll Now"}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Hidden certificates for PDF rendering */}
@@ -259,7 +495,7 @@ export default function FDPsPage() {
             --tw-ring-color: transparent;
           }
         `}} />
-        {UPCOMING_WORKSHOPS.filter(w => enrolledWorkshops.includes(w.id)).map((workshop) => (
+        {fdps.filter(w => enrolledIds[w.id] === 'completed').map((workshop) => (
           <div key={`hidden-${workshop.id}`} className="absolute top-0 left-0 opacity-[0.01] pdf-capture-container">
             <FDPCertificateView
               ref={(el) => {
@@ -269,7 +505,7 @@ export default function FDPsPage() {
               workshopTitle={workshop.title}
               collegeName="SkillSetu University"
               completionDate={new Date()}
-              certificateId={`FDP-${new Date().getFullYear()}-${workshop.id.toString().padStart(4, '0')}`}
+              certificateId={`FDP-${new Date().getFullYear()}-${workshop.id.substring(0, 8)}`}
             />
           </div>
         ))}

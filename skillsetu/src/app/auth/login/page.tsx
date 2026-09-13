@@ -64,14 +64,27 @@ function LoginForm() {
       }
 
       // Fetch user role to redirect correctly
-      const { data: userData } = await supabase
+      const { data: userData, error: dbError } = await supabase
         .from("users")
         .select("role")
         .eq("id", data.user.id)
         .single();
 
-      const role = (userData?.role as UserRole) || "student";
-      const portalPrefix = ROLE_PORTAL_MAP[role] || "/student";
+      if (dbError) {
+        console.error("Failed to fetch user role after login:", dbError);
+      }
+
+      const role = (userData?.role as UserRole) || (data.user.user_metadata?.role as UserRole);
+
+      if (!role) {
+        throw new Error("Unable to determine your account role. Please try reloading the page or contact support.");
+      }
+
+      const portalPrefix = ROLE_PORTAL_MAP[role];
+      
+      if (!portalPrefix) {
+        throw new Error("Invalid account role configuration.");
+      }
 
       router.refresh();
       router.push(`${portalPrefix}/dashboard`);
@@ -178,14 +191,27 @@ function LoginForm() {
 
       if (data.user) {
         // Fetch user role to redirect correctly
-        const { data: userData } = await supabase
+        const { data: userData, error: dbError } = await supabase
           .from("users")
           .select("role")
           .eq("id", data.user.id)
           .single();
 
-        const role = (userData?.role as UserRole) || "student";
-        const portalPrefix = ROLE_PORTAL_MAP[role] || "/student";
+        if (dbError) {
+          console.error("Failed to fetch user role after OTP verification:", dbError);
+        }
+
+        const role = (userData?.role as UserRole) || (data.user.user_metadata?.role as UserRole);
+
+        if (!role) {
+          throw new Error("Unable to determine your account role. Please try reloading the page or contact support.");
+        }
+
+        const portalPrefix = ROLE_PORTAL_MAP[role];
+        
+        if (!portalPrefix) {
+          throw new Error("Invalid account role configuration.");
+        }
 
         router.refresh();
         router.push(`${portalPrefix}/dashboard`);

@@ -4,90 +4,23 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, FlaskConical, Handshake, Presentation, ArrowRight, Calendar, CheckCircle2, XCircle, Loader2, Building2, TrendingUp, Clock, FileText } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import type { Opportunity } from "@/lib/types";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BookOpen, FlaskConical, Handshake, Presentation, ArrowRight, Calendar, Loader2, TrendingUp, Clock, AlertTriangle } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import Link from "next/link";
+import { useAcademicianDashboard } from "@/lib/hooks/useAcademicianDashboard";
+import { useAcademicianSkillGaps } from "@/lib/hooks/useAcademicianSkillGaps";
 
-const stats = [
-  { label: "FDPs Available", value: "12", icon: BookOpen, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { label: "Research Projects", value: "5", icon: FlaskConical, color: "text-violet-500", bg: "bg-violet-500/10" },
-  { label: "Consultancy", value: "3", icon: Handshake, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { label: "Active Mentees", value: "18", icon: Presentation, color: "text-amber-500", bg: "bg-amber-500/10" },
-];
-
-const opportunities = [
-  { title: "AI/ML Faculty Development Program", host: "Google India", type: "FDP", date: "Oct 5-12, 2024" },
-  { title: "Collaborative Research: NLP in Healthcare", host: "Microsoft Research", type: "Research", date: "Rolling" },
-  { title: "Industry Consulting — Fintech Risk Models", host: "Paytm", type: "Consultancy", date: "Nov 1, 2024" },
-];
-
-// Mock data for student progress chart
-const studentProgressData = [
-  { month: 'Jan', avgScore: 65, projectsCompleted: 2 },
-  { month: 'Feb', avgScore: 68, projectsCompleted: 4 },
-  { month: 'Mar', avgScore: 72, projectsCompleted: 5 },
-  { month: 'Apr', avgScore: 78, projectsCompleted: 8 },
-  { month: 'May', avgScore: 82, projectsCompleted: 12 },
-  { month: 'Jun', avgScore: 89, projectsCompleted: 15 },
-];
-
-const upcomingSchedule = [
-  { title: "1-on-1 Mentorship: Parth", time: "Today, 2:00 PM", type: "Mentorship", color: "border-l-amber-500" },
-  { title: "Advanced Pedagogy FDP", time: "Tomorrow, 9:00 AM", type: "FDP", color: "border-l-emerald-500" },
-  { title: "Consultancy Kick-off", time: "Thursday, 11:30 AM", type: "Consultancy", color: "border-l-blue-500" },
-  { title: "Research Paper Review", time: "Friday, 4:00 PM", type: "Research", color: "border-l-violet-500" },
+const statsConfig = [
+  { key: "fdpsAvailable", label: "FDPs Available", icon: BookOpen, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { key: "researchProjects", label: "Research Projects", icon: FlaskConical, color: "text-violet-500", bg: "bg-violet-500/10" },
+  { key: "consultancy", label: "Consultancy", icon: Handshake, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { key: "activeMentees", label: "Active Mentees", icon: Presentation, color: "text-amber-500", bg: "bg-amber-500/10" },
 ];
 
 export default function AcademicianDashboard() {
-  const [pendingOpps, setPendingOpps] = useState<Opportunity[]>([]);
-  const [loadingOpps, setLoadingOpps] = useState(true);
-  const [processingId, setProcessingId] = useState<string | null>(null);
+  const { stats, skillDistribution, latestOpportunities, upcomingActivities, loading: dashboardLoading } = useAcademicianDashboard();
+  const { skillGaps, loading: gapsLoading } = useAcademicianSkillGaps();
 
-  const fetchPendingOpps = async () => {
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("opportunities")
-        .select("*")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setPendingOpps(data as Opportunity[] || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingOpps(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPendingOpps();
-  }, []);
-
-  const handleVerify = async (id: string, action: "active" | "rejected") => {
-    setProcessingId(id);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("opportunities")
-        .update({ status: action })
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      toast.success(action === "active" ? "Opportunity Approved!" : "Opportunity Rejected.");
-      await fetchPendingOpps();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to verify opportunity");
-    } finally {
-      setProcessingId(null);
-    }
-  };
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">
@@ -97,24 +30,25 @@ export default function AcademicianDashboard() {
           <p className="text-muted-foreground mt-1">Discover FDPs, research, and manage your students.</p>
         </div>
         <div className="flex gap-2">
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
-            <Presentation className="w-4 h-4 mr-2" /> Schedule Session
-          </Button>
-          <Button variant="outline" className="border-border/50 bg-background hover:bg-muted">
-            <FileText className="w-4 h-4 mr-2" /> Add Publication
+          <Button variant="outline" className="border-border/50 bg-background hover:bg-muted text-foreground" asChild>
+            <Link href="/academician/research">
+              <FlaskConical className="w-4 h-4 mr-2" /> Post Research
+            </Link>
           </Button>
         </div>
       </div>
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
+        {statsConfig.map((s) => (
           <Card key={s.label} className="border-border/50 hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{s.label}</p>
-                  <p className="text-3xl font-bold mt-1 text-foreground">{s.value}</p>
+                  <p className="text-3xl font-bold mt-1 text-foreground">
+                    {dashboardLoading ? <Loader2 className="w-5 h-5 animate-spin mt-2" /> : stats[s.key as keyof typeof stats]}
+                  </p>
                 </div>
                 <div className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center`}>
                   <s.icon className={`w-5 h-5 ${s.color}`} />
@@ -125,147 +59,205 @@ export default function AcademicianDashboard() {
         ))}
       </div>
 
+      {/* Industry Skill Gap Alerts */}
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" /> Industry Skill Gap Alerts
+            </CardTitle>
+            <Button variant="outline" size="sm" className="bg-background" asChild>
+              <Link href="/academician/intelligence">View Intelligence <ArrowRight className="w-4 h-4 ml-2" /></Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {gapsLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : skillGaps.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-4 text-center">
+              No significant skill gaps detected at this time.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {skillGaps.slice(0, 3).map(gap => (
+                <div key={gap.skill_id} className="p-3 bg-background rounded-lg border border-border/50 shadow-sm flex items-start gap-3">
+                  <div className={`w-2 h-full rounded-full ${gap.gapSeverity > 60 ? 'bg-red-500' : 'bg-amber-500'}`} />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm truncate">{gap.name}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant={gap.gapSeverity > 60 ? 'destructive' : 'secondary'} className="text-[10px] leading-none px-1.5 py-0.5">
+                        {gap.gapSeverity.toFixed(0)}% Gap
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{gap.gapCount} affected {gap.gapCount === 1 ? 'student' : 'students'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Mid Section: Chart and Schedule */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-border/50">
+        {/* Industry Skill Gap Overview Chart */}
+        <Card className={`${skillDistribution.length === 0 ? 'lg:col-span-2' : 'lg:col-span-1'} border-border/50`}>
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-emerald-500" /> Mentee Progress Overview
+                  <TrendingUp className="w-5 h-5 text-amber-500" /> Industry Skill Gaps
                 </CardTitle>
-                <CardDescription>Average skill scores and project completions of your students</CardDescription>
+                <CardDescription>Skills where students need improvement based on recruiter feedback</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={studentProgressData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333333" opacity={0.2} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f8fafc' }}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Area type="monotone" dataKey="avgScore" name="Avg Score" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" />
-                </AreaChart>
-              </ResponsiveContainer>
+            {gapsLoading ? (
+              <div className="h-[300px] w-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : skillGaps.length === 0 ? (
+              <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground text-sm">
+                No skill gap data available.
+              </div>
+            ) : (
+              <div className="h-[300px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={skillGaps.slice(0, 5)} margin={{ top: 10, right: 30, left: -20, bottom: 0 }} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#333333" opacity={0.2} />
+                    <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+                    <YAxis type="category" dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} width={100} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f8fafc' }}
+                      itemStyle={{ color: '#f8fafc' }}
+                      formatter={(value: any, name: any, props: any) => [`${Number(value || 0).toFixed(0)}% Gap`, `Affected Students: ${props.payload.gapCount}`]}
+                    />
+                    <Bar dataKey="gapSeverity" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Existing Mentee Skill Distribution */}
+        <Card className={`${skillDistribution.length === 0 ? 'hidden' : 'lg:col-span-1'} border-border/50`}>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-500" /> Mentee Skill Distribution
+                </CardTitle>
+                <CardDescription>Average proficiency scores across your active mentees</CardDescription>
+              </div>
             </div>
+          </CardHeader>
+          <CardContent>
+            {dashboardLoading ? (
+              <div className="h-[300px] w-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : skillDistribution.length === 0 ? (
+              <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground">
+                No skill data available for active mentees.
+              </div>
+            ) : (
+              <div className="h-[300px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={skillDistribution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="skillName" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333333" opacity={0.2} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f8fafc' }}
+                      itemStyle={{ color: '#f8fafc' }}
+                    />
+                    <Area type="monotone" dataKey="avgScore" name="Avg Proficiency" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-amber-500" /> Upcoming Schedule
+              <Calendar className="w-5 h-5 text-amber-500" /> Upcoming Academic Activities
             </CardTitle>
-            <CardDescription>Your next few days at a glance</CardDescription>
+            <CardDescription>Your next FDPs, Research, and Consultancy deadlines</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {upcomingSchedule.map((item, i) => (
-              <div key={i} className={`pl-4 border-l-4 ${item.color} py-1 relative hover:bg-muted/30 transition-colors cursor-pointer rounded-r-lg`}>
-                <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <Clock className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground font-medium">{item.time}</span>
-                </div>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full mt-4 text-emerald-600 border-emerald-200 hover:bg-emerald-50" asChild>
-              <Link href="/academician/calendar">View Full Calendar</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bottom Section: Approvals and Opportunities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Industry Approvals */}
-        <Card className="border-border/50 border-t-4 border-t-amber-500 bg-amber-500/5">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-amber-600" /> Pending Industry Approvals
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {loadingOpps ? (
+            {dashboardLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ) : pendingOpps.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No pending opportunities to verify.
+            ) : upcomingActivities.length === 0 ? (
+              <div className="py-12 text-center text-muted-foreground text-sm">
+                No upcoming sessions scheduled.
               </div>
             ) : (
-              pendingOpps.map((opp) => (
-                <div key={opp.id} className="p-4 rounded-xl border border-border/50 bg-background hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-sm line-clamp-1">{opp.title}</h3>
-                    <Badge variant="outline" className="text-[10px] capitalize text-amber-600 bg-amber-50 border-amber-200">
-                      Pending
-                    </Badge>
+              upcomingActivities.map((item, i) => (
+                <div key={item.id} className={`pl-4 border-l-4 ${item.type === 'FDP' ? 'border-emerald-500' : item.type === 'research' ? 'border-violet-500' : 'border-blue-500'} py-1 relative hover:bg-muted/30 transition-colors cursor-pointer rounded-r-lg`}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground line-clamp-1">{item.title}</h4>
+                      <p className="text-xs text-muted-foreground">{item.host}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] capitalize ml-2 shrink-0">{item.type}</Badge>
                   </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-3">
-                    <span className="capitalize">{opp.type}</span>
-                    {opp.location && <span>• {opp.location}</span>}
-                    {opp.stipend && <span>• {opp.stipend}</span>}
-                  </div>
-                  <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/30">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                      disabled={processingId === opp.id}
-                      onClick={() => handleVerify(opp.id, "active")}
-                    >
-                      {processingId === opp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                      Approve
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      disabled={processingId === opp.id}
-                      onClick={() => handleVerify(opp.id, "rejected")}
-                    >
-                      {processingId === opp.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
-                      Reject
-                    </Button>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Clock className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground font-medium">{item.date}</span>
                   </div>
                 </div>
               ))
             )}
           </CardContent>
         </Card>
+      </div>
 
+      {/* Bottom Section: Opportunities */}
+      <div className="grid grid-cols-1 gap-6">
         {/* Latest Academic Opportunities */}
         <Card className="border-border/50">
           <CardHeader><CardTitle className="text-base">Latest Academic Opportunities</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {opportunities.map((o) => (
-              <div key={o.title} className="flex items-start gap-4 p-3 rounded-xl hover:bg-accent/50 transition-colors cursor-pointer border border-transparent hover:border-border/50">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-                  {o.type === "FDP" ? <BookOpen className="w-5 h-5 text-emerald-500" /> : o.type === "Research" ? <FlaskConical className="w-5 h-5 text-violet-500" /> : <Handshake className="w-5 h-5 text-blue-500" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-foreground">{o.title}</div>
-                  <div className="text-xs text-muted-foreground">{o.host}</div>
-                </div>
-                <div className="text-right shrink-0">
-                  <Badge variant="secondary" className="text-[10px] bg-secondary/80">{o.type}</Badge>
-                  <div className="text-xs text-muted-foreground mt-1 flex items-center justify-end gap-1"><Calendar className="w-3 h-3" />{o.date}</div>
-                </div>
+            {dashboardLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ))}
-            <Button variant="outline" size="sm" className="w-full mt-4 bg-muted/20 border-border/50">Browse All <ArrowRight className="w-3.5 h-3.5 ml-1" /></Button>
+            ) : latestOpportunities.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No academic opportunities available.
+              </div>
+            ) : (
+              latestOpportunities.map((o) => (
+                <div key={o.id} className="flex items-start gap-4 p-3 rounded-xl hover:bg-accent/50 transition-colors cursor-pointer border border-transparent hover:border-border/50">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    {o.type === "FDP" ? <BookOpen className="w-5 h-5 text-emerald-500" /> : o.type === "research" ? <FlaskConical className="w-5 h-5 text-violet-500" /> : <Handshake className="w-5 h-5 text-blue-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm text-foreground">{o.title}</div>
+                    <div className="text-xs text-muted-foreground">{o.host_industry_name}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <Badge variant="secondary" className="text-[10px] bg-secondary/80 capitalize">{o.type}</Badge>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center justify-end gap-1"><Calendar className="w-3 h-3" />{o.date}</div>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

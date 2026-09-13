@@ -269,7 +269,7 @@ export function useLearningHub() {
           console.log("[useLearningHub] Intercepting mock program update for:", enrollmentId);
           await new Promise(r => setTimeout(r, 400)); // Simulating network delay (shorter for progress saves)
           
-          let finalUpdateData = { ...updateData };
+          const finalUpdateData = { ...updateData };
           try {
             if (typeof window !== "undefined") {
               const stored = localStorage.getItem("mock_enrollments");

@@ -163,7 +163,7 @@ export class FinalScoreCalculator {
       
       const qStrengths = [];
       const qWeaknesses = [];
-      let suggestion = "Try to expand on your thought process.";
+      const suggestion = "Try to expand on your thought process.";
 
       if (isShort) qWeaknesses.push("Lacks detail");
       if (isStrong) qStrengths.push("Comprehensive", "Action-oriented");
