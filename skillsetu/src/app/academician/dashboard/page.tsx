@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, FlaskConical, Handshake, Presentation, ArrowRight, Calendar, Loader2, TrendingUp, Clock, AlertTriangle } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import Link from "next/link";
 import { useAcademicianDashboard } from "@/lib/hooks/useAcademicianDashboard";
 import { useAcademicianSkillGaps } from "@/lib/hooks/useAcademicianSkillGaps";
+import { StudentPlacementOverview } from "@/components/dashboard/student-placement-overview";
 
 const statsConfig = [
   { key: "fdpsAvailable", label: "FDPs Available", icon: BookOpen, color: "text-emerald-500", bg: "bg-emerald-500/10" },
@@ -136,13 +137,26 @@ export default function AcademicianDashboard() {
                       itemStyle={{ color: '#f8fafc' }}
                       formatter={(value: any, name: any, props: any) => [`${Number(value || 0).toFixed(0)}% Gap`, `Affected Students: ${props.payload.gapCount}`]}
                     />
-                    <Bar dataKey="gapSeverity" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="gapSeverity" radius={[0, 4, 4, 0]}>
+                      {skillGaps.slice(0, 5).map((entry, index) => {
+                        let color = "#3b82f6"; // Default Blue
+                        if (entry.name === "SQL") color = "#3b82f6"; // Blue
+                        else if (entry.name === "Data Structures & Algorithms") color = "#10b981"; // Emerald Green
+                        else if (entry.name === "Problem Solving") color = "#8b5cf6"; // Purple
+                        return <Cell key={`cell-${index}`} fill={color} />;
+                      })}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Student Placement Overview */}
+        <div className="lg:col-span-1 h-full">
+          <StudentPlacementOverview />
+        </div>
 
         {/* Existing Mentee Skill Distribution */}
         <Card className={`${skillDistribution.length === 0 ? 'hidden' : 'lg:col-span-1'} border-border/50`}>

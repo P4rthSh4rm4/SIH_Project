@@ -98,7 +98,7 @@ export default function ApplicantsPage() {
             applied_at,
             opportunities ( title, required_skills, preferred_skills ),
             users!student_id ( name ),
-            application_interview_evaluations ( overall_score ),
+            application_interview_evaluations ( overall_score, recommendation ),
             application_interviews ( id, interview_status ),
             application_offers ( id, offer_status )
           `)
@@ -297,7 +297,7 @@ export default function ApplicantsPage() {
 
       if (saveError) throw saveError;
 
-      setApplicants(prev => prev.map(a => a.id === evaluatingApp.id ? { ...a, evaluation: { overall_score: overall } } : a));
+      setApplicants(prev => prev.map(a => a.id === evaluatingApp.id ? { ...a, evaluation: { overall_score: overall, recommendation: evalData.recommendation } } : a));
       setEvaluatingApp(null);
       setEvalData({ technical_score: "", problem_solving_score: "", communication_score: "", confidence_score: "", recruiter_feedback: "", recommendation: "" });
       toast.success("Interview evaluation saved successfully!");
@@ -593,12 +593,17 @@ export default function ApplicantsPage() {
                            <Button variant="outline" size="sm" className="h-7 text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200 shrink-0" onClick={() => handleOpenFeedbackModal(app)}>
                              Skill Feedback
                            </Button>
-                           {(!app.offer || app.offer.offer_status === 'draft') && (
-                             <Button variant="outline" size="sm" className="h-7 text-xs bg-white hover:bg-blue-50 text-blue-600 border-blue-200 shrink-0" onClick={() => handleOpenOfferModal(app)}>
-                               {app.offer ? "Edit Draft Offer" : "Create Offer"} <ChevronRight className="w-3 h-3 ml-1" />
-                             </Button>
-                           )}
                          </div>
+                       )}
+                       {col.id === "interview" && app.evaluation && (!app.offer || !app.offer.id || app.offer.offer_status === 'draft') && app.evaluation.recommendation?.toLowerCase() !== 'reject' && (
+                         <Button variant="outline" size="sm" className="h-7 text-xs bg-white hover:bg-blue-50 text-blue-600 border-blue-200 shrink-0" onClick={() => handleOpenOfferModal(app)}>
+                           {app.offer?.id ? "Edit Draft Offer" : "Create Offer"} <ChevronRight className="w-3 h-3 ml-1" />
+                         </Button>
+                       )}
+                       {col.id === "interview" && app.evaluation && app.offer && app.offer.id && app.offer.offer_status !== 'draft' && (
+                         <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 px-2 py-0 h-7 flex items-center capitalize shrink-0 text-xs">
+                           Offer {app.offer.offer_status}
+                         </Badge>
                        )}
                        {col.id === "offer" && app.offer && (
                          <div className="flex flex-col gap-1 w-full text-right">

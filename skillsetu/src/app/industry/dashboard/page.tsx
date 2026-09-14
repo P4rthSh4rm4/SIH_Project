@@ -43,7 +43,7 @@ export default function IndustryDashboard() {
           // Fetch industry's opportunities WITH applications
           const { data: oppsData } = await supabase
             .from("opportunities")
-            .select(`*, applications(*)`)
+            .select(`*, applications(*, application_offers(id, offer_status))`)
             .eq("industry_id", user.id)
             .order("created_at", { ascending: false });
             
@@ -104,7 +104,11 @@ export default function IndustryDashboard() {
   const shortlistedCount = allApplications.filter(a => ['shortlisted', 'interview', 'offer', 'hired'].includes(a.status)).length;
   const interviewCount = allApplications.filter(a => a.status === 'interview').length;
   const offerCount = allApplications.filter(a => a.status === 'offer').length;
-  const hiredCount = allApplications.filter(a => a.status === 'hired').length;
+  const hiredCount = allApplications.filter(a => {
+    if (a.status === 'hired') return true;
+    const offers = Array.isArray(a.application_offers) ? a.application_offers : (a.application_offers ? [a.application_offers] : []);
+    return offers.some((o: any) => o.offer_status === 'accepted');
+  }).length;
   
   const avgMatchScore = allApplications.length > 0 && allApplications.some(a => a.match_score !== null)
     ? Math.round(allApplications.reduce((acc, a) => acc + (a.match_score || 0), 0) / allApplications.filter(a => a.match_score !== null).length)
@@ -192,7 +196,7 @@ export default function IndustryDashboard() {
           { label: "Shortlisted", value: shortlistedCount },
           { label: "Interviews", value: interviewCount },
           { label: "Offers Made", value: offerCount },
-          { label: "Hired", value: hiredCount === 0 ? "No data yet" : hiredCount },
+          { label: "Hired", value: hiredCount },
           { label: "Avg Match Score", value: avgMatchScore !== null ? `${avgMatchScore}%` : "No data" },
         ].map((kpi, i) => (
           <Card key={i} className="border-border/50 bg-secondary/5">

@@ -71,13 +71,13 @@ function LoginForm() {
         .single();
 
       if (dbError) {
-        console.error("Failed to fetch user role after login:", dbError);
+        throw new Error(`Failed to fetch user role: ${dbError.message}`);
       }
 
-      const role = (userData?.role as UserRole) || (data.user.user_metadata?.role as UserRole);
+      const role = userData?.role as UserRole;
 
       if (!role) {
-        throw new Error("Unable to determine your account role. Please try reloading the page or contact support.");
+        throw new Error("Unable to determine your account role. Please contact support.");
       }
 
       const portalPrefix = ROLE_PORTAL_MAP[role];
@@ -198,13 +198,13 @@ function LoginForm() {
           .single();
 
         if (dbError) {
-          console.error("Failed to fetch user role after OTP verification:", dbError);
+          throw new Error(`Failed to fetch user role: ${dbError.message}`);
         }
 
-        const role = (userData?.role as UserRole) || (data.user.user_metadata?.role as UserRole);
+        const role = userData?.role as UserRole;
 
         if (!role) {
-          throw new Error("Unable to determine your account role. Please try reloading the page or contact support.");
+          throw new Error("Unable to determine your account role. Please contact support.");
         }
 
         const portalPrefix = ROLE_PORTAL_MAP[role];

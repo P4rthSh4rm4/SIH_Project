@@ -167,10 +167,10 @@ export default function SkillAnalysisPage() {
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                      <PolarGrid stroke="hsl(var(--border))" />
+                      <PolarGrid stroke="var(--border)" />
                       <PolarAngleAxis
                         dataKey="category"
-                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
                       />
                       <PolarRadiusAxis
                         angle={30}
@@ -200,7 +200,7 @@ export default function SkillAnalysisPage() {
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={skills.slice(0, 8)} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
                       <YAxis
                         dataKey="name"
@@ -234,7 +234,7 @@ export default function SkillAnalysisPage() {
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={growth} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                       <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
                       <Tooltip />

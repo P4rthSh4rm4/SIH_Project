@@ -88,7 +88,11 @@ export async function GET(request: Request) {
   }
 
   const role = userProfile.role as UserRole;
-  const portalPrefix = ROLE_PORTAL_MAP[role] || "/student";
+  const portalPrefix = ROLE_PORTAL_MAP[role];
+
+  if (!portalPrefix) {
+    return NextResponse.redirect(`${origin}/auth/login?error=${encodeURIComponent("Invalid account role configuration.")}`);
+  }
 
   // ─── Check onboarding status ──────────────────────────────────────────
   if (!userProfile.onboarding_completed) {

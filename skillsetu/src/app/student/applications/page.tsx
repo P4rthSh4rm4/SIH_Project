@@ -274,7 +274,7 @@ export default function ApplicationsPage() {
                 )}
                 
                 {app.status === 'offer' && (
-                  <CardFooter className="pt-0 justify-end bg-emerald-50/50 mt-2 border-t border-emerald-100 rounded-b-xl py-3">
+                  <CardFooter className="pt-0 justify-end gap-2 bg-emerald-50/50 mt-2 border-t border-emerald-100 rounded-b-xl py-3 flex-wrap">
                     <Button 
                       variant="outline" 
                       className="bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50"
@@ -283,6 +283,53 @@ export default function ApplicationsPage() {
                       <FileText className="w-4 h-4 mr-2" />
                       View Job Offer
                     </Button>
+                    {(() => {
+                      const appData = app as any;
+                      const offer = Array.isArray(appData.application_offers) 
+                        ? appData.application_offers[0] 
+                        : appData.application_offers;
+                      if (offer && offer.offer_status === 'sent') {
+                        return (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              className="bg-white border-red-200 text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                setViewingOfferApp(app);
+                                setIsDeclining(true);
+                              }}
+                            >
+                              Decline
+                            </Button>
+                            <Button 
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={() => handleAcceptOffer(app)}
+                              disabled={processingId === app.id}
+                            >
+                              {processingId === app.id && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                              Accept Offer
+                            </Button>
+                          </>
+                        );
+                      }
+                      if (offer && offer.offer_status === 'accepted') {
+                        return (
+                          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 px-3 flex items-center h-9">
+                            <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                            Offer Accepted
+                          </Badge>
+                        );
+                      }
+                      if (offer && offer.offer_status === 'declined') {
+                        return (
+                          <Badge className="bg-red-100 text-red-800 hover:bg-red-100 px-3 flex items-center h-9">
+                            <AlertCircle className="w-4 h-4 mr-1.5" />
+                            Offer Declined
+                          </Badge>
+                        );
+                      }
+                      return null;
+                    })()}
                   </CardFooter>
                 )}
               </Card>
@@ -366,13 +413,13 @@ export default function ApplicationsPage() {
                     <div className="space-y-3 mt-2 border border-red-200 rounded-lg p-3 bg-red-50/50">
                       <div className="text-sm font-medium text-red-800">Why are you declining this offer?</div>
                       <Textarea 
-                        placeholder="Optional reason (e.g., accepted another offer, compensation mismatch...)" 
-                        className="text-sm bg-white"
+                        placeholder="Optional feedback..."
                         value={declineReason}
                         onChange={(e) => setDeclineReason(e.target.value)}
+                        className="bg-white border-red-200 focus-visible:ring-red-200"
                       />
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => setIsDeclining(false)}>Cancel</Button>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" onClick={() => setIsDeclining(false)} className="hover:bg-red-100 hover:text-red-800">Cancel</Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDeclineOffer(viewingOfferApp)} disabled={!!processingId}>
                           {processingId === viewingOfferApp.id && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                           Confirm Decline
@@ -382,15 +429,15 @@ export default function ApplicationsPage() {
                   )}
 
                   {offer.offer_status === 'accepted' && (
-                    <div className="bg-emerald-100 text-emerald-800 p-3 rounded-lg flex items-center text-sm font-medium">
+                    <div className="bg-emerald-100 text-emerald-800 p-3 rounded-lg flex items-center text-sm font-medium mt-2">
                       <CheckCircle2 className="w-5 h-5 mr-2" />
                       You accepted this offer on {new Date(offer.accepted_at).toLocaleDateString()}
                     </div>
                   )}
 
                   {offer.offer_status === 'declined' && (
-                    <div className="bg-red-100 text-red-800 p-3 rounded-lg flex items-center text-sm font-medium">
-                      <XCircle className="w-5 h-5 mr-2" />
+                    <div className="bg-red-100 text-red-800 p-3 rounded-lg flex items-center text-sm font-medium mt-2">
+                      <AlertCircle className="w-5 h-5 mr-2" />
                       You declined this offer on {new Date(offer.declined_at).toLocaleDateString()}
                     </div>
                   )}

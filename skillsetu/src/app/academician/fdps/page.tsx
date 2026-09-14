@@ -1,25 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  BookOpen, ExternalLink, Calendar, MapPin, 
-  Clock, Presentation, Sparkles, CheckCircle2, Download, Plus, Loader2
+  BookOpen, ExternalLink, Calendar, MapPin,
+  Clock, Presentation, Sparkles, CheckCircle2, Download, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { FDPCertificateView } from "@/components/dashboard/fdp-certificate-view";
 import { useUserProfile } from "@/lib/hooks/useUserProfile";
 import { createClient } from "@/lib/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 // We'll define the types here to match the DB
 type FDP = {
@@ -47,27 +39,13 @@ export default function FDPsPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [enrolledIds, setEnrolledIds] = useState<Record<string, string>>({}); // FDP ID -> status
   const [loading, setLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const certificateRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const supabase = createClient();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [defaultTitle, setDefaultTitle] = useState("");
-  const [defaultDescription, setDefaultDescription] = useState("");
-  const searchParams = useSearchParams();
-
   useEffect(() => {
     fetchFDPs();
-    
-    // Check for new_skill parameter to auto-open FDP creation
-    const newSkill = searchParams.get("new_skill");
-    if (newSkill) {
-      setDefaultTitle(`FDP on ${newSkill}`);
-      setDefaultDescription(`This Faculty Development Program addresses a critical industry skill gap identified in our students regarding ${newSkill}.`);
-      setIsDialogOpen(true);
-    }
-  }, [profile?.id, searchParams]);
+  }, [profile?.id]);
 
   const fetchFDPs = async () => {
     try {
@@ -148,45 +126,6 @@ export default function FDPsPage() {
     }
   };
 
-  const handleCreateFDP = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!profile?.id) return;
-    setIsCreating(true);
-
-    const formData = new FormData(e.currentTarget);
-    const capacityStr = formData.get("capacity") as string;
-
-    try {
-      const { error } = await supabase
-        .from("academician_opportunities")
-        .insert({
-          type: "FDP",
-          title: formData.get("title") as string,
-          description: formData.get("description") as string || "FDP Workshop",
-          start_date: formData.get("start_date") as string || null,
-          end_date: formData.get("end_date") as string || null,
-          duration: formData.get("duration") as string || null,
-          mode: formData.get("mode") as string,
-          location: formData.get("location") as string || null,
-          instructor: formData.get("instructor") as string || null,
-          capacity: capacityStr ? parseInt(capacityStr, 10) : null,
-          created_by: profile.id,
-          status: "upcoming"
-        });
-
-      if (error) throw error;
-      toast.success("FDP created successfully!");
-      fetchFDPs();
-      // Reset form via uncontrolled nature or close modal
-      const closeButton = document.getElementById("close-dialog-btn");
-      if (closeButton) closeButton.click();
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to create FDP");
-    } finally {
-      setIsCreating(false);
-    }
-  };
 
   const handleDownload = async (workshopId: string, workshopTitle: string) => {
     const element = certificateRefs.current[workshopId];
@@ -248,75 +187,6 @@ export default function FDPsPage() {
           </p>
         </div>
 
-        {/* FDP Creation Dialog (Only academicians or admins) */}
-        {(profile?.role?.toLowerCase() === "academician" || profile?.role?.toLowerCase() === "institution_admin" || profile?.role?.toLowerCase() === "super_admin") && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger 
-              render={
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Post FDP
-                </Button>
-              } 
-            />
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Post new FDP</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateFDP} className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title *</label>
-                  <input name="title" required defaultValue={defaultTitle} className="w-full p-2 border rounded-md" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Description</label>
-                  <textarea name="description" rows={3} defaultValue={defaultDescription} className="w-full p-2 border rounded-md" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Start Date *</label>
-                    <input name="start_date" type="date" required className="w-full p-2 border rounded-md" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">End Date *</label>
-                    <input name="end_date" type="date" required className="w-full p-2 border rounded-md" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Mode</label>
-                    <select name="mode" className="w-full p-2 border rounded-md">
-                      <option value="Offline">Offline</option>
-                      <option value="Online">Online</option>
-                      <option value="Hybrid">Hybrid</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Capacity</label>
-                    <input name="capacity" type="number" min="1" placeholder="Optional" className="w-full p-2 border rounded-md" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Location</label>
-                  <input name="location" placeholder="e.g., Main Auditorium or Zoom link" className="w-full p-2 border rounded-md" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Instructor</label>
-                  <input name="instructor" className="w-full p-2 border rounded-md" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Duration Text</label>
-                  <input name="duration" placeholder="e.g., 3 Days" className="w-full p-2 border rounded-md" />
-                </div>
-                <Button type="submit" className="w-full bg-emerald-600" disabled={isCreating}>
-                  {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Create FDP
-                </Button>
-                <DialogTrigger render={<button type="button" id="close-dialog-btn" className="hidden" />} />
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
       </div>
 
       {/* ATAL FDP Featured Section */}
