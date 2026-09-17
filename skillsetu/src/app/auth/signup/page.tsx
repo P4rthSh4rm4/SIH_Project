@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,10 @@ import {
   Building2,
   BookOpen,
   BarChart3,
+  Code2,
+  Leaf,
+  Pill,
+  CheckCircle2,
 } from "lucide-react";
 import { SELF_ASSIGNABLE_ROLES, ROLE_PORTAL_MAP, type UserRole } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
@@ -61,13 +65,37 @@ const roles: {
   },
 ];
 
-
+const departments = [
+  {
+    id: "CSE",
+    label: "CSE",
+    fullName: "Computer Science & Engg",
+    icon: Code2,
+    desc: "Tech, Software & AI/ML",
+    color: "text-blue-500",
+  },
+  {
+    id: "Ayurveda",
+    label: "Ayurveda",
+    fullName: "Ayurvedic Medicine (BAMS)",
+    icon: Leaf,
+    desc: "Herbal, Clinical & Wellness",
+    color: "text-emerald-500",
+  },
+  {
+    id: "BPharma",
+    label: "BPharma",
+    fullName: "Pharmacy (B.Pharm)",
+    icon: Pill,
+    desc: "Pharma, Drug Dev & QA",
+    color: "text-purple-500",
+  },
+];
 
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedRole = searchParams.get("role") as UserRole | null;
-
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -75,12 +103,16 @@ function SignupForm() {
   const [selectedRole, setSelectedRole] = useState<UserRole>(
     preselectedRole || "student"
   );
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("CSE");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-
-
+  // Ensure a clean slate when arriving at signup (clear any lingering session)
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.signOut().catch(() => {});
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,35 +127,48 @@ function SignupForm() {
 
     try {
       const supabase = createClient();
+      await supabase.auth.signOut().catch(() => {});
 
-      // 1. Create the auth user, storing name & role in metadata so the
-      //    DB trigger (handle_new_user) can populate public.users automatically.
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name.trim(),
-            role: safeRole,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+      // 1. Create account via server API with auto email confirmation
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          role: safeRole,
+          department: selectedDepartment,
+        }),
       });
 
-      if (authError) {
-        if (authError.message.includes("already registered")) {
-          throw new Error(
-            "An account with this email already exists. Please log in instead."
-          );
-        }
-        throw authError;
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        throw new Error(json.error || "Sign up failed");
       }
 
-      // 2. Redirect to dashboard
-      if (data.user) {
-        const portalPrefix = ROLE_PORTAL_MAP[safeRole] || "/student";
-        router.refresh();
-        router.push(`${portalPrefix}/dashboard`);
+      // 2. Sign in immediately to establish a fresh, verified session for the new user
+      const { data: signInData, error: signInErr } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+
+      if (signInErr) {
+        throw signInErr;
+      }
+
+      // 3. Redirect: new student goes to onboarding profile setup before dashboard;
+      //    other roles go directly to their dashboard
+      if (signInData?.user) {
+        if (safeRole === "student") {
+          router.refresh();
+          router.push("/student/onboarding");
+        } else {
+          const portalPrefix = ROLE_PORTAL_MAP[safeRole] || "/student";
+          router.refresh();
+          router.push(`${portalPrefix}/dashboard`);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed");
@@ -207,6 +252,53 @@ function SignupForm() {
             })}
           </div>
         </div>
+
+        {/* Department selector — shown when student, academician, or industry is chosen */}
+        {SELF_ASSIGNABLE_ROLES.includes(selectedRole) && (
+          <div className="space-y-2.5 pt-1 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <Label className="text-[0.9rem] font-semibold flex items-center gap-1.5">
+                <span>Select Department</span>
+                <span className="text-[11px] font-normal text-muted-foreground">(Required)</span>
+              </Label>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {departments.find((d) => d.id === selectedDepartment)?.label}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              {departments.map((dept) => {
+                const isSelected = selectedDepartment === dept.id;
+                return (
+                  <button
+                    key={dept.id}
+                    type="button"
+                    onClick={() => setSelectedDepartment(dept.id)}
+                    className={`p-3 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${
+                      isSelected
+                        ? "border-primary bg-primary/5 shadow-md shadow-primary/10 ring-1 ring-primary/30"
+                        : "border-border/50 hover:border-primary/30 hover:bg-accent/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-2">
+                      <dept.icon className={`w-5 h-5 ${isSelected ? dept.color : "text-muted-foreground"} transition-colors`} />
+                      {isSelected && (
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-[0.88rem] font-bold tracking-tight">
+                        {dept.label}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                        {dept.desc}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <Separator />
 

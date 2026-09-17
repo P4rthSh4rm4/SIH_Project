@@ -43,9 +43,7 @@ export function useProfileData(): UseProfileDataResult {
       const [userRes, spRes] = await Promise.all([
         supabase
           .from("users")
-          .select(
-            "id, role, name, email, avatar_url, institution_id, onboarding_completed, created_at, updated_at"
-          )
+          .select("*")
           .eq("id", user.id)
           .single(),
         supabase
@@ -57,7 +55,7 @@ export function useProfileData(): UseProfileDataResult {
 
       if (userRes.error) throw userRes.error;
 
-      const userData = userRes.data;
+      const userData = userRes.data as any;
       let spData = spRes.data;
 
       // Auto-create student_profiles row if missing
@@ -87,8 +85,10 @@ export function useProfileData(): UseProfileDataResult {
         name: userData.name || user.user_metadata?.full_name || user.user_metadata?.name,
         email: userData.email || user.email,
         role: userData.role,
+        department: userData.department || spData?.department || (user.user_metadata?.department as string) || "CSE",
         avatar_url: userData.avatar_url || user.user_metadata?.avatar_url,
         institution_id: userData.institution_id,
+        onboarding_completed: userData.onboarding_completed ?? false,
         student_profile_id: spData?.id,
         bio: spData?.bio,
         career_objective: spData?.career_objective,

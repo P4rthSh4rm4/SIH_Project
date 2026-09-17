@@ -82,7 +82,11 @@ export default function ResumeBuilderPage() {
     
     try {
       const element = resumeRef.current;
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
       const imgData = canvas.toDataURL("image/png");
       
       const pdf = new jsPDF({

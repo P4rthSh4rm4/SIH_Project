@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { DashboardSidebar, type NavItem } from "@/components/layout/dashboard-sidebar";
 import {
   LayoutDashboard, Target, User, Briefcase, FolderOpen,
@@ -33,7 +34,12 @@ const studentNav: NavItem[] = [
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { profile } = useUserProfile();
+
+  if (pathname === "/student/onboarding") {
+    return <div className="min-h-screen bg-background">{children}</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -43,6 +49,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         roleColor="text-violet-500"
         userName={profile?.name}
         userEmail={profile?.email}
+        department={profile?.department}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-5 md:p-10 max-w-7xl mx-auto w-full">{children}</div>

@@ -26,6 +26,7 @@ export default function IndustryLayout({ children }: { children: React.ReactNode
         roleColor="text-blue-500"
         userName={profile?.name}
         userEmail={profile?.email}
+        department={profile?.department}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-5 md:p-10 max-w-7xl mx-auto w-full">{children}</div>

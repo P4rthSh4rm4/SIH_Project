@@ -71,11 +71,11 @@ function SkillRing({
 
 // Colors that match the existing design system
 const RING_COLORS = [
-  "oklch(0.55 0.15 245)",   // primary ocean
-  "oklch(0.68 0.15 190)",   // teal
-  "oklch(0.70 0.14 150)",   // emerald
-  "oklch(0.62 0.15 280)",   // purple-blue
-  "oklch(0.75 0.15 60)",    // warm amber
+  "#0077c2",   // primary ocean
+  "#00b4ad",   // teal
+  "#54b66e",   // emerald
+  "#7679de",   // purple-blue
+  "#f2943c",   // warm amber
 ];
 
 export function SkillRings({ skills, loading }: SkillRingsProps) {

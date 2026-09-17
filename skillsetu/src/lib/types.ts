@@ -22,11 +22,14 @@ export const ROLE_PORTAL_MAP: Record<UserRole, string> = {
   super_admin: "/admin",
 };
 
+export type Department = "CSE" | "Ayurveda" | "BPharma" | string;
+
 export interface UserProfile {
   id: string;
   role: UserRole;
   name: string;
   email: string;
+  department?: Department;
   avatar_url?: string;
   institution_id?: string;
   onboarding_completed: boolean;
@@ -210,6 +213,7 @@ export type Gender = "male" | "female" | "non_binary" | "prefer_not_to_say";
 export interface StudentProfile {
   id: string;
   user_id: string;
+  department?: Department;
   bio?: string;
   resume_url?: string;
   portfolio_json?: Record<string, unknown>;
@@ -260,6 +264,7 @@ export interface ProfileFormData {
   name: string;
   email: string;
   role: UserRole;
+  department?: Department;
   avatar_url?: string;
   institution_id?: string;
   onboarding_completed?: boolean;

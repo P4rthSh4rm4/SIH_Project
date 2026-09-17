@@ -27,6 +27,7 @@ export default function AcademicianLayout({ children }: { children: React.ReactN
         roleColor="text-emerald-500"
         userName={profile?.name}
         userEmail={profile?.email}
+        department={profile?.department}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-5 md:p-10 max-w-7xl mx-auto w-full">{children}</div>

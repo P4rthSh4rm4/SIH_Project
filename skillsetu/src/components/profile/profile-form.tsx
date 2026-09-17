@@ -24,7 +24,7 @@ import {
   Save,
   Loader2,
 } from "lucide-react";
-import type { ProfileFormData, Gender } from "@/lib/types";
+import type { ProfileFormData, Gender, Department } from "@/lib/types";
 
 interface ProfileFormProps {
   profile: ProfileFormData;
@@ -111,8 +111,24 @@ export function ProfileForm({
           </div>
         </div>
 
-        {/* Row 3: DOB + Gender */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Row 3: Department + DOB */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="space-y-2">
+            <Label>Academic Department</Label>
+            <Select
+              value={profile.department ?? "CSE"}
+              onValueChange={(val) => onChange({ department: (val as Department) || undefined })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CSE">CSE (Computer Science)</SelectItem>
+                <SelectItem value="Ayurveda">Ayurveda (BAMS)</SelectItem>
+                <SelectItem value="BPharma">BPharma (Pharmacy)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="profile-dob">Date of Birth</Label>
             <div className="relative">

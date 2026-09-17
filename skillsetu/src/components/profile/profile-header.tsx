@@ -66,14 +66,22 @@ export function ProfileHeader({ profile, onAvatarChange }: ProfileHeaderProps) {
             <p className="text-base text-muted-foreground mt-0.5">{profile.email}</p>
           </div>
 
-          {/* Role badge */}
-          <div className="pt-4">
+          {/* Role and Department badges */}
+          <div className="pt-4 flex flex-wrap items-center gap-2">
             <Badge
               variant="secondary"
               className="bg-primary/10 text-primary border-primary/20 capitalize px-4 py-1.5 text-[0.95rem] font-bold"
             >
               {profile.role.replace("_", " ")}
             </Badge>
+            {profile.department && (
+              <Badge
+                variant="outline"
+                className="bg-accent/50 text-foreground border-border/80 px-3.5 py-1.5 text-[0.9rem] font-bold"
+              >
+                {profile.department}
+              </Badge>
+            )}
           </div>
         </div>
       </CardContent>

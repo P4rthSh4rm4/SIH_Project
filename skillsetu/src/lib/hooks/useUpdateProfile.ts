@@ -64,6 +64,10 @@ export function useUpdateProfile(): UseUpdateProfileResult {
 
         if (data.name !== undefined) userFields.name = data.name;
         if (avatarUrl !== undefined) userFields.avatar_url = avatarUrl;
+        if (data.department !== undefined) {
+          userFields.department = data.department;
+          profileFields.department = data.department;
+        }
         if (data.institution_id !== undefined)
           userFields.institution_id = data.institution_id;
         if (data.onboarding_completed !== undefined)
@@ -86,6 +90,16 @@ export function useUpdateProfile(): UseUpdateProfileResult {
         if (data.portfolio_json !== undefined)
           profileFields.portfolio_json = data.portfolio_json;
 
+        // Keep auth metadata in sync if department or name changed
+        if (data.department !== undefined || data.name !== undefined) {
+          supabase.auth.updateUser({
+            data: {
+              ...(data.name ? { name: data.name } : {}),
+              ...(data.department ? { department: data.department } : {}),
+            },
+          }).catch((err) => console.warn("Sync metadata failed:", err));
+        }
+
         // Update both tables in parallel
         const promises: Promise<void>[] = [];
 
@@ -96,7 +110,18 @@ export function useUpdateProfile(): UseUpdateProfileResult {
                 .from("users")
                 .update(userFields)
                 .eq("id", user.id);
-              if (error) throw error;
+              if (error) {
+                // If column does not exist yet in DB, retry without department
+                if (error.message?.includes("department") && "department" in userFields) {
+                  const copy = { ...userFields };
+                  delete copy.department;
+                  if (Object.keys(copy).length > 0) {
+                    await supabase.from("users").update(copy).eq("id", user.id);
+                  }
+                } else {
+                  throw error;
+                }
+              }
             })()
           );
         }
@@ -108,7 +133,18 @@ export function useUpdateProfile(): UseUpdateProfileResult {
                 .from("student_profiles")
                 .update(profileFields)
                 .eq("user_id", user.id);
-              if (error) throw error;
+              if (error) {
+                // If column does not exist yet in DB, retry without department
+                if (error.message?.includes("department") && "department" in profileFields) {
+                  const copy = { ...profileFields };
+                  delete copy.department;
+                  if (Object.keys(copy).length > 0) {
+                    await supabase.from("student_profiles").update(copy).eq("user_id", user.id);
+                  }
+                } else {
+                  throw error;
+                }
+              }
             })()
           );
         }

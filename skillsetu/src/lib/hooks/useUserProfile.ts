@@ -44,9 +44,7 @@ export function useUserProfile(): UseUserProfileResult {
       // 2. Fetch the matching row from public.users
       const { data, error: dbError } = await supabase
         .from("users")
-        .select(
-          "id, role, name, email, avatar_url, institution_id, onboarding_completed, created_at, updated_at"
-        )
+        .select("*")
         .eq("id", user.id)
         .single();
 
@@ -60,45 +58,56 @@ export function useUserProfile(): UseUserProfileResult {
           if (!["student", "industry", "academician"].includes(role)) {
             role = "student";
           }
+          const department = (meta.department as string) || "CSE";
+
+          const insertPayload: Record<string, unknown> = {
+            id: user.id,
+            name:
+              (meta.name as string) ||
+              (meta.full_name as string) ||
+              user.email?.split("@")[0] ||
+              "User",
+            email: user.email ?? "",
+            role,
+            avatar_url: (meta.avatar_url as string) || null,
+          };
 
           const { data: inserted, error: insertError } = await supabase
             .from("users")
-            .insert({
-              id: user.id,
-              name:
-                (meta.name as string) ||
-                (meta.full_name as string) ||
-                user.email?.split("@")[0] ||
-                "User",
-              email: user.email ?? "",
-              role,
-              avatar_url: (meta.avatar_url as string) || null,
-            })
-            .select(
-              "id, role, name, email, avatar_url, institution_id, onboarding_completed, created_at, updated_at"
-            )
+            .insert(insertPayload)
+            .select("*")
             .single();
 
           if (insertError) {
             // If insert fails (maybe race condition with trigger), try fetching again
             const { data: retryData, error: retryError } = await supabase
               .from("users")
-              .select(
-                "id, role, name, email, avatar_url, institution_id, onboarding_completed, created_at, updated_at"
-              )
+              .select("*")
               .eq("id", user.id)
               .single();
 
             if (retryError) throw retryError;
-            setProfile(retryData as UserProfile);
+            const res = retryData as any;
+            setProfile({
+              ...res,
+              department: res.department || (meta.department as string) || "CSE",
+            } as UserProfile);
           } else {
-            setProfile(inserted as UserProfile);
+            const res = inserted as any;
+            setProfile({
+              ...res,
+              department: res.department || (meta.department as string) || "CSE",
+            } as UserProfile);
           }
         } else {
           throw dbError;
         }
       } else {
-        setProfile(data as UserProfile);
+        const res = data as any;
+        setProfile({
+          ...res,
+          department: res.department || (user.user_metadata?.department as string) || "CSE",
+        } as UserProfile);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load profile");

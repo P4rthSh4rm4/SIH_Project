@@ -94,7 +94,7 @@ export default function StudentDashboard() {
 
   const firstName = profile?.name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
-  const targetRole = (profile as any)?.career_objective || "Software Engineer";
+  const targetRole = (profile as any)?.career_objective || (profile?.department === "Ayurveda" ? "Ayurvedic Medical Practitioner" : profile?.department === "BPharma" ? "Pharmaceutical Research Specialist" : "Software Engineer");
 
   const statCards = [
     {
@@ -140,15 +140,22 @@ export default function StudentDashboard() {
     <div className="space-y-7 pb-20">
       {/* Header */}
       <div className="animate-slide-up">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-          Welcome back,{" "}
-          {isLoading ? (
-            <span className="inline-block h-9 w-32 rounded-xl bg-muted animate-pulse align-middle" />
-          ) : (
-            <span className="gradient-text">{firstName || "there"}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            Welcome back,{" "}
+            {isLoading ? (
+              <span className="inline-block h-9 w-32 rounded-xl bg-muted animate-pulse align-middle" />
+            ) : (
+              <span className="gradient-text">{firstName || "there"}</span>
+            )}
+            {" "}👋
+          </h1>
+          {profile?.department && (
+            <Badge variant="outline" className="text-xs px-2.5 py-1 font-bold text-primary border-primary/30 bg-primary/5">
+              {profile.department}
+            </Badge>
           )}
-          {" "}👋
-        </h1>
+        </div>
         <p className="text-muted-foreground mt-2 text-[0.95rem]">
           Here&apos;s your career readiness overview and actionable steps for today.
         </p>

@@ -64,6 +64,7 @@ export async function updateSession(request: NextRequest) {
     "/auth/callback",
     "/auth/signout",
     "/auth/verify",
+    "/auth/signup",
   ];
 
   const isProtectedRoute = protectedPrefixes.some((prefix) =>

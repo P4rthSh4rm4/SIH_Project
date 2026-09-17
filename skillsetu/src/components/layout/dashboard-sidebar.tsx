@@ -28,6 +28,7 @@ interface DashboardSidebarProps {
   roleColor: string; // Tailwind text color class
   userName?: string;
   userEmail?: string;
+  department?: string;
 }
 
 export function DashboardSidebar({
@@ -36,6 +37,7 @@ export function DashboardSidebar({
   roleColor,
   userName = "",
   userEmail = "",
+  department,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -126,10 +128,15 @@ export function DashboardSidebar({
       </div>
 
       {(!collapsed || mobile) && (
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-4 flex items-center justify-between gap-2">
           <span className={`text-xs font-bold uppercase tracking-widest ${roleColor}`}>
             {roleLabel}
           </span>
+          {department && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 tracking-wider">
+              {department}
+            </span>
+          )}
         </div>
       )}
 

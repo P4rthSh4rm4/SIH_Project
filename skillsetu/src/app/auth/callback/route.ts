@@ -95,9 +95,8 @@ export async function GET(request: Request) {
   }
 
   // ─── Check onboarding status ──────────────────────────────────────────
-  if (!userProfile.onboarding_completed) {
-    // For now, redirect to dashboard — onboarding can be added later
-    return NextResponse.redirect(`${origin}${portalPrefix}/dashboard`);
+  if (role === "student" && !userProfile.onboarding_completed) {
+    return NextResponse.redirect(`${origin}/student/onboarding`);
   }
 
   return NextResponse.redirect(`${origin}${portalPrefix}/dashboard`);
