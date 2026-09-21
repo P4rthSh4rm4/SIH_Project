@@ -256,9 +256,14 @@ export default function SkillAssessmentPage() {
           </div>
           <div className="relative z-10 max-w-2xl">
             <h1 className="text-3xl font-bold tracking-tight mb-3">Skill Assessment Hub</h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-lg mb-6">
               Challenge yourself with AI-powered assessments. Identify your strengths and pinpoint areas for growth across Coding, Aptitude, and Soft Skills.
             </p>
+            <Button asChild>
+              <a href="/student/skill-analysis">
+                <BarChart3 className="w-4 h-4 mr-2" /> View Skill Analysis
+              </a>
+            </Button>
           </div>
         </div>
 

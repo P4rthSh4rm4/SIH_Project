@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Compass, Map, Briefcase, ChevronRight, CheckCircle2,
   Circle, Star, ArrowRight, Zap, PlayCircle, Trophy,
-  Search, Lock, Award, Flag, Shield
+  Search, Lock, Award, Flag, Shield, BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
@@ -195,7 +195,7 @@ export default function CareerGuidancePage() {
             Explore career paths, map your skills, and get AI-driven advice.
           </p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <Button 
             variant="outline" 
             className="flex-1 sm:flex-none justify-start text-muted-foreground bg-muted/20 backdrop-blur-sm border-border/50 hover:bg-muted/40"
@@ -206,6 +206,11 @@ export default function CareerGuidancePage() {
             <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:ml-6">
               <span className="text-xs">⌘</span>K
             </kbd>
+          </Button>
+          <Button asChild variant="outline" className="shrink-0 border-primary/20 hover:bg-primary/5">
+            <Link href="/student/learning-hub">
+              <BookOpen className="w-4 h-4 mr-2 text-primary" /> Learning Hub
+            </Link>
           </Button>
           <Button asChild className="bg-primary/10 text-primary hover:bg-primary/20 shrink-0">
             <Link href="/student/copilot">
