@@ -1,6 +1,7 @@
 import {
   Compass, Map, Zap, BrainCircuit, ShieldAlert,
-  Smartphone, Cloud, Palette, Blocks
+  Smartphone, Cloud, Palette, Blocks,
+  Star, Briefcase, Award, Shield
 } from "lucide-react";
 
 export const CAREER_PATHS = [
@@ -314,7 +315,216 @@ export const CAREER_PATHS = [
         description: "Build scalable, reusable component libraries.",
         completed: false,
         skills: ["Component Variants", "Auto Layout", "Design Tokens"],
-      },
+      }
     ]
   }
 ];
+export const AYURVEDA_CAREER_PATHS = [
+  {
+    id: "ayurveda_clinical",
+    title: "Clinical Practitioner (Ayurveda)",
+    description: "Diagnose and manage patients using Ayurvedic principles, clinical knowledge, lifestyle guidance, and appropriate therapies.",
+    icon: Compass,
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    salary: "₹5L - ₹15L",
+    demand: "High",
+    requiredSkills: ["Clinical Knowledge", "Patient Assessment", "Ayurveda Fundamentals", "Clinical Reasoning", "Patient Communication", "Documentation"],
+    phases: [
+      {
+        title: "Ayurveda Clinical Foundations",
+        program_id: "ayur-clin-101",
+        description: "Master the core concepts of Doshas, Dhatus, and Malas.",
+        completed: false,
+        skills: ["Clinical Knowledge", "Ayurveda Fundamentals", "Roga Nidan", "Patient Assessment"],
+      },
+      {
+        title: "Clinical Practice",
+        program_id: "ayur-clin-201",
+        description: "Learn advanced diagnostic techniques and case taking.",
+        completed: false,
+        skills: ["Case Taking", "Clinical Reasoning", "Treatment Planning", "Patient Communication"],
+      },
+      {
+        title: "Professional Practice",
+        program_id: "ayur-clin-301",
+        description: "Develop professional ethics and patient counseling skills.",
+        completed: false,
+        skills: ["Clinical Documentation", "Patient Counselling", "Ethical Practice", "Healthcare Communication"],
+      },
+      {
+        title: "Career Readiness",
+        program_id: "ayur-clin-401",
+        description: "Prepare for internships and professional practice.",
+        completed: false,
+        skills: ["Internship/Clinical Experience", "Resume", "Interview Preparation", "Professional Development"],
+      }
+    ],
+  },
+  {
+    id: "ayurvedic_pharma",
+    title: "Ayurvedic Pharma Specialist",
+    description: "Work with Ayurvedic formulations, quality processes, manufacturing, documentation, and pharmaceutical practices.",
+    icon: Zap,
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    salary: "₹6L - ₹18L",
+    demand: "Medium",
+    requiredSkills: ["Ayurvedic Formulation", "Quality Control", "Pharmaceutical Processes", "Documentation", "Medicinal Plants", "Research"],
+    phases: [
+      {
+        title: "Formulation Basics",
+        program_id: "ayur-pharm-101",
+        description: "Understand the preparation of classical and proprietary formulations.",
+        completed: false,
+        skills: ["Ayurvedic Formulation", "Herbal Extraction", "Formulation Design"],
+      },
+      {
+        title: "Quality & Process Management",
+        program_id: "ayur-pharm-201",
+        description: "Learn GMP standards and quality testing for Ayurvedic drugs.",
+        completed: false,
+        skills: ["Quality Control", "Pharmaceutical Processes", "GMP", "Safety Testing"],
+      }
+    ]
+  },
+  {
+    id: "ayurveda_researcher",
+    title: "Ayurveda Researcher",
+    description: "Work on Ayurvedic clinical, drug, pre-clinical, or fundamental research and evidence-based documentation.",
+    icon: Map,
+    color: "text-purple-500",
+    bg: "bg-purple-500/10",
+    salary: "₹7L - ₹20L",
+    demand: "High",
+    requiredSkills: ["Research Methodology", "Clinical Research", "Data Interpretation", "Scientific Documentation", "Evidence-Based Practice", "Ayurveda Research"],
+    phases: [
+      {
+        title: "Research Fundamentals",
+        program_id: "ayur-res-101",
+        description: "Introduction to research methodologies in Ayurveda.",
+        completed: false,
+        skills: ["Research Methodology", "Literature Review", "Study Design"],
+      },
+      {
+        title: "Clinical Trials & Documentation",
+        program_id: "ayur-res-201",
+        description: "Execute clinical research and maintain evidence-based documentation.",
+        completed: false,
+        skills: ["Clinical Research", "Scientific Documentation", "Data Interpretation", "Evidence-Based Practice"],
+      }
+    ]
+  },
+  {
+    id: "panchakarma_specialist",
+    title: "Panchakarma & Wellness Specialist",
+    description: "Build expertise in Panchakarma, wellness practices, patient care, and related therapeutic procedures.",
+    icon: Star,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    salary: "₹6L - ₹15L",
+    demand: "High",
+    requiredSkills: ["Panchakarma", "Wellness Practices", "Patient Care", "Therapeutic Procedures"],
+    phases: [
+      {
+        title: "Panchakarma Foundations",
+        program_id: "ayur-panch-101",
+        description: "Core principles of Purva, Pradhana, and Paschat Karma.",
+        completed: false,
+        skills: ["Panchakarma", "Therapeutic Procedures"],
+      },
+      {
+        title: "Wellness & Patient Care",
+        program_id: "ayur-panch-201",
+        description: "Integrate wellness therapies with holistic patient care.",
+        completed: false,
+        skills: ["Wellness Practices", "Patient Care", "Lifestyle Counseling"],
+      }
+    ]
+  },
+  {
+    id: "ayurveda_documentation",
+    title: "Ayurveda Clinical Documentation Specialist",
+    description: "Focus on clinical documentation, case records, healthcare documentation, communication, and Ayurvedic practice support.",
+    icon: Briefcase,
+    color: "text-indigo-500",
+    bg: "bg-indigo-500/10",
+    salary: "₹4L - ₹10L",
+    demand: "Medium",
+    requiredSkills: ["Clinical Documentation", "Case Records", "Healthcare Documentation", "Communication", "Practice Support"],
+    phases: [
+      {
+        title: "Documentation Standards",
+        program_id: "ayur-doc-101",
+        description: "Learn healthcare and Ayurvedic record-keeping standards.",
+        completed: false,
+        skills: ["Clinical Documentation", "Healthcare Documentation"],
+      },
+      {
+        title: "Case Records & Communication",
+        program_id: "ayur-doc-201",
+        description: "Maintain accurate case records and coordinate practice support.",
+        completed: false,
+        skills: ["Case Records", "Communication", "Practice Support"],
+      }
+    ]
+  },
+  {
+    id: "ayurveda_academic",
+    title: "Ayurveda Academic & Teaching",
+    description: "Pursue teaching, academic development, training, and knowledge-sharing in Ayurveda.",
+    icon: Award,
+    color: "text-rose-500",
+    bg: "bg-rose-500/10",
+    salary: "₹6L - ₹14L",
+    demand: "Medium",
+    requiredSkills: ["Academic Development", "Teaching", "Training", "Knowledge-Sharing", "Ayurveda Fundamentals"],
+    phases: [
+      {
+        title: "Academic Pedagogy",
+        program_id: "ayur-acad-101",
+        description: "Principles of teaching and instructional design in Ayurveda.",
+        completed: false,
+        skills: ["Teaching", "Training", "Academic Development"],
+      },
+      {
+        title: "Knowledge Dissemination",
+        program_id: "ayur-acad-201",
+        description: "Effectively share Ayurvedic knowledge and train the next generation.",
+        completed: false,
+        skills: ["Knowledge-Sharing", "Ayurveda Fundamentals"],
+      }
+    ]
+  },
+  {
+    id: "ayurveda_medicinal_plants",
+    title: "Ayurvedic Medicinal Plants Specialist",
+    description: "Work with medicinal plants, identification, cultivation, documentation, research, and Ayurvedic applications.",
+    icon: Shield,
+    color: "text-teal-500",
+    bg: "bg-teal-500/10",
+    salary: "₹5L - ₹12L",
+    demand: "Medium",
+    requiredSkills: ["Medicinal Plants", "Plant Identification", "Cultivation", "Documentation", "Research"],
+    phases: [
+      {
+        title: "Plant Identification & Cultivation",
+        program_id: "ayur-plant-101",
+        description: "Learn to accurately identify and cultivate Ayurvedic medicinal herbs.",
+        completed: false,
+        skills: ["Medicinal Plants", "Plant Identification", "Cultivation"],
+      },
+      {
+        title: "Documentation & Application",
+        program_id: "ayur-plant-201",
+        description: "Document herbal properties and research their applications.",
+        completed: false,
+        skills: ["Documentation", "Research", "Ayurvedic Applications"],
+      }
+    ]
+  }
+];
+
+export const getCareerPaths = (department?: string) => {
+  return department === "Ayurveda" ? AYURVEDA_CAREER_PATHS : CAREER_PATHS;
+};

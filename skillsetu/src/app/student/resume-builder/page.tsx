@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Download, Wand2, RefreshCw, FileText } from "lucide-react";
-import { useUserProfile } from "@/lib/hooks/useUserProfile";
+import { useProfileData } from "@/lib/hooks/useProfileData";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -21,7 +21,7 @@ interface ResumeData {
 }
 
 export default function ResumeBuilderPage() {
-  const { profile } = useUserProfile();
+  const { profile, loading } = useProfileData();
   
   // Basic Info State
   const [fullName, setFullName] = useState("");
@@ -44,12 +44,35 @@ export default function ResumeBuilderPage() {
     if (profile) {
       if (!fullName && profile.name) setFullName(profile.name);
       if (!email && profile.email) setEmail(profile.email);
+
+      const isAyurveda = profile.department === "Ayurveda";
+      
+      if (!linkedin && profile.linkedin) {
+        // Avoid pre-filling obvious placeholder/CSE profiles for Ayurveda
+        if (isAyurveda && profile.linkedin.toLowerCase().includes("johndoe")) {
+          // Skip
+        } else {
+          setLinkedin(profile.linkedin);
+        }
+      }
+      
+      if (!github && profile.github) {
+        // We no longer pre-fill github for Ayurveda
+        if (!isAyurveda) {
+          setGithub(profile.github);
+        }
+      }
     }
-  }, [profile, fullName, email]);
+  }, [profile, fullName, email, linkedin, github]);
 
   const handleGenerate = async () => {
     if (!promptData.trim()) {
       toast.error("Please enter some background information for the AI to work with.");
+      return;
+    }
+
+    if (!profile?.department) {
+      toast.error("Department information is missing.");
       return;
     }
 
@@ -58,12 +81,23 @@ export default function ResumeBuilderPage() {
       const res = await fetch("/api/gemini/generate-resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promptData, fullName }),
+        body: JSON.stringify({ promptData, fullName, department: profile.department }),
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to generate resume");
+        let errMsg = "Failed to generate resume";
+        try {
+          const text = await res.text();
+          try {
+            const errData = JSON.parse(text);
+            errMsg = errData.details || errData.error || `Server error ${res.status}`;
+          } catch (_) {
+            errMsg = text || `HTTP error ${res.status}`;
+          }
+        } catch (_) {
+          errMsg = `HTTP error ${res.status}`;
+        }
+        throw new Error(errMsg);
       }
 
       const data = await res.json();
@@ -100,11 +134,38 @@ export default function ResumeBuilderPage() {
       
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${fullName.replace(/\s+/g, '_')}_Resume.pdf`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to export PDF.");
+    } catch (err: any) {
+      console.error("[PDF EXPORT ERROR]", err);
+      if (err instanceof Error) {
+        console.error("Message:", err.message);
+        console.error("Stack:", err.stack);
+      }
+      toast.error(`Failed to export PDF: ${err?.message || 'Unknown error'}`);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-100px)]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Loading Resume Builder...</p>
+      </div>
+    );
+  }
+
+  if (!profile?.department) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-100px)] text-center space-y-4">
+        <FileText className="w-12 h-12 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">Department Information Missing</h2>
+        <p className="text-muted-foreground max-w-md">
+          Please update your profile with your department to build your resume.
+        </p>
+      </div>
+    );
+  }
+
+  const isAyurveda = profile.department === "Ayurveda";
 
   return (
     <div className="flex flex-col xl:flex-row gap-6 h-full min-h-[calc(100vh-100px)]">
@@ -140,13 +201,15 @@ export default function ResumeBuilderPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">LinkedIn URL</label>
+              <label className="text-sm font-medium">LinkedIn URL (Optional)</label>
               <Input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="linkedin.com/in/johndoe" />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">GitHub URL</label>
-              <Input value={github} onChange={(e) => setGithub(e.target.value)} placeholder="github.com/johndoe" />
-            </div>
+            {!isAyurveda && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">GitHub URL</label>
+                <Input value={github} onChange={(e) => setGithub(e.target.value)} placeholder="github.com/johndoe" />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -161,7 +224,7 @@ export default function ResumeBuilderPage() {
             <Textarea 
               value={promptData}
               onChange={(e) => setPromptData(e.target.value)}
-              placeholder="e.g. I am a 3rd year CS student at XYZ College. I know Python, React, and AWS. I built an AgriBot app that uses ML to detect crop health. I won 1st place in a local hackathon..."
+              placeholder={isAyurveda ? "e.g. I am a 3rd year Ayurveda student at XYZ College. I have clinical experience in Panchakarma. I published a case study on Dravyaguna..." : "e.g. I am a 3rd year CS student at XYZ College. I know Python, React, and AWS. I built an AgriBot app that uses ML to detect crop health. I won 1st place in a local hackathon..."}
               className="h-40 resize-none"
             />
             
@@ -194,15 +257,15 @@ export default function ResumeBuilderPage() {
             {/* HEADER */}
             <div className="text-center mb-6">
               <h1 className="text-4xl font-extrabold uppercase tracking-widest mb-3">{fullName || "YOUR NAME"}</h1>
-              <div className="text-sm flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-gray-800">
+              <div className="text-sm flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[#1f2937]">
                 {phone && <span>Mobile No. - {phone}</span>}
                 {phone && email && <span>|</span>}
                 {email && <span>Email - {email}</span>}
               </div>
-              <div className="text-sm flex flex-wrap justify-center items-center gap-x-3 gap-y-1 mt-1 text-gray-800">
+              <div className="text-sm flex flex-wrap justify-center items-center gap-x-3 gap-y-1 mt-1 text-[#1f2937]">
                 {linkedin && <span>LinkedIN - {linkedin}</span>}
-                {linkedin && github && <span>|</span>}
-                {github && <span>Github - {github}</span>}
+                {!isAyurveda && linkedin && github && <span>|</span>}
+                {!isAyurveda && github && <span>Github - {github}</span>}
               </div>
             </div>
 
@@ -227,7 +290,7 @@ export default function ResumeBuilderPage() {
                           <span>{edu.degree}</span>
                           <span>{edu.year}</span>
                         </div>
-                        <div className="text-gray-800">{edu.institution}</div>
+                        <div className="text-[#1f2937]">{edu.institution}</div>
                       </div>
                     ))}
                   </div>
@@ -261,10 +324,10 @@ export default function ResumeBuilderPage() {
                           </span>
                           <span>{proj.year}</span>
                         </div>
-                        <ul className="list-none ml-4 space-y-1 text-gray-800">
+                        <ul className="list-none ml-4 space-y-1 text-[#1f2937]">
                           {proj.description.map((desc, dIdx) => (
                             <li key={dIdx} className="flex gap-2">
-                              <span className="text-gray-500">-</span> <span>{desc}</span>
+                              <span className="text-[#6b7280]">-</span> <span>{desc}</span>
                             </li>
                           ))}
                         </ul>

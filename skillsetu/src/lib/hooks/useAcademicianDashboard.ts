@@ -46,12 +46,18 @@ export function useAcademicianDashboard() {
   const fetchDashboardData = useCallback(async () => {
     if (!profile?.id) return;
     
+    // Fail closed for academicians if department is missing
+    if (profile.role === 'academician' && !profile.department) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     const supabase = createClient();
     
     try {
       // 1. Fetch Academician Opportunities for stats & latest list
-      const { data: opps, error: oppsError } = await supabase
+      let query = supabase
         .from("academician_opportunities")
         .select(`
           id, 
@@ -60,9 +66,17 @@ export function useAcademicianDashboard() {
           deadline,
           users!academician_opportunities_host_industry_id_fkey (
             name
+          ),
+          creator:users!academician_opportunities_created_by_fkey!inner (
+            department
           )
-        `)
-        .order("id", { ascending: false }); // order by id as proxy for latest if created_at is missing, or just deadline
+        `);
+        
+      if (profile.role === 'academician') {
+        query = query.eq('creator.department', profile.department);
+      }
+        
+      const { data: opps, error: oppsError } = await query.order("id", { ascending: false });
 
       if (oppsError) console.error("Error fetching academician opps:", oppsError);
       
@@ -104,12 +118,21 @@ export function useAcademicianDashboard() {
         setUpcomingActivities(upcoming);
       }
 
-      // 2. Fetch Mentorships for active mentees count and mentee_ids
-      const { data: mentorships, error: mentError } = await supabase
+      // 2. Fetch Mentorships for active mentees count and mentee_ids (isolated by mentee department)
+      let mentQuery = supabase
         .from("mentorships")
-        .select("mentee_id")
+        .select(`
+          mentee_id,
+          mentee:users!mentorships_mentee_id_fkey!inner(department)
+        `)
         .eq("mentor_id", profile.id)
         .eq("status", "active");
+
+      if (profile.role === 'academician' && profile.department) {
+        mentQuery = mentQuery.eq('mentee.department', profile.department);
+      }
+      
+      const { data: mentorships, error: mentError } = await mentQuery;
         
       if (mentError) console.error("Error fetching mentorships:", mentError);
       

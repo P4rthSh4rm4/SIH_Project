@@ -45,17 +45,30 @@ export default function FDPsPage() {
 
   useEffect(() => {
     fetchFDPs();
-  }, [profile?.id]);
+  }, [profile?.id, profile?.department]);
 
   const fetchFDPs = async () => {
     try {
       setLoading(true);
       // 1. Fetch FDPs
-      const { data: fdpData, error: fdpError } = await supabase
+      let query = supabase
         .from("academician_opportunities")
-        .select("*")
+        .select(`
+          *,
+          creator:users!academician_opportunities_created_by_fkey!inner(department)
+        `)
         .eq("type", "FDP")
         .order("start_date", { ascending: true });
+
+      if (profile?.department && profile.department !== 'global') {
+        query = query.eq("creator.department", profile.department);
+      } else if (!profile?.department) {
+        setFdps([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: fdpData, error: fdpError } = await query;
 
       if (fdpError) throw fdpError;
 

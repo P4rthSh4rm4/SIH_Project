@@ -24,7 +24,8 @@ export function useAcademicianResearch() {
   const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from("academician_opportunities")
         .select(`
           id, 
@@ -34,10 +35,22 @@ export function useAcademicianResearch() {
           deadline, 
           status, 
           created_by,
+          creator:users!academician_opportunities_created_by_fkey!inner(department),
           users!academician_opportunities_host_industry_id_fkey(name)
         `)
         .eq("type", "research")
         .order("id", { ascending: false });
+
+      if (profile?.department && profile.department !== 'global') {
+        query = query.eq("creator.department", profile.department);
+      } else if (!profile?.department) {
+        // Fail closed: Do not expose all records if department is unknown
+        setProjects([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setProjects(data as unknown as ResearchProject[]);
@@ -47,11 +60,15 @@ export function useAcademicianResearch() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile?.department, supabase]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    if (profile?.department) {
+      fetchProjects();
+    } else {
+      fetchProjects();
+    }
+  }, [fetchProjects, profile?.department]);
 
   const createProject = async (formData: FormData) => {
     if (!profile?.id) {

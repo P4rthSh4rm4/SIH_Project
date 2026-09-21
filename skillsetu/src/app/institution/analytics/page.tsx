@@ -273,21 +273,21 @@ export default function InstitutionAnalyticsPage() {
             {companyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={companyData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="name" 
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
                   />
                   <YAxis 
                     allowDecimals={false}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
                   />
                   <RechartsTooltip
-                    cursor={{ fill: 'var(--muted)' }}
+                    cursor={{ fill: '#f3f4f6' }}
                     contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--background)' }}
                   />
                   <Bar dataKey="placements" fill={COLORS.placed} radius={[4, 4, 0, 0]} barSize={40} />

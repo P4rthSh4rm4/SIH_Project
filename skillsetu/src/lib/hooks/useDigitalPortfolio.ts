@@ -6,7 +6,7 @@ import { useLearningHub } from "./useLearningHub";
 import { useCareerAssessment, CareerCertificate } from "./useCareerAssessment";
 import { useProfileSkills } from "./useProfileSkills";
 import { useProfileData } from "./useProfileData";
-import { CAREER_PATHS } from "@/lib/data/career-paths";
+import { getCareerPaths } from "@/lib/data/career-paths";
 
 export function useDigitalPortfolio() {
   const { items: portfolioItems, loading: portfolioLoading, addItem, deleteItem } = usePortfolio();
@@ -18,6 +18,8 @@ export function useDigitalPortfolio() {
   const [certificates, setCertificates] = useState<CareerCertificate[]>([]);
   const [certsLoading, setCertsLoading] = useState(true);
   const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
+  
+  const careerPaths = useMemo(() => getCareerPaths(profile?.department), [profile?.department]);
 
   useEffect(() => {
     getCertificates().then(data => {
@@ -86,7 +88,7 @@ export function useDigitalPortfolio() {
   // 2. Calculate Completed Roadmaps
   const completedRoadmaps = useMemo(() => {
     const roadmaps = [];
-    for (const path of CAREER_PATHS) {
+    for (const path of careerPaths) {
       const completedPhases = path.phases.filter(phase => {
         if (!("program_id" in phase)) return false;
         const match = enrollments.find(
@@ -121,7 +123,7 @@ export function useDigitalPortfolio() {
     certificates.forEach(c => {
       list.push({
         id: `cert-ach-${c.id}`,
-        title: `${CAREER_PATHS.find(p => p.id === c.career_path_id)?.title || 'Career Path'} Certified`,
+        title: `${careerPaths.find(p => p.id === c.career_path_id)?.title || 'Career Path'} Certified`,
         description: `Passed the final assessment with score ${c.score}%`,
         date: new Date(c.issued_at),
         category: "certificate",
@@ -254,7 +256,7 @@ export function useDigitalPortfolio() {
       events.push({
         id: `cert-${c.id}`,
         title: "Earned Career Certificate",
-        description: `Passed the assessment for ${CAREER_PATHS.find(p => p.id === c.career_path_id)?.title || 'Career Path'}`,
+        description: `Passed the assessment for ${careerPaths.find(p => p.id === c.career_path_id)?.title || 'Career Path'}`,
         date: new Date(c.issued_at),
         type: "certificate",
         icon: "Award"
@@ -302,7 +304,7 @@ export function useDigitalPortfolio() {
   // 7. AI Insights
   const aiInsights = useMemo(() => {
     if (certificates.length > 0) {
-      return `Your certification in ${CAREER_PATHS.find(p => p.id === certificates[0].career_path_id)?.title} shows you are highly ready for junior roles. Apply for jobs with confidence!`;
+      return `Your certification in ${careerPaths.find(p => p.id === certificates[0].career_path_id)?.title} shows you are highly ready for junior roles. Apply for jobs with confidence!`;
     }
     if (completedRoadmaps.length > 0) {
       return `You have completed a career roadmap! Take the final assessment to earn your certificate and boost your recruiter score.`;

@@ -65,6 +65,8 @@ export default function ApplicantsPage() {
     gap_indicator: "",
     comment: ""
   });
+  
+  const [userDepartment, setUserDepartment] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchApplicants() {
@@ -74,7 +76,20 @@ export default function ApplicantsPage() {
         
         if (!user) return;
         
-        // Fetch active opportunities for this industry user to verify ownership (RLS handles this but good for safety)
+        // Fetch active opportunities and the recruiter's department
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("department")
+          .eq("id", user.id)
+          .single();
+          
+        if (userError || !userData?.department) {
+          setApplicants([]);
+          return;
+        }
+        const recruiterDepartment = userData.department;
+        setUserDepartment(recruiterDepartment);
+
         const { data: opps } = await supabase
           .from("opportunities")
           .select("id")
@@ -87,7 +102,7 @@ export default function ApplicantsPage() {
         
         const oppIds = opps.map(o => o.id);
         
-        // Fetch applications for these opportunities
+        // Fetch applications for these opportunities, strictly scoping to the recruiter's department
         const { data, error } = await supabase
           .from("applications")
           .select(`
@@ -97,12 +112,13 @@ export default function ApplicantsPage() {
             match_score,
             applied_at,
             opportunities ( title, required_skills, preferred_skills ),
-            users!student_id ( name ),
+            users!student_id!inner ( name, department ),
             application_interview_evaluations ( overall_score, recommendation ),
             application_interviews ( id, interview_status ),
             application_offers ( id, offer_status )
           `)
           .in("opportunity_id", oppIds)
+          .eq("users.department", recruiterDepartment)
           .order("applied_at", { ascending: false });
           
         if (error) throw error;
@@ -170,6 +186,7 @@ export default function ApplicantsPage() {
   };
 
   const handleScheduleInterview = async () => {
+    let oppId: string | undefined = undefined;
     try {
       // Validate
       if (!scheduleData.interview_type) return toast.error("Please select an interview type");
@@ -183,7 +200,7 @@ export default function ApplicantsPage() {
       const supabase = createClient();
       
       // Fetch full application to get opportunity_id if not present
-      let oppId = schedulingApp.opportunity_id;
+      oppId = schedulingApp.opportunity_id;
       if (!oppId) {
         const { data: appData } = await supabase.from("applications").select("opportunity_id").eq("id", schedulingApp.id).single();
         if (appData) oppId = appData.opportunity_id;
@@ -208,7 +225,12 @@ export default function ApplicantsPage() {
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error(
+          `SUPABASE_INSERT_ERROR | code=${String(insertError.code)} | message=${String(insertError.message)} | details=${String(insertError.details)} | hint=${String(insertError.hint)}`
+        );
+        throw insertError;
+      }
 
       // Move application to 'interview'
       const { error: updateError } = await supabase
@@ -225,7 +247,31 @@ export default function ApplicantsPage() {
       setScheduleData({ interview_type: "", scheduled_date: "", scheduled_time: "", mode: "", meeting_link: "", location: "", interviewer: "", instructions: "" });
       toast.success("Interview scheduled successfully!");
     } catch (err: any) {
-      console.error("Failed to schedule interview:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : String(err?.message ?? err ?? "Unknown error");
+      const errorCode =
+        typeof err === "object" && err !== null && "code" in err
+          ? String(err.code)
+          : "NO_CODE";
+      const errorDetails =
+        typeof err === "object" && err !== null && "details" in err
+          ? String(err.details)
+          : "NO_DETAILS";
+      const errorHint =
+        typeof err === "object" && err !== null && "hint" in err
+          ? String(err.hint)
+          : "NO_HINT";
+          
+      console.error(
+        `SCHEDULE_INTERVIEW_ERROR | code=${errorCode} | message=${errorMessage} | details=${errorDetails} | hint=${errorHint}`
+      );
+      
+      console.error(
+        `SCHEDULE_INTERVIEW_PAYLOAD | application_id=${String(schedulingApp?.id)} | opportunity_id=${String(oppId)} | interview_type=${String(scheduleData.interview_type)} | mode=${String(scheduleData.mode)} | scheduled_date=${String(scheduleData.scheduled_date)} | scheduled_time=${String(scheduleData.scheduled_time)} | location=${String(scheduleData.location)} | interviewer_name=${String(scheduleData.interviewer)}`
+      );
+      
       toast.error(err.message || "Failed to schedule interview");
     }
   };
@@ -261,8 +307,11 @@ export default function ApplicantsPage() {
       const cs = Number(evalData.communication_score);
       const cfs = Number(evalData.confidence_score);
 
-      if (evalData.technical_score === "" || isNaN(ts) || ts < 0 || ts > 100) return toast.error("Technical score must be between 0 and 100");
-      if (evalData.problem_solving_score === "" || isNaN(ps) || ps < 0 || ps > 100) return toast.error("Problem solving score must be between 0 and 100");
+      const tsLabel = userDepartment === "Ayurveda" ? "Clinical & Domain Knowledge" : "Technical";
+      const psLabel = userDepartment === "Ayurveda" ? "Ayurvedic Knowledge / Practical Understanding" : "Problem solving";
+
+      if (evalData.technical_score === "" || isNaN(ts) || ts < 0 || ts > 100) return toast.error(`${tsLabel} score must be between 0 and 100`);
+      if (evalData.problem_solving_score === "" || isNaN(ps) || ps < 0 || ps > 100) return toast.error(`${psLabel} score must be between 0 and 100`);
       if (evalData.communication_score === "" || isNaN(cs) || cs < 0 || cs > 100) return toast.error("Communication score must be between 0 and 100");
       if (evalData.confidence_score === "" || isNaN(cfs) || cfs < 0 || cfs > 100) return toast.error("Confidence score must be between 0 and 100");
       if (!evalData.recruiter_feedback) return toast.error("Feedback is required");
@@ -397,13 +446,13 @@ export default function ApplicantsPage() {
        }
     }
     setOfferData({
-      position_title: "",
+      position_title: app.role || "",
       employment_type: "",
       salary_package: "",
       joining_date: "",
       offer_expiry_date: "",
       additional_terms: "",
-      recruiter_message: ""
+      recruiter_message: "Congratulations! We are thrilled to offer you this position. Please review the terms and let us know if you have any questions."
     });
   };
 
@@ -655,9 +704,21 @@ export default function ApplicantsPage() {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Technical">Technical</SelectItem>
-                    <SelectItem value="HR">HR</SelectItem>
-                    <SelectItem value="Technical + HR">Technical + HR</SelectItem>
+                    {userDepartment === "Ayurveda" ? (
+                      <>
+                        <SelectItem value="Clinical & Domain">Clinical & Domain</SelectItem>
+                        <SelectItem value="HR">HR</SelectItem>
+                        <SelectItem value="Behavioral">Behavioral</SelectItem>
+                        <SelectItem value="Aptitude">Aptitude</SelectItem>
+                        <SelectItem value="Mixed">Mixed</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="Technical">Technical</SelectItem>
+                        <SelectItem value="HR">HR</SelectItem>
+                        <SelectItem value="Technical + HR">Technical + HR</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -729,11 +790,11 @@ export default function ApplicantsPage() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Technical Skills (0-100)</Label>
+                <Label>{userDepartment === "Ayurveda" ? "Clinical & Domain Knowledge" : "Technical Skills"} (0-100)</Label>
                 <Input type="number" min="0" max="100" value={evalData.technical_score} onChange={(e) => setEvalData({...evalData, technical_score: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <Label>Problem Solving (0-100)</Label>
+                <Label>{userDepartment === "Ayurveda" ? "Ayurvedic Knowledge / Practical Understanding" : "Problem Solving"} (0-100)</Label>
                 <Input type="number" min="0" max="100" value={evalData.problem_solving_score} onChange={(e) => setEvalData({...evalData, problem_solving_score: e.target.value})} />
               </div>
             </div>
@@ -798,7 +859,7 @@ export default function ApplicantsPage() {
             
             <div className="space-y-2">
               <Label>Position / Role *</Label>
-              <Input placeholder="e.g. Software Engineer" value={offerData.position_title} onChange={(e) => setOfferData({...offerData, position_title: e.target.value})} />
+              <Input placeholder={offeringApp?.role || "e.g. Software Engineer"} value={offerData.position_title} onChange={(e) => setOfferData({...offerData, position_title: e.target.value})} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

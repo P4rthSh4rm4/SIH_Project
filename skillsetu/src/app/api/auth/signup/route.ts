@@ -35,6 +35,22 @@ export async function POST(request: Request) {
       },
     });
 
+    // Dynamically find a default institution_id for students and academicians
+    let defaultInstitutionId: string | null = null;
+    if (safeRole === "student" || safeRole === "academician") {
+      const { data: instData } = await admin
+        .from("users")
+        .select("institution_id")
+        .eq("role", "institution_admin")
+        .not("institution_id", "is", null)
+        .limit(1)
+        .single();
+      
+      if (instData?.institution_id) {
+        defaultInstitutionId = instData.institution_id;
+      }
+    }
+
     // 1. Create user with email_confirm: true (bypasses email rate limits & guarantees immediate login)
     const { data: userData, error: createError } =
       await admin.auth.admin.createUser({
@@ -46,6 +62,7 @@ export async function POST(request: Request) {
           full_name: name.trim(),
           role: safeRole,
           department: safeDept,
+          ...(defaultInstitutionId && { institution_id: defaultInstitutionId }),
         },
       });
 
@@ -76,6 +93,7 @@ export async function POST(request: Request) {
         email: email.trim().toLowerCase(),
         role: safeRole,
         department: safeDept,
+        ...(defaultInstitutionId && { institution_id: defaultInstitutionId }),
         onboarding_completed: false,
       },
       { onConflict: "id" }

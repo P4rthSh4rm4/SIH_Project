@@ -107,6 +107,30 @@ export const KNOWLEDGE_BASE: Record<string, { courses: Recommendation[], certifi
        { id: "cert_tm_1", type: "certification", title: "Certified ScrumMaster", provider: "Scrum Alliance", difficulty: "Advanced", duration: "2 Days", expectedImprovement: 15, priority: "Optional", url: "https://scrumalliance.org", skillsCovered: ["Agile", "Scrum", "Leadership"], careerValue: "Highly valued for team leadership." }
     ],
     platforms: []
+  },
+  "Clinical Knowledge": {
+    courses: [
+      { id: "c_ay_clin_1", type: "course", title: "Certificate Course for Panchakarma Therapist", skillImproved: "Clinical Knowledge", reason: "Practical training in Ayurvedic therapeutic procedures.", difficulty: "Intermediate", duration: "3-6 Months", expectedImprovement: 20, priority: "High Priority", url: "https://ayurveduniversity.edu.in" }
+    ],
+    certifications: [
+      { id: "cert_ay_pk", type: "certification", title: "Certificate Course in Panchakarma", provider: "Gujarat Ayurved University", difficulty: "Advanced", duration: "7 Months", expectedImprovement: 25, priority: "High Priority", url: "https://ayurveduniversity.edu.in", skillsCovered: ["Panchakarma", "Clinical Practice", "Therapeutics"], careerValue: "Official certification for specialized Panchakarma practice. Eligibility: BAMS/Ayurveda graduates." },
+      { id: "cert_ay_ks", type: "certification", title: "Certificate Course in Ksharasutra", provider: "Gujarat Ayurved University", difficulty: "Advanced", duration: "7 Months", expectedImprovement: 25, priority: "High Priority", url: "https://ayurveduniversity.edu.in", skillsCovered: ["Ksharasutra", "Surgical Practice", "Clinical Knowledge"], careerValue: "Specialized training in Ayurvedic para-surgical procedures. Eligibility: BAMS/Ayurveda graduates." }
+    ],
+    platforms: [
+      { name: "Gujarat Ayurved University", url: "https://ayurveduniversity.edu.in", logo: "/logos/gau.png" },
+      { name: "ITRA Jamnagar", url: "https://itra.ac.in", logo: "/logos/itra.png" }
+    ]
+  },
+  "Industry Awareness": {
+    courses: [
+      { id: "c_ay_diet", type: "course", title: "Certificate Course for Dietetics in Ayurveda", skillImproved: "Industry Awareness", reason: "Growing demand for Ayurvedic diet and lifestyle consultation.", difficulty: "Intermediate", duration: "3 Months", expectedImprovement: 15, priority: "Medium Priority", url: "https://ayurveduniversity.edu.in" }
+    ],
+    certifications: [
+      { id: "cert_ay_diet", type: "certification", title: "Certificate Course for Dietetics in Ayurveda", provider: "Gujarat Ayurved University", difficulty: "Intermediate", duration: "3 Months", expectedImprovement: 20, priority: "Medium Priority", url: "https://ayurveduniversity.edu.in", skillsCovered: ["Dietetics", "Pathya-Apathya", "Lifestyle Consultation"], careerValue: "Equips practitioners with professional dietary planning skills based on Ayurvedic principles." }
+    ],
+    platforms: [
+      { name: "Gujarat Ayurved University", url: "https://ayurveduniversity.edu.in", logo: "/logos/gau.png" }
+    ]
   }
 };
 
@@ -120,7 +144,7 @@ export const GENERAL_PLATFORMS: Platform[] = [
   { name: "NPTEL", url: "https://nptel.ac.in", logo: "/logos/nptel.png" }
 ];
 
-export function getRecommendations(gaps: SkillGap[], portfolioSkills: any[] = [], completedCourses: any[] = []) {
+export function getRecommendations(gaps: SkillGap[], portfolioSkills: any[] = [], completedCourses: any[] = [], department?: string) {
   // Sort by gap size descending
   const sortedGaps = [...gaps].sort((a, b) => b.gap - a.gap);
   
@@ -135,7 +159,21 @@ export function getRecommendations(gaps: SkillGap[], portfolioSkills: any[] = []
   sortedGaps.forEach(gap => {
     // Only recommend if gap > 0 and skill is not already fully verified
     if (gap.gap > 0 && !verifiedSkillNames.has(gap.skill)) {
-      const knowledge = KNOWLEDGE_BASE[gap.skill] || KNOWLEDGE_BASE["Web Development"]; // fallback
+      let knowledge = KNOWLEDGE_BASE[gap.skill];
+      
+      if (!knowledge) {
+        if (!department) {
+          knowledge = { courses: [], certifications: [], platforms: [] };
+        } else if (department === "Ayurveda") {
+          // Do not leak CSE fallbacks for Ayurveda
+          knowledge = { courses: [], certifications: [], platforms: [] };
+        } else if (department === "BPharma") {
+          // Use default generic or specific fallback if configured, preserving current BPharma behavior
+          knowledge = KNOWLEDGE_BASE["Web Development"]; 
+        } else {
+          knowledge = KNOWLEDGE_BASE["Web Development"]; // fallback for CSE
+        }
+      }
       
       // Filter courses
       const validCourses = knowledge.courses.filter(c => !completedCourseTitles.has(c.title));
@@ -161,8 +199,8 @@ export function getRecommendations(gaps: SkillGap[], portfolioSkills: any[] = []
     }
   });
 
-  // Ensure we have some platforms
-  if (platforms.length === 0) {
+  // Ensure we have some platforms, but not for Ayurveda or missing departments which should use real ones or be empty
+  if (platforms.length === 0 && department && department !== "Ayurveda") {
     platforms.push(...GENERAL_PLATFORMS.slice(0, 4));
   }
 
@@ -177,7 +215,16 @@ export function getRecommendations(gaps: SkillGap[], portfolioSkills: any[] = []
   };
 }
 
-export function generateWeeklyRoadmap(skillName: string) {
+export function generateWeeklyRoadmap(skillName: string, department?: string) {
+  if (department === "Ayurveda") {
+    return [
+      { week: 1, title: `Fundamentals of ${skillName}`, task: "Review classical texts, foundational principles, and core terminology.", focus: "Theory & Principles" },
+      { week: 2, title: `Clinical Observation`, task: "Analyze case studies or observe relevant clinical presentations.", focus: "Observation" },
+      { week: 3, title: `Applied Analysis`, task: "Practice diagnosing, documenting, or researching specific integrative approaches.", focus: "Analysis" },
+      { week: 4, title: `Professional Practice`, task: "Document findings and discuss applications with peers or mentors.", focus: "Practice" }
+    ];
+  }
+
   // AI Simulation for roadmap generation based on the top missing skill
   return [
     { week: 1, title: `Fundamentals of ${skillName}`, task: "Complete introductory modules and understand core concepts.", focus: "Theory & Syntax" },

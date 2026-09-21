@@ -209,14 +209,27 @@ function SessionContent() {
       };
 
       recognition.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
-        if (event.error === 'not-allowed') {
-          toast.error("Microphone access denied. Falling back to Text mode.");
+        console.error("Speech recognition error:", event.error);
+        if (event.preventDefault) event.preventDefault();
+
+        if (['not-allowed', 'service-not-allowed', 'network'].includes(event.error)) {
+          let msg = "Microphone access denied.";
+          if (event.error === 'network') msg = "Network error during speech recognition.";
+          if (event.error === 'service-not-allowed') msg = "Speech recognition service not allowed.";
+          
+          toast.error(`${msg} Falling back to Text mode.`);
           stopMediaTracks();
           setFallbackMode(true);
-          setIsRecording(false);
-          if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
+        } else if (event.error === 'no-speech') {
+          toast.error("No speech detected. Please try again.");
+        } else if (event.error === 'aborted') {
+          // Normal if the user clicked stop
+        } else {
+          toast.error(`Speech recognition stopped: ${event.error}`);
         }
+
+        setIsRecording(false);
+        if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
       };
 
       recognitionRef.current = recognition;

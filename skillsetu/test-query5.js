@@ -1,6 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '.env.local') });
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -9,11 +14,10 @@ const supabase = createClient(
 
 async function run() {
   const { data, error } = await supabase
-    .from('users')
-    .select('id, name, role')
-    .eq('id', 'e6374874-7ed6-4865-8600-f4e3d3e2bccf');
+    .from('academician_opportunities')
+    .select('*')
+    .limit(1);
     
-  console.log('Student:', JSON.stringify(data, null, 2), error);
+  console.log('Cols:', JSON.stringify(data, null, 2), error);
 }
-
 run();

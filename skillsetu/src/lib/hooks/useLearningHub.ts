@@ -84,6 +84,38 @@ export const MOCK_PROGRAMS = [
     type: "communication",
     skills_covered: ["Public Speaking", "Email Etiquette", "Negotiation"],
     url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  {
+    id: "ayur-fund-101",
+    title: "Ayurvedic Fundamentals",
+    provider: "SkillSetu Ayurveda",
+    type: "medical",
+    skills_covered: ["Dosha Assessment", "Basic Herbology"],
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  {
+    id: "ayur-diag-201",
+    title: "Clinical Diagnosis",
+    provider: "SkillSetu Ayurveda",
+    type: "medical",
+    skills_covered: ["Pulse Diagnosis", "Patient Consultation"],
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  {
+    id: "ayur-pharm-101",
+    title: "Formulation Basics",
+    provider: "SkillSetu Pharma",
+    type: "medical",
+    skills_covered: ["Herbal Extraction", "Formulation Design"],
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  {
+    id: "ayur-pharm-201",
+    title: "Quality Assurance",
+    provider: "SkillSetu Pharma",
+    type: "medical",
+    skills_covered: ["GMP", "Quality Testing"],
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   }
 ];
 
@@ -179,12 +211,11 @@ export function useLearningHub() {
         console.log("[useLearningHub] Program ID:", programId);
         console.log("[useLearningHub] Authenticated User ID:", user.id);
 
-        if (programId.startsWith("mock-")) {
+        const mockProgram = MOCK_PROGRAMS.find(p => p.id === programId);
+        if (mockProgram) {
           // Intercept mock program enrollment to preserve UI functionality without DB errors
           console.log("[useLearningHub] Intercepting mock program enrollment for:", programId);
           await new Promise(r => setTimeout(r, 800)); // Simulate network delay
-          
-          const mockProgram = MOCK_PROGRAMS.find(p => p.id === programId);
           
           const newEnrollment = {
             id: `mock-enroll-${Date.now()}`,

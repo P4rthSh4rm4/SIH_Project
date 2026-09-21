@@ -12,7 +12,7 @@ import {
 import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
 import { useProfileData } from "@/lib/hooks/useProfileData";
 import { useCareerAssessment, type CareerCertificate } from "@/lib/hooks/useCareerAssessment";
-import { CAREER_PATHS } from "@/lib/data/career-paths";
+import { getCareerPaths } from "@/lib/data/career-paths";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { CertificateView } from "@/components/dashboard/certificate-view";
 import Link from "next/link";
@@ -24,6 +24,8 @@ export default function CertificationsPage() {
   const { getCertificates } = useCareerAssessment();
   const [careerCerts, setCareerCerts] = useState<CareerCertificate[]>([]);
   const [certsLoading, setCertsLoading] = useState(true);
+
+  const careerPaths = getCareerPaths(profile?.department);
 
   useEffect(() => {
     getCertificates().then((certs) => {
@@ -128,7 +130,7 @@ export default function CertificationsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {careerCerts.map((cert) => {
-            const careerPath = CAREER_PATHS.find((p) => p.id === cert.career_path_id);
+            const careerPath = careerPaths.find((p) => p.id === cert.career_path_id);
             const pathTitle = careerPath?.title || cert.career_path_id;
             const PathIcon = careerPath?.icon || Award;
 
@@ -294,7 +296,7 @@ export default function CertificationsPage() {
           }
         `}} />
         {careerCerts.map((cert) => {
-          const careerPath = CAREER_PATHS.find((p) => p.id === cert.career_path_id);
+          const careerPath = careerPaths.find((p) => p.id === cert.career_path_id);
           const pathTitle = careerPath?.title || cert.career_path_id;
           return (
             <div key={`hidden-${cert.id}`} className="absolute top-0 left-0 opacity-[0.01] pdf-capture-container">

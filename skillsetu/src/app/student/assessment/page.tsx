@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Target, Code, Brain, MessageSquare, Clock, ChevronRight,
   CheckCircle2, XCircle, ArrowLeft, Flag, ChevronLeft,
-  Loader2, Trophy, RotateCcw, BarChart3, Sparkles,
+  Loader2, Trophy, RotateCcw, BarChart3, Sparkles, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAssessments } from "@/lib/hooks/useAssessments";
@@ -25,45 +25,87 @@ interface CategoryConfig {
   subcategories: Array<{ id: string; label: string; description: string; targetSkillName: string }>;
 }
 
-const CATEGORIES: CategoryConfig[] = [
-  {
-    id: "coding",
-    label: "Coding",
-    icon: Code,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-    subcategories: [
-      { id: "dsa", label: "DSA", description: "Arrays, Trees, Graphs, DP, Sorting", targetSkillName: "Data Structures & Algorithms" },
-      { id: "sql", label: "SQL", description: "Queries, JOINs, Aggregations, Optimization", targetSkillName: "SQL" },
-      { id: "web_dev", label: "Web Dev", description: "HTML, CSS, JS, React, APIs", targetSkillName: "Web Development" },
-    ],
-  },
-  {
-    id: "aptitude",
-    label: "Aptitude",
-    icon: Brain,
-    color: "text-amber-500",
-    bg: "bg-amber-500/10",
-    subcategories: [
-      { id: "quant", label: "Quantitative", description: "Numbers, Percentages, Probability", targetSkillName: "Quantitative Aptitude" },
-      { id: "logical", label: "Logical Reasoning", description: "Puzzles, Patterns, Syllogisms", targetSkillName: "Logical Reasoning" },
-      { id: "verbal", label: "Verbal Ability", description: "Comprehension, Grammar, Vocabulary", targetSkillName: "Verbal Ability" },
-    ],
-  },
-  {
-    id: "soft_skills",
-    label: "Soft Skills",
-    icon: MessageSquare,
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-    subcategories: [
-      { id: "communication", label: "Communication", description: "Listening, Presentation, Feedback", targetSkillName: "Communication Skills" },
-      { id: "leadership", label: "Leadership", description: "Decision Making, Delegation, Vision", targetSkillName: "Leadership" },
-      { id: "teamwork", label: "Teamwork", description: "Collaboration, Conflict Resolution", targetSkillName: "Teamwork" },
-      { id: "problem_solving", label: "Problem Solving", description: "Critical Thinking, Analysis", targetSkillName: "Problem Solving" },
-    ],
-  },
-];
+const GET_CATEGORIES = (dept: string): CategoryConfig[] => {
+  if (dept === "Ayurveda") {
+    return [
+      {
+        id: "ayurveda_domain",
+        label: "Ayurveda Knowledge",
+        icon: Code, // can reuse icons
+        color: "text-blue-500",
+        bg: "bg-blue-500/10",
+        subcategories: [
+          { id: "clinical_practice", label: "Clinical Practice", description: "Diagnosis, Treatment, Herbs", targetSkillName: "Clinical Knowledge" },
+          { id: "research", label: "Research", description: "Methodology, Clinical Trials", targetSkillName: "Research Skills" },
+          { id: "pharma", label: "Ayurvedic Pharma", description: "Formulations, QA, Regulations", targetSkillName: "Ayurvedic Pharmacy" },
+        ],
+      },
+      {
+        id: "aptitude",
+        label: "Aptitude",
+        icon: Brain,
+        color: "text-amber-500",
+        bg: "bg-amber-500/10",
+        subcategories: [
+          { id: "quant", label: "Quantitative", description: "Numbers, Percentages", targetSkillName: "Quantitative Aptitude" },
+          { id: "logical", label: "Logical Reasoning", description: "Puzzles, Patterns", targetSkillName: "Logical Reasoning" },
+        ],
+      },
+      {
+        id: "soft_skills",
+        label: "Soft Skills",
+        icon: MessageSquare,
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/10",
+        subcategories: [
+          { id: "communication", label: "Communication", description: "Listening, Patient Interaction", targetSkillName: "Communication Skills" },
+          { id: "documentation", label: "Documentation", description: "Case Studies, Medical Records", targetSkillName: "Documentation" },
+        ],
+      },
+    ];
+  }
+
+  // Default / CSE
+  return [
+    {
+      id: "coding",
+      label: "Coding",
+      icon: Code,
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      subcategories: [
+        { id: "dsa", label: "DSA", description: "Arrays, Trees, Graphs, DP, Sorting", targetSkillName: "Data Structures & Algorithms" },
+        { id: "sql", label: "SQL", description: "Queries, JOINs, Aggregations, Optimization", targetSkillName: "SQL" },
+        { id: "web_dev", label: "Web Dev", description: "HTML, CSS, JS, React, APIs", targetSkillName: "Web Development" },
+      ],
+    },
+    {
+      id: "aptitude",
+      label: "Aptitude",
+      icon: Brain,
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+      subcategories: [
+        { id: "quant", label: "Quantitative", description: "Numbers, Percentages, Probability", targetSkillName: "Quantitative Aptitude" },
+        { id: "logical", label: "Logical Reasoning", description: "Puzzles, Patterns, Syllogisms", targetSkillName: "Logical Reasoning" },
+        { id: "verbal", label: "Verbal Ability", description: "Comprehension, Grammar, Vocabulary", targetSkillName: "Verbal Ability" },
+      ],
+    },
+    {
+      id: "soft_skills",
+      label: "Soft Skills",
+      icon: MessageSquare,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      subcategories: [
+        { id: "communication", label: "Communication", description: "Listening, Presentation, Feedback", targetSkillName: "Communication Skills" },
+        { id: "leadership", label: "Leadership", description: "Decision Making, Delegation, Vision", targetSkillName: "Leadership" },
+        { id: "teamwork", label: "Teamwork", description: "Collaboration, Conflict Resolution", targetSkillName: "Teamwork" },
+        { id: "problem_solving", label: "Problem Solving", description: "Critical Thinking, Analysis", targetSkillName: "Problem Solving" },
+      ],
+    },
+  ];
+};
 
 const DIFFICULTIES = [
   { id: "beginner", label: "Beginner", color: "text-emerald-500" },
@@ -73,8 +115,13 @@ const DIFFICULTIES = [
 
 const QUESTION_COUNTS = [5, 10, 15];
 
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
+
 export default function SkillAssessmentPage() {
+  const { profile, loading: profileLoading } = useUserProfile();
   const { history, loading: historyLoading, generateQuestions, evaluateAssessment, saveAssessment } = useAssessments();
+  
+  const categories = profile?.department ? GET_CATEGORIES(profile.department) : [];
 
   // Catalog state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -96,7 +143,7 @@ export default function SkillAssessmentPage() {
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [showExplanations, setShowExplanations] = useState(false);
 
-  const currentCategory = CATEGORIES.find((c) => c.id === selectedCategory);
+  const currentCategory = categories.find((c) => c.id === selectedCategory);
 
   const handleStartAssessment = async () => {
     if (!selectedCategory || !selectedSubcategory) {
@@ -109,7 +156,8 @@ export default function SkillAssessmentPage() {
         selectedCategory,
         selectedSubcategory,
         selectedDifficulty,
-        questionCount
+        questionCount,
+        profile?.department as string
       );
       setQuestions(qs);
       setAnswers({});
@@ -118,8 +166,11 @@ export default function SkillAssessmentPage() {
       setStartTime(Date.now());
       setView("quiz");
       toast.success("Assessment ready! Good luck!");
-    } catch {
-      toast.error("Failed to generate questions. Check your Gemini API key.");
+    } catch (error: any) {
+      // Use console.warn instead of console.error to prevent the Next.js dev error overlay
+      // from popping up during a graceful expected 429/503 high-demand error.
+      console.warn("Assessment generation error:", error);
+      toast.error(error.message || "Failed to generate questions.");
     } finally {
       setIsGenerating(false);
     }
@@ -135,10 +186,11 @@ export default function SkillAssessmentPage() {
         selectedSubcategory,
         questions,
         answers,
-        timeTaken
+        timeTaken,
+        profile?.department as string
       );
       setResult(evalResult);
-      const currentSub = CATEGORIES.find((c) => c.id === selectedCategory)
+      const currentSub = categories.find((c) => c.id === selectedCategory)
         ?.subcategories.find((s) => s.id === selectedSubcategory);
       const targetSkillName = currentSub?.targetSkillName || "";
 
@@ -166,6 +218,26 @@ export default function SkillAssessmentPage() {
   };
 
   // ─── CATALOG VIEW ────────────────────────────────────────────
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!profile?.department) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <AlertTriangle className="w-12 h-12 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">Department Information Missing</h2>
+        <p className="text-muted-foreground max-w-md">
+          Please update your profile with your department to access the Skill Assessment hub.
+        </p>
+      </div>
+    );
+  }
+
   if (view === "catalog") {
     const totalAssessments = history.length;
     const avgScore = totalAssessments > 0
@@ -226,7 +298,7 @@ export default function SkillAssessmentPage() {
                 <h2 className="text-xl font-semibold">Select a Category</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <Card
                     key={cat.id}
                     className={`border-border/50 cursor-pointer transition-all duration-200 hover:shadow-lg ${

@@ -16,12 +16,22 @@ import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
-const SUGGESTIONS = [
-  "What skills should I learn for Full-Stack Development?",
-  "Review my current skill gaps.",
-  "Give me a mock interview question for React.",
-  "How can I improve my communication skills?",
-];
+const getSuggestions = (department?: string) => {
+  if (department === "Ayurveda") {
+    return [
+      "What clinical skills should I focus on for Panchakarma?",
+      "Review my current knowledge gaps in Dravyaguna.",
+      "Give me a mock interview question for an Ayurvedic physician role.",
+      "How can I improve my patient consultation skills?",
+    ];
+  }
+  return [
+    "What skills should I learn for Full-Stack Development?",
+    "Review my current skill gaps.",
+    "Give me a mock interview question for React.",
+    "How can I improve my communication skills?",
+  ];
+};
 
 export default function CopilotPage() {
   const { messages, isLoading, sendMessage, clearChat } = useCopilotChat();
@@ -48,6 +58,7 @@ export default function CopilotPage() {
     // Build context payload
     const studentContext = profile ? {
       name: profile.name,
+      department: profile.department,
       careerObjective: undefined,
       skills: skills.map(s => ({ name: s.name, proficiency: s.score })),
       education: undefined,
@@ -103,7 +114,7 @@ export default function CopilotPage() {
                 </p>
 
                 <div className="w-full space-y-2 mt-4">
-                  {SUGGESTIONS.map((s, i) => (
+                  {getSuggestions(profile?.department).map((s, i) => (
                     <button
                       key={i}
                       onClick={() => handleSend(undefined, s)}

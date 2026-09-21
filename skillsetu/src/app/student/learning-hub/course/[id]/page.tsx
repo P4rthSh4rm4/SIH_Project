@@ -396,8 +396,10 @@ export default function CourseViewerPage() {
                   }}
                 />
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  Invalid Video URL
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-muted/20">
+                  <PlayCircle className="w-12 h-12 mb-3 text-muted-foreground/50" />
+                  <span className="font-medium text-lg">Video coming soon</span>
+                  <span className="text-sm mt-1">Learning content is being prepared</span>
                 </div>
               )}
             </div>

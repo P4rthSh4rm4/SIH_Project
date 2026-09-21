@@ -6,7 +6,7 @@ import { useAssessments } from "./useAssessments";
 import { useMockInterview } from "./useMockInterview";
 import { useEducation } from "./useEducation";
 import { useExperience } from "./useExperience";
-import { CAREER_PATHS } from "@/lib/data/career-paths";
+import { getCareerPaths, CAREER_PATHS } from "@/lib/data/career-paths";
 
 import {
   calculateTechnicalScore,
@@ -28,7 +28,7 @@ export interface CompanyEligibility {
 }
 
 // ── Overall Readiness Weights ──────────────────────────────
-const READINESS_WEIGHTS = {
+const CSE_WEIGHTS = {
   technical:  0.25,
   softSkills: 0.15,
   aptitude:   0.15,
@@ -37,6 +37,17 @@ const READINESS_WEIGHTS = {
   github:     0.10,
   linkedin:   0.05,
   experience: 0.10,
+} as const;
+
+const AYURVEDA_WEIGHTS = {
+  technical:  0.30,
+  softSkills: 0.20,
+  aptitude:   0.10,
+  resume:     0.15,
+  portfolio:  0.10,
+  github:     0.00,
+  linkedin:   0.00,
+  experience: 0.15,
 } as const;
 
 export function usePlacementReadiness() {
@@ -115,48 +126,51 @@ export function usePlacementReadiness() {
 
   // ─── 2. Overall Score (weighted average) ──────────────────
 
+  const isAyurveda = portfolio.profile?.department === "Ayurveda";
+  const weights = isAyurveda ? AYURVEDA_WEIGHTS : CSE_WEIGHTS;
+
   const overallScore = useMemo(() => {
     let weightedSum = 0;
     let totalWeight = 0;
 
     if (technicalMetric.attempted) {
-      weightedSum += technicalMetric.score * READINESS_WEIGHTS.technical;
-      totalWeight += READINESS_WEIGHTS.technical;
+      weightedSum += technicalMetric.score * weights.technical;
+      totalWeight += weights.technical;
     }
     if (softSkillsMetric.attempted) {
-      weightedSum += softSkillsMetric.score * READINESS_WEIGHTS.softSkills;
-      totalWeight += READINESS_WEIGHTS.softSkills;
+      weightedSum += softSkillsMetric.score * weights.softSkills;
+      totalWeight += weights.softSkills;
     }
     if (aptitudeMetric.attempted) {
-      weightedSum += aptitudeMetric.score * READINESS_WEIGHTS.aptitude;
-      totalWeight += READINESS_WEIGHTS.aptitude;
+      weightedSum += aptitudeMetric.score * weights.aptitude;
+      totalWeight += weights.aptitude;
     }
     if (resumeMetric.attempted) {
-      weightedSum += resumeMetric.score * READINESS_WEIGHTS.resume;
-      totalWeight += READINESS_WEIGHTS.resume;
+      weightedSum += resumeMetric.score * weights.resume;
+      totalWeight += weights.resume;
     }
     if (portfolioMetric.attempted) {
-      weightedSum += portfolioMetric.score * READINESS_WEIGHTS.portfolio;
-      totalWeight += READINESS_WEIGHTS.portfolio;
+      weightedSum += portfolioMetric.score * weights.portfolio;
+      totalWeight += weights.portfolio;
     }
-    if (githubMetric.attempted) {
-      weightedSum += githubMetric.score * READINESS_WEIGHTS.github;
-      totalWeight += READINESS_WEIGHTS.github;
+    if (githubMetric.attempted && !isAyurveda) {
+      weightedSum += githubMetric.score * weights.github;
+      totalWeight += weights.github;
     }
     if (linkedinMetric.attempted) {
-      weightedSum += linkedinMetric.score * READINESS_WEIGHTS.linkedin;
-      totalWeight += READINESS_WEIGHTS.linkedin;
+      weightedSum += linkedinMetric.score * weights.linkedin;
+      totalWeight += weights.linkedin;
     }
     if (experienceMetric.attempted) {
-      weightedSum += experienceMetric.score * READINESS_WEIGHTS.experience;
-      totalWeight += READINESS_WEIGHTS.experience;
+      weightedSum += experienceMetric.score * weights.experience;
+      totalWeight += weights.experience;
     }
 
     return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
   }, [
     technicalMetric, softSkillsMetric, aptitudeMetric,
     resumeMetric, portfolioMetric, githubMetric,
-    linkedinMetric, experienceMetric,
+    linkedinMetric, experienceMetric, weights, isAyurveda
   ]);
 
   // ─── 3. Status ────────────────────────────────────────────
@@ -174,16 +188,22 @@ export function usePlacementReadiness() {
 
   const strengths = useMemo(() => {
     const s: string[] = [];
-    if (technicalMetric.attempted && technicalMetric.score >= 70) s.push("Strong Technical Skills");
-    if (portfolioMetric.attempted && portfolioMetric.score >= 70) s.push("Excellent Project Portfolio");
-    if (experienceMetric.attempted && experienceMetric.score >= 60) s.push("Solid Experience & Certifications");
+    if (technicalMetric.attempted && technicalMetric.score >= 70) {
+      s.push(isAyurveda ? "Strong Clinical & Domain Skills" : "Strong Technical Skills");
+    }
+    if (portfolioMetric.attempted && portfolioMetric.score >= 70) {
+      s.push(isAyurveda ? "Excellent Clinical/Research Portfolio" : "Excellent Project Portfolio");
+    }
+    if (experienceMetric.attempted && experienceMetric.score >= 60) {
+      s.push(isAyurveda ? "Solid Clinical Training & Certifications" : "Solid Experience & Certifications");
+    }
     if (resumeMetric.attempted && resumeMetric.score >= 70) s.push("ATS-Optimized Resume");
     if (portfolio.completedRoadmaps.length > 0) s.push("Completed Career Roadmap");
     if (portfolio.skills.some((sk: any) => sk.verified)) s.push("Platform Verified Skills");
     if (softSkillsMetric.attempted && softSkillsMetric.score >= 70) s.push("Strong Soft Skills");
-    if (githubMetric.attempted && githubMetric.score >= 60) s.push("Active GitHub Presence");
+    if (githubMetric.attempted && githubMetric.score >= 60 && !isAyurveda) s.push("Active GitHub Presence");
     return s;
-  }, [technicalMetric, portfolioMetric, experienceMetric, resumeMetric, portfolio.completedRoadmaps, portfolio.skills, softSkillsMetric, githubMetric]);
+  }, [technicalMetric, portfolioMetric, experienceMetric, resumeMetric, portfolio.completedRoadmaps, portfolio.skills, softSkillsMetric, githubMetric, isAyurveda]);
 
   // ─── 5. Improvements (aggregated from all services) ──────
 
@@ -192,14 +212,16 @@ export function usePlacementReadiness() {
 
     // Collect the top recommendations from each service that has missing items
     const metricMap: Array<{ metric: ReadinessMetric; label: string; weight: number }> = [
-      { metric: technicalMetric, label: "Technical Skills", weight: READINESS_WEIGHTS.technical },
-      { metric: softSkillsMetric, label: "Soft Skills", weight: READINESS_WEIGHTS.softSkills },
-      { metric: aptitudeMetric, label: "Aptitude", weight: READINESS_WEIGHTS.aptitude },
-      { metric: resumeMetric, label: "Resume ATS", weight: READINESS_WEIGHTS.resume },
-      { metric: portfolioMetric, label: "Portfolio", weight: READINESS_WEIGHTS.portfolio },
-      { metric: githubMetric, label: "GitHub", weight: READINESS_WEIGHTS.github },
-      { metric: linkedinMetric, label: "LinkedIn", weight: READINESS_WEIGHTS.linkedin },
-      { metric: experienceMetric, label: "Experience", weight: READINESS_WEIGHTS.experience },
+      { metric: technicalMetric, label: isAyurveda ? "Clinical & Domain Skills" : "Technical Skills", weight: weights.technical },
+      { metric: softSkillsMetric, label: "Soft Skills", weight: weights.softSkills },
+      { metric: aptitudeMetric, label: "Aptitude", weight: weights.aptitude },
+      { metric: resumeMetric, label: "Resume ATS", weight: weights.resume },
+      { metric: portfolioMetric, label: "Portfolio", weight: weights.portfolio },
+      ...(isAyurveda ? [] : [
+        { metric: githubMetric, label: "GitHub", weight: weights.github },
+        { metric: linkedinMetric, label: "LinkedIn", weight: weights.linkedin }
+      ]),
+      { metric: experienceMetric, label: "Experience", weight: weights.experience },
     ];
 
     // Sort by weight descending so highest-impact recommendations come first
@@ -219,26 +241,50 @@ export function usePlacementReadiness() {
     }
 
     return allRecs;
-  }, [technicalMetric, softSkillsMetric, aptitudeMetric, resumeMetric, portfolioMetric, githubMetric, linkedinMetric, experienceMetric]);
+  }, [technicalMetric, softSkillsMetric, aptitudeMetric, resumeMetric, portfolioMetric, githubMetric, linkedinMetric, experienceMetric, weights, isAyurveda]);
 
   // ─── 6. Placement Checklist ───────────────────────────────
 
-  const checklist = useMemo(() => [
-    { id: "resume", label: "Resume uploaded", done: !!portfolio.profile?.resume_url },
-    { id: "profile", label: "Profile completed", done: linkedinMetric.score >= 70 },
-    { id: "portfolio", label: "Portfolio projects added", done: portfolioMetric.attempted },
-    { id: "github", label: "GitHub linked", done: githubMetric.attempted },
-    { id: "linkedin", label: "LinkedIn linked", done: !!portfolio.profile?.linkedin },
-    { id: "cert", label: "Certifications earned", done: portfolio.stats.certificates > 0 },
-    { id: "skills", label: "Skills verified", done: portfolio.skills.some((s: any) => s.verified) },
-    { id: "interview", label: "Mock interview completed", done: completedInterviews.length > 0 },
-  ], [portfolio.profile, linkedinMetric.score, portfolioMetric.attempted, githubMetric.attempted, portfolio.stats.certificates, portfolio.skills, completedInterviews.length]);
+  const checklist = useMemo(() => {
+    const list = [
+      { id: "resume", label: "Resume uploaded", done: !!portfolio.profile?.resume_url },
+      { id: "profile", label: "Profile completed", done: linkedinMetric.score >= 70 },
+      { id: "portfolio", label: isAyurveda ? "Clinical Cases/Research Added" : "Portfolio projects added", done: portfolioMetric.attempted },
+      { id: "cert", label: "Certifications earned", done: portfolio.stats.certificates > 0 },
+      { id: "skills", label: "Skills verified", done: portfolio.skills.some((s: any) => s.verified) },
+      { id: "interview", label: "Mock interview completed", done: completedInterviews.length > 0 },
+    ];
+    if (!isAyurveda) {
+      list.splice(3, 0, { id: "github", label: "GitHub linked", done: githubMetric.attempted });
+      list.splice(4, 0, { id: "linkedin", label: "LinkedIn linked", done: !!portfolio.profile?.linkedin });
+    }
+    return list;
+  }, [portfolio.profile, linkedinMetric.score, portfolioMetric.attempted, githubMetric.attempted, portfolio.stats.certificates, portfolio.skills, completedInterviews.length, isAyurveda]);
 
   const checklistProgress = Math.round((checklist.filter(c => c.done).length / checklist.length) * 100);
 
   // ─── 7. Industry Readiness (Domains) ──────────────────────
 
   const industryReadiness = useMemo(() => {
+    if (isAyurveda) {
+      const paths = getCareerPaths("Ayurveda");
+      return paths.map(path => {
+        // Map required skills to actual student skills
+        const reqSkills = path.requiredSkills.map(s => s.toLowerCase());
+        const matched = portfolio.skills.filter((s: any) => reqSkills.includes(s.skill?.name?.toLowerCase()));
+        
+        let score = 0;
+        if (reqSkills.length > 0) {
+          // If no skills are verified/matched, score stays low
+          const matchRatio = matched.length / reqSkills.length;
+          score = Math.round((overallScore * 0.5) + (matchRatio * 50));
+        } else {
+          score = overallScore;
+        }
+        return { name: path.title, score };
+      });
+    }
+
     const domains = [];
     const hasData = portfolio.skills.some((s: any) => ["python", "sql", "data", "pandas", "machine learning"].includes(s.skill?.name?.toLowerCase()));
     const hasFrontend = portfolio.skills.some((s: any) => ["react", "html", "css", "javascript", "frontend"].includes(s.skill?.name?.toLowerCase()));
@@ -251,12 +297,36 @@ export function usePlacementReadiness() {
     domains.push({ name: "Full Stack Developer", score: (hasFrontend && hasBackend) ? Math.min(overallScore + 15, 100) : Math.max(overallScore - 10, 0) });
 
     return domains;
-  }, [overallScore, portfolio.skills]);
+  }, [overallScore, portfolio.skills, isAyurveda]);
 
   // ─── 8. Company Eligibility ───────────────────────────────
 
   const companyEligibility = useMemo((): CompanyEligibility[] => {
     const companies: CompanyEligibility[] = [];
+
+    if (isAyurveda) {
+      companies.push({
+        company: "Top Ayurveda Hospitals & Wellness Centers",
+        role: "Clinical Practitioner",
+        status: overallScore >= 90 && portfolio.stats.projects >= 2 ? "Eligible" : overallScore >= 75 ? "Nearly Eligible" : "Not Eligible",
+        reasons: overallScore < 90 ? ["Requires 90%+ Overall Readiness", "Needs documented clinical cases"] : [],
+      });
+
+      companies.push({
+        company: "Ayurvedic Pharma",
+        role: "Pharma Specialist",
+        status: portfolio.stats.projects >= 2 && technicalMetric.score >= 70 ? "Eligible" : portfolio.stats.projects >= 1 ? "Nearly Eligible" : "Not Eligible",
+        reasons: portfolio.stats.projects < 2 ? ["Needs minimum 2 clinical/research projects"] : [],
+      });
+
+      companies.push({
+        company: "Ayurveda Research",
+        role: "Ayurveda Researcher",
+        status: overallScore >= 60 && !!portfolio.profile?.resume_url ? "Eligible" : "Not Eligible",
+        reasons: overallScore < 60 ? ["Requires 60%+ Overall Readiness"] : !portfolio.profile?.resume_url ? ["Resume upload required"] : [],
+      });
+      return companies;
+    }
 
     companies.push({
       company: "Top Tech (FAANG)",
@@ -280,7 +350,7 @@ export function usePlacementReadiness() {
     });
 
     return companies;
-  }, [overallScore, portfolio.stats, technicalMetric.score, portfolio.profile]);
+  }, [overallScore, portfolio.stats, technicalMetric.score, portfolio.profile, isAyurveda]);
 
   // ─── 9. Placement Timeline ────────────────────────────────
 
@@ -288,11 +358,11 @@ export function usePlacementReadiness() {
     { id: "t1", title: "Profile Created", status: "completed" },
     { id: "t2", title: "Resume Uploaded", status: portfolio.profile?.resume_url ? "completed" : "pending" },
     { id: "t3", title: "Skill Assessment", status: assessmentHistory.length > 0 ? "completed" : "pending" },
-    { id: "t4", title: "Project Added", status: portfolio.stats.projects > 0 ? "completed" : "pending" },
+    { id: "t4", title: isAyurveda ? "Clinical Case/Research Added" : "Project Added", status: portfolio.stats.projects > 0 ? "completed" : "pending" },
     { id: "t5", title: "Certification Earned", status: portfolio.stats.certificates > 0 ? "completed" : "pending" },
     { id: "t6", title: "Mock Interview", status: completedInterviews.length > 0 ? "completed" : "pending" },
     { id: "t7", title: "Placement Ready", status: overallScore >= 80 ? "completed" : "in-progress" },
-  ], [portfolio.profile, assessmentHistory.length, portfolio.stats, completedInterviews.length, overallScore]);
+  ], [portfolio.profile, assessmentHistory.length, portfolio.stats, completedInterviews.length, overallScore, isAyurveda]);
 
   // ─── 10. Dynamic Insights ─────────────────────────────────
 
@@ -300,9 +370,17 @@ export function usePlacementReadiness() {
     const insights: string[] = [];
 
     if (technicalMetric.score > softSkillsMetric.score + 20) {
-      insights.push("Your technical skills are strong, but improving communication and soft skills will dramatically increase your hiring chances.");
+      insights.push(
+        isAyurveda 
+          ? "Your clinical and domain knowledge is strong, but improving patient communication and soft skills will dramatically increase your readiness."
+          : "Your technical skills are strong, but improving communication and soft skills will dramatically increase your hiring chances."
+      );
     } else if (softSkillsMetric.score > technicalMetric.score + 20) {
-      insights.push("You have great soft skills. Focus on building more technical projects to balance your profile.");
+      insights.push(
+        isAyurveda
+          ? "You have great communication skills. Focus on documenting more clinical cases and deepening domain knowledge to balance your profile."
+          : "You have great soft skills. Focus on building more technical projects to balance your profile."
+      );
     }
 
     if (overallScore >= 80) {
@@ -314,19 +392,23 @@ export function usePlacementReadiness() {
     }
 
     if (portfolio.stats.projects > 0 && portfolio.stats.certificates === 0) {
-      insights.push("You have practical experience through projects. Earning a certificate will validate those skills for recruiters.");
+      insights.push(
+        isAyurveda
+          ? "You have practical experience through clinical cases. Earning an Ayurveda certification will validate those skills for hospitals."
+          : "You have practical experience through projects. Earning a certificate will validate those skills for recruiters."
+      );
     }
 
     if (!aptitudeMetric.attempted) {
-      insights.push("Take the Aptitude Assessment to unlock 15% of your overall readiness score.");
+      insights.push("Take the Aptitude Assessment to unlock a portion of your overall readiness score.");
     }
 
-    if (!githubMetric.attempted) {
+    if (!githubMetric.attempted && !isAyurveda) {
       insights.push("Link your GitHub profile and connect your repositories to improve your score.");
     }
 
     return insights;
-  }, [technicalMetric.score, softSkillsMetric.score, overallScore, portfolio.stats, aptitudeMetric.attempted, githubMetric.attempted]);
+  }, [technicalMetric.score, softSkillsMetric.score, overallScore, portfolio.stats, aptitudeMetric.attempted, githubMetric.attempted, isAyurveda]);
 
   // ─── 11. Probability ──────────────────────────────────────
 
@@ -372,7 +454,7 @@ export function usePlacementReadiness() {
       placementTimeline,
       placementInsights,
       probability,
-      weights: READINESS_WEIGHTS,
+      weights,
     },
   };
 }

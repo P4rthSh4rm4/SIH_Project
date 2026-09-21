@@ -1,4 +1,4 @@
-export type InterviewType = 'HR' | 'Technical' | 'Behavioral' | 'Aptitude' | 'Mixed';
+export type InterviewType = 'HR' | 'Technical' | 'Behavioral' | 'Aptitude' | 'Mixed' | 'Clinical & Domain';
 export type InterviewDifficulty = 'Easy' | 'Medium' | 'Hard';
 export type InterviewMode = 'Text' | 'Voice' | 'Video';
 
@@ -48,6 +48,13 @@ export const MOCK_QUESTIONS: InterviewQuestion[] = [
   { id: 'tech_da_2', type: 'Technical', domain: 'Data Analyst', difficulty: 'Hard', question: 'How do you handle missing or imbalanced data in a dataset?' },
   { id: 'tech_ai_1', type: 'Technical', domain: 'AI/ML', difficulty: 'Medium', question: 'What is overfitting in machine learning, and how can you prevent it?' },
   { id: 'tech_ai_2', type: 'Technical', domain: 'AI/ML', difficulty: 'Hard', question: 'Explain the architecture of a Transformer model and why attention mechanisms are important.' },
+
+  // Technical - Ayurveda
+  { id: 'tech_ayur_1', type: 'Technical', domain: 'Clinical Practice', difficulty: 'Easy', question: 'Can you explain the concept of Tridosha and how it influences diagnosis?' },
+  { id: 'tech_ayur_2', type: 'Technical', domain: 'Clinical Practice', difficulty: 'Medium', question: 'Describe your approach to performing Nadi Pariksha.' },
+  { id: 'tech_ayur_3', type: 'Technical', domain: 'Panchakarma', difficulty: 'Medium', question: 'What are the indications and contraindications for Vamana Karma?' },
+  { id: 'tech_ayur_4', type: 'Technical', domain: 'Ayurvedic Pharma', difficulty: 'Hard', question: 'Explain the standard operating procedures for preparing a Bhasma.' },
+  { id: 'tech_ayur_5', type: 'Technical', domain: 'Research & Development', difficulty: 'Medium', question: 'How would you design a clinical trial to validate the efficacy of an Ayurvedic formulation?' },
 ];
 
 /**

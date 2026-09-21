@@ -182,8 +182,12 @@ export default function PortfolioPage() {
                   </a>
                 )}
                 {github && (
-                  <a href={github.startsWith('http') ? github : `https://${github}`} target="_blank" rel="noreferrer" className="group flex items-center justify-center w-10 h-10 bg-secondary/60 hover:bg-foreground/10 rounded-full transition-all" title="GitHub">
-                    <FaGithub className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
+                  <a href={github.startsWith('http') ? github : `https://${github}`} target="_blank" rel="noreferrer" className="group flex items-center justify-center w-10 h-10 bg-secondary/60 hover:bg-foreground/10 rounded-full transition-all" title={portfolio.profile?.department === "Ayurveda" ? "Research/Clinical Log" : "GitHub"}>
+                    {portfolio.profile?.department === "Ayurveda" ? (
+                      <FileText className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
+                    ) : (
+                      <FaGithub className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
+                    )}
                   </a>
                 )}
                 {portfolio_website && (
@@ -425,7 +429,11 @@ export default function PortfolioPage() {
                         id="title" 
                         value={title} 
                         onChange={(e) => setTitle(e.target.value)} 
-                        placeholder={`E.g., ${type === 'project' ? 'E-commerce Platform' : type === 'achievement' ? 'Hackathon Winner' : 'Software Engineering Intern'}`}
+                        placeholder={
+                          portfolio.profile?.department === "Ayurveda" 
+                            ? `E.g., ${type === 'project' ? 'Clinical Case Study' : type === 'achievement' ? 'Paper Published' : 'Hospital Internship'}`
+                            : `E.g., ${type === 'project' ? 'E-commerce Platform' : type === 'achievement' ? 'Hackathon Winner' : 'Software Engineering Intern'}`
+                        }
                         required
                       />
                     </div>
@@ -450,7 +458,7 @@ export default function PortfolioPage() {
                           type="url" 
                           value={url} 
                           onChange={(e) => setUrl(e.target.value)} 
-                          placeholder="https://github.com/..."
+                          placeholder={portfolio.profile?.department === "Ayurveda" ? "https://researchgate.net/..." : "https://github.com/..."}
                           className="pl-9"
                         />
                       </div>

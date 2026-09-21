@@ -15,15 +15,29 @@ import { toast } from "sonner";
 import { awardXp } from "@/lib/supabase/queries";
 import { OpportunityAnalyzerModal } from "@/components/opportunities/opportunity-analyzer-modal";
 
-const PREMIUM_OPPS = [
-  { id: "p1", company: "Google", role: "SDE-1 Off-Campus", type: "Full-time", location: "Bangalore", stipend: "₹24 LPA", gradient: "from-blue-500/20 to-red-500/20", border: "border-blue-500/30", link: "https://careers.google.com/students/" },
-  { id: "p2", company: "Amazon", role: "SDE Intern", type: "Internship", location: "Hyderabad", stipend: "₹80k/mo", gradient: "from-orange-500/20 to-amber-500/20", border: "border-orange-500/30", link: "https://www.amazon.jobs/en/teams/internships-for-students" },
-  { id: "p3", company: "Meta", role: "Open Source Hackathon", type: "Hackathon", location: "Online", stipend: "$10k Pool", gradient: "from-blue-600/20 to-indigo-500/20", border: "border-blue-600/30", link: "https://www.metacareers.com/students_and_grads/" },
-  { id: "p4", company: "Microsoft", role: "Cloud Advocate", type: "Project", location: "Remote", stipend: "Unpaid", gradient: "from-green-500/20 to-emerald-500/20", border: "border-green-500/30", link: "https://careers.microsoft.com/v2/global/en/students_and_graduates" },
-  { id: "p5", company: "Apple", role: "Hardware Eng Intern", type: "Internship", location: "Bangalore", stipend: "₹1L/mo", gradient: "from-slate-500/20 to-gray-500/20", border: "border-slate-500/30", link: "https://www.apple.com/careers/us/students.html" },
-];
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 
-function PremiumNewsBoard() {
+const getPremiumOpps = (department?: string) => {
+  if (department === "Ayurveda") {
+    return [
+      { id: "a1", company: "Patanjali", role: "Ayurvedic Physician", type: "Full-time", location: "Haridwar", stipend: "₹8 LPA", gradient: "from-orange-500/20 to-amber-500/20", border: "border-orange-500/30", link: "#" },
+      { id: "a2", company: "Dabur", role: "R&D Intern", type: "Internship", location: "Ghaziabad", stipend: "₹30k/mo", gradient: "from-green-500/20 to-emerald-500/20", border: "border-green-500/30", link: "#" },
+      { id: "a3", company: "Himalaya", role: "Clinical Researcher", type: "Full-time", location: "Bangalore", stipend: "₹10 LPA", gradient: "from-teal-500/20 to-emerald-500/20", border: "border-teal-500/30", link: "#" },
+      { id: "a4", company: "Baidyanath", role: "Medical Officer", type: "Full-time", location: "Kolkata", stipend: "₹7 LPA", gradient: "from-red-500/20 to-orange-500/20", border: "border-red-500/30", link: "#" },
+      { id: "a5", company: "Kottakkal", role: "Panchakarma Specialist", type: "Internship", location: "Kerala", stipend: "₹25k/mo", gradient: "from-amber-500/20 to-yellow-500/20", border: "border-amber-500/30", link: "#" },
+    ];
+  }
+  return [
+    { id: "p1", company: "Google", role: "SDE-1 Off-Campus", type: "Full-time", location: "Bangalore", stipend: "₹24 LPA", gradient: "from-blue-500/20 to-red-500/20", border: "border-blue-500/30", link: "https://careers.google.com/students/" },
+    { id: "p2", company: "Amazon", role: "SDE Intern", type: "Internship", location: "Hyderabad", stipend: "₹80k/mo", gradient: "from-orange-500/20 to-amber-500/20", border: "border-orange-500/30", link: "https://www.amazon.jobs/en/teams/internships-for-students" },
+    { id: "p3", company: "Meta", role: "Open Source Hackathon", type: "Hackathon", location: "Online", stipend: "$10k Pool", gradient: "from-blue-600/20 to-indigo-500/20", border: "border-blue-600/30", link: "https://www.metacareers.com/students_and_grads/" },
+    { id: "p4", company: "Microsoft", role: "Cloud Advocate", type: "Project", location: "Remote", stipend: "Unpaid", gradient: "from-green-500/20 to-emerald-500/20", border: "border-green-500/30", link: "https://careers.microsoft.com/v2/global/en/students_and_graduates" },
+    { id: "p5", company: "Apple", role: "Hardware Eng Intern", type: "Internship", location: "Bangalore", stipend: "₹1L/mo", gradient: "from-slate-500/20 to-gray-500/20", border: "border-slate-500/30", link: "https://www.apple.com/careers/us/students.html" },
+  ];
+};
+
+function PremiumNewsBoard({ department }: { department?: string }) {
+  const opps = getPremiumOpps(department);
   return (
     <div className="mb-2 animate-slide-up">
       <div className="flex items-center gap-2 mb-4">
@@ -33,7 +47,7 @@ function PremiumNewsBoard() {
         <h2 className="text-xl font-bold tracking-tight">Premium Opportunities Board</h2>
       </div>
       <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
-        {PREMIUM_OPPS.map((opp) => (
+        {opps.map((opp) => (
           <a href={opp.link} target="_blank" rel="noopener noreferrer" key={opp.id} className={`snap-start shrink-0 w-[280px] rounded-2xl border ${opp.border} bg-gradient-to-br ${opp.gradient} p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group relative overflow-hidden block`}>
              <div className="absolute top-0 right-0 p-16 bg-background/20 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
              <div className="flex justify-between items-start mb-4 relative z-10">
@@ -56,6 +70,7 @@ function PremiumNewsBoard() {
 }
 
 export default function OpportunitiesPage() {
+  const { profile } = useUserProfile();
   const { opportunities, loading, applyToOpportunity } = useOpportunities();
   const [searchQuery, setSearchQuery] = useState("");
   const [applyingIdState, setApplyingId] = useState<string | null>(null);
@@ -106,7 +121,7 @@ export default function OpportunitiesPage() {
 
   return (
     <div className="space-y-6 pb-10">
-      <PremiumNewsBoard />
+      <PremiumNewsBoard department={profile?.department} />
       
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-4 border-t border-border/50">
         <div>

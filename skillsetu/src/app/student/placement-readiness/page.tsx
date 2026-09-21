@@ -15,8 +15,11 @@ import {
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import Link from "next/link";
 
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
+
 export default function PlacementReadinessDashboard() {
   const { readiness, loading } = usePlacementReadiness();
+  const { profile } = useUserProfile();
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
 
   const toggleCard = (key: string) => {
@@ -46,6 +49,8 @@ export default function PlacementReadinessDashboard() {
 
   const scoreColor = overallScore >= 80 ? "text-emerald-500" : overallScore >= 60 ? "text-amber-500" : "text-rose-500";
   const strokeColor = overallScore >= 80 ? "#10b981" : overallScore >= 60 ? "#f59e0b" : "#f43f5e";
+
+  const isAyurveda = profile?.department === "Ayurveda";
 
   return (
     <div className="space-y-8 pb-12 max-w-7xl mx-auto">
@@ -104,15 +109,15 @@ export default function PlacementReadinessDashboard() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {([
-            { key: "technical", label: "Technical Skills", icon: Code, desc: "Verified coding & domain skills", metric: metrics.technical, weight: weights.technical },
+            { key: "technical", label: isAyurveda ? "Clinical Skills" : "Technical Skills", icon: Code, desc: isAyurveda ? "Verified clinical & domain skills" : "Verified coding & domain skills", metric: metrics.technical, weight: weights.technical },
             { key: "softSkills", label: "Soft Skills", icon: MessageSquare, desc: "Communication & collaboration", metric: metrics.softSkills, weight: weights.softSkills },
             { key: "aptitude", label: "Aptitude Readiness", icon: BrainCircuit, desc: "Quantitative & logical reasoning", metric: metrics.aptitude, weight: weights.aptitude },
             { key: "resume", label: "Resume ATS Score", icon: FileText, desc: "Format, keywords & completeness", metric: metrics.resume, weight: weights.resume },
-            { key: "portfolio", label: "Portfolio Quality", icon: FolderOpen, desc: "Project count, quality & completeness", metric: metrics.portfolio, weight: weights.portfolio },
+            { key: "portfolio", label: isAyurveda ? "Professional Profile" : "Portfolio Quality", icon: FolderOpen, desc: "Project count, quality & completeness", metric: metrics.portfolio, weight: weights.portfolio },
             { key: "github", label: "GitHub Readiness", icon: FaGithub, desc: "GitHub repos & open source activity", metric: metrics.github, weight: weights.github },
             { key: "linkedin", label: "LinkedIn Profile", icon: FaLinkedin, desc: "Professional profile completeness", metric: metrics.linkedin, weight: weights.linkedin },
             { key: "experience", label: "Experience & Certs", icon: GraduationCap, desc: "Internships, courses & certifications", metric: metrics.experience, weight: weights.experience },
-          ] as const).map((item) => {
+          ] as const).filter(item => item.weight > 0).map((item) => {
             const isExpanded = expandedCards[item.key];
             const m = item.metric;
             return (

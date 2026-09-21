@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +12,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { promptData, fullName } = await req.json();
+    const { promptData, fullName, department = "CSE" } = await req.json();
 
     if (!promptData) {
       return NextResponse.json(
@@ -22,15 +21,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const deptContext = department === "Ayurveda" 
+      ? "The user is an Ayurveda medical student. Tailor the professional summary and skill categories to be highly relevant to Ayurveda, Clinical Practice, or Ayurvedic Pharma where applicable."
+      : "";
+
     const systemPrompt = `
 You are an expert ATS-friendly Resume Writer and Career Coach. 
 The user will provide rough notes about their background, projects, education, and skills. 
 Your job is to transform this raw data into a highly professional, well-formatted, impact-driven resume in JSON format.
+${deptContext}
 
 RULES:
 1. "professionalSummary": Write a 3-4 sentence professional summary highlighting their top skills and objective.
 2. "education": Extract education details. If missing, provide placeholders like "[University Name]", "[Degree]".
-3. "skills": Group skills into categories (e.g., "Languages", "Frameworks", "Tools").
+3. "skills": Group skills into categories (e.g., "Languages", "Frameworks", "Tools", or for Ayurveda: "Clinical Skills", "Diagnostics").
 4. "projects": Write 2-3 strong, action-oriented bullet points for each project mentioned. Use the XYZ formula (Accomplished [X] as measured by [Y], by doing [Z]).
 5. "certifications": Extract any certifications.
 6. "awards": Extract any awards.
@@ -87,20 +91,45 @@ JSON SCHEMA EXPECTED:
       ],
     };
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
+    const modelsToTry = ["gemini-3.5-flash", "gemini-3.6-flash"];
+    const MAX_RETRIES = 2;
+    let response: Response | null = null;
+    let usedModel = modelsToTry[0];
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Gemini API Error:", errorData);
+    for (const model of modelsToTry) {
+      usedModel = model;
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        response = await fetch(`${apiUrl}?key=${apiKey}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) break;
+
+        const errText = await response.text();
+        console.error(`Gemini Resume Error (${model} attempt ${attempt}):`, response.status, errText);
+
+        if (response.status === 429 || response.status === 503) {
+          if (attempt < MAX_RETRIES) {
+             const delay = Math.pow(2, attempt) * 1000;
+             await new Promise(r => setTimeout(r, delay));
+          }
+        } else {
+           break;
+        }
+      }
+      if (response?.ok) break;
+    }
+
+    if (!response || !response.ok) {
       return NextResponse.json(
-        { error: errorData?.error?.message || "Failed to generate resume content with Gemini" },
-        { status: response.status }
+        { error: "AI service is temporarily unavailable. Please try again in a moment." },
+        { status: response?.status || 503 }
       );
     }
 
@@ -108,18 +137,13 @@ JSON SCHEMA EXPECTED:
     let textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     // Clean up markdown formatting if the model still wraps it
-    textOutput = textOutput.trim();
-    if (textOutput.startsWith("```json")) {
-      textOutput = textOutput.replace(/^```json/, "").replace(/```$/, "").trim();
-    } else if (textOutput.startsWith("```")) {
-      textOutput = textOutput.replace(/^```/, "").replace(/```$/, "").trim();
-    }
+    textOutput = textOutput.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
 
     // Try to locate JSON object
     const startIndex = textOutput.indexOf("{");
     const endIndex = textOutput.lastIndexOf("}");
     
-    if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+    if (startIndex !== -1 && endIndex !== -1 && endIndex >= startIndex) {
       textOutput = textOutput.substring(startIndex, endIndex + 1);
     }
 

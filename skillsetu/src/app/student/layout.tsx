@@ -41,10 +41,17 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     return <div className="min-h-screen bg-background">{children}</div>;
   }
 
+  const filteredNav = studentNav.filter((item) => {
+    if (item.label === "Documents" && profile?.department === "Ayurveda") {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <DashboardSidebar
-        navItems={studentNav}
+        navItems={filteredNav}
         roleLabel="Student Portal"
         roleColor="text-violet-500"
         userName={profile?.name}

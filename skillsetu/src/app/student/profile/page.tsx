@@ -246,6 +246,7 @@ export default function ProfilePage() {
             onAdd={eduHook.addEducation}
             onUpdate={eduHook.updateEducation}
             onDelete={eduHook.deleteEducation}
+            department={formData.department}
           />
         </TabsContent>
 
@@ -257,6 +258,7 @@ export default function ProfilePage() {
             onAdd={expHook.addExperience}
             onUpdate={expHook.updateExperience}
             onDelete={expHook.deleteExperience}
+            department={formData.department}
           />
         </TabsContent>
 
@@ -279,6 +281,7 @@ export default function ProfilePage() {
             onAdd={certsHook.addCertification}
             onUpdate={certsHook.updateCertification}
             onDelete={certsHook.deleteCertification}
+            department={formData.department}
           />
         </TabsContent>
 

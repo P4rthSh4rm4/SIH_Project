@@ -39,15 +39,17 @@ export default function IndustryDashboard() {
         
         const { data: { user } } = await supabase.auth.getUser();
         
+        let oppsData: any[] = [];
         if (user) {
-          // Fetch industry's opportunities WITH applications
-          const { data: oppsData } = await supabase
+          // Fetch industry's opportunities WITH applications and student department
+          const { data: fetchedOpps } = await supabase
             .from("opportunities")
-            .select(`*, applications(*, application_offers(id, offer_status))`)
+            .select(`*, applications(*, application_offers(id, offer_status), users!student_id(department))`)
             .eq("industry_id", user.id)
             .order("created_at", { ascending: false });
             
-          setOpportunities(oppsData || []);
+          oppsData = fetchedOpps || [];
+          setOpportunities(oppsData);
 
           // Fetch skills to map skill IDs to names
           const { data: skillsData } = await supabase
@@ -57,11 +59,39 @@ export default function IndustryDashboard() {
           setSkillsMaster(skillsData || []);
         }
 
-        // Fetch users who are students
+        // Fetch current user department
+        let department = null;
+        if (user) {
+          const { data: currentUserData } = await supabase
+            .from("users")
+            .select("department")
+            .eq("id", user.id)
+            .single();
+          department = currentUserData?.department;
+        }
+
+        // Fail closed: If no department, return no students
+        if (!department) {
+           setStudents([]);
+           setOpportunities([]); // Also fail closed for opportunities processing
+           return;
+        }
+
+        // Filter opportunities' applications by the industry department (department isolation)
+        if (oppsData.length > 0 && department) {
+           const filteredOpps = oppsData.map(opp => ({
+             ...opp,
+             applications: (opp.applications || []).filter((a: any) => a.users?.department === department)
+           }));
+           setOpportunities(filteredOpps);
+        }
+
+        // Fetch users who are students in the same department
         const { data: usersData, error: usersError } = await supabase
           .from("users")
           .select("*")
           .eq("role", "student")
+          .eq("department", department)
           .limit(10);
           
         if (usersError) throw usersError;
@@ -100,11 +130,17 @@ export default function IndustryDashboard() {
     { label: "Available Students", value: students.length.toString(), icon: Eye, color: "text-emerald-500", bg: "bg-emerald-500/10" },
   ];
 
+  // Normalize application statuses exactly as Applicant Tracking does
+  const normalizedApplications = allApplications.map(a => ({
+    ...a,
+    status: ["shortlisted", "interview", "offer", "hired"].includes(a.status) ? a.status : "applied"
+  }));
+
   // Hiring KPIs
-  const shortlistedCount = allApplications.filter(a => ['shortlisted', 'interview', 'offer', 'hired'].includes(a.status)).length;
-  const interviewCount = allApplications.filter(a => a.status === 'interview').length;
-  const offerCount = allApplications.filter(a => a.status === 'offer').length;
-  const hiredCount = allApplications.filter(a => {
+  const shortlistedCount = normalizedApplications.filter(a => a.status === 'shortlisted').length;
+  const interviewCount = normalizedApplications.filter(a => a.status === 'interview').length;
+  const offerCount = normalizedApplications.filter(a => a.status === 'offer').length;
+  const hiredCount = normalizedApplications.filter(a => {
     if (a.status === 'hired') return true;
     const offers = Array.isArray(a.application_offers) ? a.application_offers : (a.application_offers ? [a.application_offers] : []);
     return offers.some((o: any) => o.offer_status === 'accepted');
@@ -116,8 +152,8 @@ export default function IndustryDashboard() {
 
   // Candidate Pipeline
   const pipeline = {
-    applied: allApplications.filter(a => a.status === 'applied').length,
-    screening: shortlistedCount, // Shortlisted serves as screening
+    applied: normalizedApplications.filter(a => a.status === 'applied').length,
+    screening: shortlistedCount,
     interview: interviewCount,
     offer: offerCount,
     hired: hiredCount,
@@ -370,9 +406,11 @@ export default function IndustryDashboard() {
                 )}
                 
                 {opportunities.length > 3 && (
-                   <Button variant="outline" size="sm" className="w-full mt-2">
-                     View All Opportunities <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                   </Button>
+                   <Link href="/industry/applicants" className="block w-full mt-2">
+                     <Button variant="outline" size="sm" className="w-full">
+                       View All Opportunities <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                     </Button>
+                   </Link>
                 )}
               </div>
             </CardContent>

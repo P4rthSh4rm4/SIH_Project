@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { CAREER_PATHS } from "@/lib/data/career-paths";
+import { getCareerPaths } from "@/lib/data/career-paths";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 import { getQuestionsForPath, type AssessmentQuestionData } from "@/lib/data/career-assessment-questions";
 import { useCareerAssessment, type CareerAssessmentAttempt } from "@/lib/hooks/useCareerAssessment";
 import { useLearningHub } from "@/lib/hooks/useLearningHub";
@@ -36,7 +37,9 @@ export default function CareerAssessmentPage() {
   const router = useRouter();
   const pathId = params.pathId as string;
 
-  const careerPath = CAREER_PATHS.find((p) => p.id === pathId);
+  const { profile } = useUserProfile();
+  const careerPaths = getCareerPaths(profile?.department);
+  const careerPath = careerPaths.find((p) => p.id === pathId);
   const { checkPathCompletion, getAttempts, submitAttempt, loading: hookLoading } = useCareerAssessment();
   const { enrollments, loading: enrollmentsLoading } = useLearningHub();
 

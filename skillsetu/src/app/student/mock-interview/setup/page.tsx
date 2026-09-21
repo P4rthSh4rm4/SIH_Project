@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMockInterview } from "@/lib/hooks/useMockInterview";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { CAREER_PATHS } from "@/lib/data/career-paths";
+import { getCareerPaths } from "@/lib/data/career-paths";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 import { InterviewType, InterviewDifficulty, InterviewMode } from "@/lib/data/mock-interview-questions";
 import { Video, ChevronLeft, Loader2, Play, Mic, Type } from "lucide-react";
 import Link from "next/link";
@@ -18,10 +19,27 @@ export default function MockInterviewSetupPage() {
   
   const [type, setType] = useState<InterviewType>("Mixed");
   const [difficulty, setDifficulty] = useState<InterviewDifficulty>("Medium");
-  const [careerPath, setCareerPath] = useState<string>(CAREER_PATHS[0].title);
+  const { profile, loading } = useUserProfile();
+  const careerPaths = getCareerPaths(profile?.department);
+  const [careerPath, setCareerPath] = useState<string>(careerPaths[0].title);
   const [mode, setMode] = useState<InterviewMode>("Text");
   
   const [isStarting, setIsStarting] = useState(false);
+
+  useEffect(() => {
+    if (careerPaths.length > 0) {
+      const isValid = careerPaths.some(p => p.title === careerPath);
+      if (!isValid) {
+        setCareerPath(careerPaths[0].title);
+      }
+    }
+  }, [careerPaths, careerPath]);
+
+  useEffect(() => {
+    if (profile?.department === "Ayurveda" && type === "Technical") {
+      setType("Clinical & Domain" as any);
+    }
+  }, [profile?.department, type]);
 
   const handleStart = async () => {
     setIsStarting(true);
@@ -60,7 +78,9 @@ export default function MockInterviewSetupPage() {
           <div className="space-y-3">
             <Label className="text-base font-bold">Interview Type</Label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {['Mixed', 'HR', 'Technical', 'Behavioral', 'Aptitude'].map((t) => (
+              {(profile?.department === "Ayurveda" 
+                ? ['Mixed', 'HR', 'Clinical & Domain', 'Behavioral', 'Aptitude'] 
+                : ['Mixed', 'HR', 'Technical', 'Behavioral', 'Aptitude']).map((t) => (
                 <div 
                   key={t}
                   onClick={() => setType(t as InterviewType)}
@@ -134,14 +154,18 @@ export default function MockInterviewSetupPage() {
                 <SelectValue placeholder="Select your career path" />
               </SelectTrigger>
               <SelectContent>
-                {CAREER_PATHS.map((path) => (
+                {careerPaths.map((path) => (
                   <SelectItem key={path.id} value={path.title}>
                     {path.title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-sm text-muted-foreground mt-1">Technical questions will be tailored to this domain.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {profile?.department === "Ayurveda" 
+                ? "Clinical and domain questions will be tailored to this career path." 
+                : "Technical questions will be tailored to this domain."}
+            </p>
           </div>
 
         </CardContent>

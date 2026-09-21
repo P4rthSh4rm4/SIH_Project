@@ -41,17 +41,30 @@ export function useAcademicianSkillGaps() {
     setLoading(true);
     setError(null);
     try {
-      // 1. Fetch raw application feedback safely scoped by institution RLS
-      const { data: feedbackData, error: feedbackError } = await supabase
-        .from("application_skill_feedback")
+      if (profile?.role === 'academician' && !profile?.department) {
+        setSkillGaps([]);
+        setLoading(false);
+        return;
+      }
+
+      let query = supabase
+        .from("applications")
         .select(`
-          id, rating, gap_indicator,
-          skills (id, name),
-          applications!inner (
-            id, student_id,
-            users!inner (id, name)
+          id, student_id,
+          users!inner (id, name, department),
+          application_skill_feedback (
+            id, rating, gap_indicator,
+            skills (id, name)
           )
         `);
+
+      if (profile?.role === 'academician') {
+        // Safe DB-level filtering by department
+        query = query.eq('users.department', profile.department);
+      }
+
+      // 1. Fetch raw application feedback
+      const { data: feedbackData, error: feedbackError } = await query;
 
       if (feedbackError) throw feedbackError;
 
@@ -60,65 +73,68 @@ export function useAcademicianSkillGaps() {
       // 2. Aggregate into skill gaps
       const gapsMap: Record<string, { skill_id: string, name: string, count: number, ratingSum: number, gapCount: number, students: AffectedStudent[] }> = {};
 
-      rawData.forEach((row: any) => {
-        const sId = row.skills?.id;
-        if (!sId) return;
+      rawData.forEach((appRow: any) => {
+        const feedbacks = appRow.application_skill_feedback || [];
+        feedbacks.forEach((row: any) => {
+          // Fallback to name if id is mysteriously stripped from the response
+          const sId = row.skills?.id || row.skills?.name;
+          if (!sId) return;
 
-        if (!gapsMap[sId]) {
-          gapsMap[sId] = {
-            skill_id: sId,
-            name: row.skills?.name || "Unknown Skill",
-            count: 0,
-            ratingSum: 0,
-            gapCount: 0,
-            students: []
-          };
-        }
-
-        gapsMap[sId].count++;
-        gapsMap[sId].ratingSum += row.rating;
-        
-        if (row.gap_indicator === 'Needs Improvement' || row.gap_indicator === 'Significant Gap') {
-          gapsMap[sId].gapCount++;
-          
-          // Add to affected students if it's a negative rating
-          // Avoid duplicate student entries for the same skill
-          const existingStudent = gapsMap[sId].students.find(s => s.student_id === row.applications.student_id);
-          if (!existingStudent) {
-            gapsMap[sId].students.push({
-              student_id: row.applications.student_id,
-              name: row.applications.users?.name || "Unknown Student",
-              rating: row.rating,
-              gap_indicator: row.gap_indicator,
-              application_id: row.applications.id
-            });
+          if (!gapsMap[sId]) {
+            gapsMap[sId] = {
+              skill_id: sId,
+              name: row.skills?.name || "Unknown Skill",
+              count: 0,
+              ratingSum: 0,
+              gapCount: 0,
+              students: []
+            };
           }
-        }
+
+          gapsMap[sId].count++;
+          gapsMap[sId].ratingSum += row.rating;
+          
+          if (row.gap_indicator === 'Needs Improvement' || row.gap_indicator === 'Significant Gap') {
+            gapsMap[sId].gapCount++;
+            
+            // Add to affected students if it's a negative rating
+            // Avoid duplicate student entries for the same skill
+            const existingStudent = gapsMap[sId].students.find(s => s.student_id === appRow.student_id);
+            if (!existingStudent) {
+              gapsMap[sId].students.push({
+                student_id: appRow.student_id,
+                name: appRow.users?.name || "Unknown Student",
+                rating: row.rating,
+                gap_indicator: row.gap_indicator,
+                application_id: appRow.id
+              });
+            }
+          }
+        });
       });
+
 
       const finalGaps: SkillGap[] = [];
       const finalStudentsMap: Record<string, AffectedStudent[]> = {};
 
       Object.values(gapsMap).forEach(stats => {
-        if (stats.gapCount > 0) { // Only show skills that actually have gaps
-          const avgRating = (stats.ratingSum / stats.count).toFixed(1);
-          const gapSeverity = (stats.gapCount / stats.count) * 100;
-          let gapLevel = 'Low (Adequate)';
-          if (gapSeverity > 60) gapLevel = 'High (Significant Gap)';
-          else if (gapSeverity > 30) gapLevel = 'Medium (Needs Improvement)';
+        const avgRating = (stats.ratingSum / stats.count).toFixed(1);
+        const gapSeverity = (stats.gapCount / stats.count) * 100;
+        let gapLevel = 'Low (Adequate)';
+        if (gapSeverity > 60) gapLevel = 'High (Significant Gap)';
+        else if (gapSeverity > 30) gapLevel = 'Medium (Needs Improvement)';
 
-          finalGaps.push({
-            skill_id: stats.skill_id,
-            name: stats.name,
-            count: stats.count,
-            gapCount: stats.gapCount,
-            gapSeverity,
-            gapLevel,
-            avgRating
-          });
-          
-          finalStudentsMap[stats.skill_id] = stats.students;
-        }
+        finalGaps.push({
+          skill_id: stats.skill_id,
+          name: stats.name,
+          count: stats.count,
+          gapCount: stats.gapCount,
+          gapSeverity,
+          gapLevel,
+          avgRating
+        });
+        
+        finalStudentsMap[stats.skill_id] = stats.students;
       });
 
       // Sort by severity (desc) then by gap count (desc)
@@ -144,7 +160,24 @@ export function useAcademicianSkillGaps() {
     const toastId = toast.loading("Creating mentorship request...");
 
     try {
-      // 1. Check if an active mentorship already exists between this mentor and mentee
+      // 1. Verify department isolation (mentor.department === mentee.department)
+      const { data: mentee, error: menteeError } = await supabase
+        .from("users")
+        .select("department")
+        .eq("id", studentId)
+        .single();
+        
+      if (menteeError || !mentee?.department) {
+        toast.error("Could not verify student department.", { id: toastId });
+        return false;
+      }
+      
+      if (mentee.department !== profile.department) {
+        toast.error("Cross-department mentorship is not allowed.", { id: toastId });
+        return false;
+      }
+
+      // 2. Check if an active mentorship already exists between this mentor and mentee
       const { data: existing, error: checkError } = await supabase
         .from("mentorships")
         .select("id")

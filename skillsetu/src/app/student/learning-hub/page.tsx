@@ -42,7 +42,10 @@ function LearningHubSkeleton() {
   );
 }
 
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
+
 function LearningHubContent() {
+  const { profile, loading: profileLoading } = useUserProfile();
   const { programs, enrollments, loading, enroll, updateProgress } = useLearningHub();
   const searchParams = useSearchParams();
   const phaseQuery = searchParams.get("phase");
@@ -59,12 +62,24 @@ function LearningHubContent() {
   const enrolledIds = new Set(enrollments.map((e) => e.program_id));
   
   // Always include MOCK_PROGRAMS that aren't already fetched from the DB
-  const allPrograms = [...programs];
+  let allPrograms = [...programs];
   MOCK_PROGRAMS.forEach(mock => {
     if (!allPrograms.some(p => p.id === mock.id || p.title === mock.title)) {
       allPrograms.push(mock as any);
     }
   });
+
+  // Department-aware Program Catalog isolation
+  if (profile?.department === 'Ayurveda') {
+    // Ayurveda strictly receives medical, aptitude, and communication programs. NO tech.
+    allPrograms = allPrograms.filter(
+      p => p.type === 'medical' || p.type === 'communication' || p.type === 'aptitude'
+    );
+  } else if (profile?.department === 'CSE') {
+    // CSE receives its existing catalog, excluding medical-specific ones.
+    allPrograms = allPrograms.filter(p => p.type !== 'medical');
+  }
+  // BPharma is untouched (preserves existing behavior)
   
   let exactMatches: any[] = [];
   let similarMatches: any[] = [];
@@ -134,8 +149,19 @@ function LearningHubContent() {
     }
   };
 
-  if (loading) {
+  if (loading || profileLoading) {
     return <LearningHubSkeleton />;
+  }
+
+  if (!profile?.department) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 p-8 bg-secondary/5 rounded-xl border border-dashed border-border/50">
+        <h2 className="text-xl font-semibold">Department Information Missing</h2>
+        <p className="text-muted-foreground max-w-md">
+          Please update your profile with your department to view the Learning Hub catalog.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -154,67 +180,81 @@ function LearningHubContent() {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Embedded Sheryians AI School Video */}
-          <Card className="border-border/50 hover:border-primary/30 transition-colors overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <Badge variant="outline" className="mb-2">
-                    Sheryians AI School
-                  </Badge>
-                  <CardTitle className="text-lg leading-tight">Mastering React JS - Full Course</CardTitle>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <div className="aspect-video w-full rounded-xl overflow-hidden bg-muted">
-                <iframe 
-                  width="100%" 
-                  height="100%" 
-                  src="https://www.youtube.com/embed/E6tAtRi82QY" 
-                  title="YouTube video player" 
-                  frameBorder="0" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
-              </div>
-            </CardContent>
-            <CardFooter className="pt-0 justify-end gap-2">
-              <Button size="sm" variant="outline">
-                <CheckCircle2 className="w-4 h-4 mr-2" /> Mark Completed
-              </Button>
-            </CardFooter>
-          </Card>
+          {profile?.department !== 'Ayurveda' && (
+            <>
+              {/* Embedded Sheryians AI School Video */}
+              <Card className="border-border/50 hover:border-primary/30 transition-colors overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <Badge variant="outline" className="mb-2">
+                        Sheryians AI School
+                      </Badge>
+                      <CardTitle className="text-lg leading-tight">Mastering React JS - Full Course</CardTitle>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-muted">
+                    <iframe 
+                      width="100%" 
+                      height="100%" 
+                      src="https://www.youtube.com/embed/E6tAtRi82QY" 
+                      title="YouTube video player" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-0 justify-end gap-2">
+                  <Button size="sm" variant="outline">
+                    <CheckCircle2 className="w-4 h-4 mr-2" /> Mark Completed
+                  </Button>
+                </CardFooter>
+              </Card>
 
-          {/* Shared by Faculty */}
-          <Card className="border-red-500 border-2 shadow-sm hover:shadow-md transition-all overflow-hidden relative">
-            <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] px-2 py-1 font-bold rounded-bl-lg z-10 shadow-sm">
-              Shared by Faculty
-            </div>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <Badge variant="outline" className="mb-2 border-red-200 text-red-600 bg-red-50">
-                    Dr. Smith
-                  </Badge>
-                  <CardTitle className="text-lg leading-tight mt-1">Data Structures in C++</CardTitle>
+              {/* Shared by Faculty */}
+              <Card className="border-red-500 border-2 shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+                <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] px-2 py-1 font-bold rounded-bl-lg z-10 shadow-sm">
+                  Shared by Faculty
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pb-4">
-              <div className="aspect-video w-full rounded-xl overflow-hidden bg-muted">
-                <iframe 
-                  width="100%" 
-                  height="100%" 
-                  src="https://www.youtube.com/embed/8hly31xKli0" 
-                  title="YouTube video player" 
-                  frameBorder="0" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
-              </div>
-            </CardContent>
-          </Card>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <Badge variant="outline" className="mb-2 border-red-200 text-red-600 bg-red-50">
+                        Dr. Smith
+                      </Badge>
+                      <CardTitle className="text-lg leading-tight mt-1">Data Structures in C++</CardTitle>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-muted">
+                    <iframe 
+                      width="100%" 
+                      height="100%" 
+                      src="https://www.youtube.com/embed/8hly31xKli0" 
+                      title="YouTube video player" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {profile?.department === 'Ayurveda' && activeEnrollments.length === 0 && (
+            <div className="col-span-1 lg:col-span-2 text-center py-10 bg-secondary/5 rounded-xl border border-dashed border-border/50">
+              <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+              <h3 className="text-lg font-semibold text-foreground mb-1">No Active Programs</h3>
+              <p className="text-muted-foreground text-sm">
+                You haven't enrolled in any Ayurveda learning programs yet. Browse the catalog below to start learning.
+              </p>
+            </div>
+          )}
 
 
 

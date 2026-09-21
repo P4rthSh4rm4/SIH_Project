@@ -105,24 +105,24 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
               <AreaChart data={growthData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                 <defs>
                   <linearGradient id="skillGrowthGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  tick={{ fontSize: 12, fill: "#9ca3af" }}
                   tickLine={false}
-                  axisLine={{ stroke: "var(--border)" }}
-                  label={{ value: "Assessment Date", position: "insideBottom", offset: -15, style: { fontSize: 12, fill: "var(--muted-foreground)", fontWeight: 500 } }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  label={{ value: "Assessment Date", position: "insideBottom", offset: -15, style: { fontSize: 12, fill: "#9ca3af", fontWeight: 500 } }}
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  tick={{ fontSize: 12, fill: "#9ca3af" }}
                   tickLine={false}
-                  axisLine={{ stroke: "var(--border)" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
                   width={40}
-                  label={{ value: "Avg Proficiency (%)", angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 12, fill: "var(--muted-foreground)", fontWeight: 500 } }}
+                  label={{ value: "Avg Proficiency (%)", angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 12, fill: "#9ca3af", fontWeight: 500 } }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -138,11 +138,11 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
                 <Area
                   type="monotone"
                   dataKey="avgScore"
-                  stroke="var(--primary)"
+                  stroke="#3b82f6"
                   strokeWidth={3}
                   fill="url(#skillGrowthGrad)"
                   name="Avg Score"
-                  activeDot={{ r: 6, fill: "var(--primary)", stroke: "var(--background)", strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: "#3b82f6", stroke: "#ffffff", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -168,15 +168,15 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
           ) : (
             <ResponsiveContainer width="100%" height={400}>
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                <PolarGrid stroke="var(--border)" />
+                <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis
                   dataKey="subject"
-                  tick={{ fontSize: 12, fill: "var(--foreground)", fontWeight: 500 }}
+                  tick={{ fontSize: 12, fill: "#374151", fontWeight: 500 }}
                 />
                 <PolarRadiusAxis
                   angle={30}
                   domain={[0, 100]}
-                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  tick={{ fontSize: 10, fill: "#9ca3af" }}
                   axisLine={false}
                 />
                 <Tooltip
@@ -193,16 +193,16 @@ export function AnalyticsCharts({ skills, growth, loading }: AnalyticsChartsProp
                 <Radar
                   name="Current Proficiency"
                   dataKey="current"
-                  stroke="var(--primary)"
-                  fill="var(--primary)"
+                  stroke="#3b82f6"
+                  fill="#3b82f6"
                   fillOpacity={0.25}
                   strokeWidth={3}
                 />
                 <Radar
                   name="Target Goal"
                   dataKey="target"
-                  stroke="var(--secondary)"
-                  fill="var(--secondary)"
+                  stroke="#10b981"
+                  fill="#10b981"
                   fillOpacity={0.15}
                   strokeWidth={3}
                   strokeDasharray="4 4"

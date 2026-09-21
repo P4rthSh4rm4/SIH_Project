@@ -66,8 +66,54 @@ export function useMockInterview() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
-    // Simulate AI generation by pulling from local data
-    const questions = generateMockQuestions(type, careerPath, difficulty, 5);
+    // Fetch user profile to get department
+    const { data: profileData } = await supabase
+      .from("users")
+      .select("department")
+      .eq("id", user.id)
+      .single();
+
+    // Call real Gemini API
+    const response = await fetch("/api/gemini/generate-interview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type,
+        careerPath,
+        difficulty,
+        count: 5,
+        department: profileData?.department || "CSE"
+      })
+    });
+
+    if (!response.ok) {
+      let errorBody = "";
+      try {
+        errorBody = await response.text();
+      } catch (e) {
+        errorBody = "Could not read error response";
+      }
+      console.error("Mock Interview API Error", {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody,
+      });
+
+      let errorMessage = `Failed to generate questions from AI: ${response.status} ${response.statusText}`;
+      if (response.status === 503 || response.status === 429) {
+        errorMessage = "AI service is temporarily unavailable. Please try again in a moment.";
+      } else {
+        try {
+          const parsed = JSON.parse(errorBody);
+          if (parsed.error) errorMessage = parsed.error;
+        } catch (e) {
+          // Keep default
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    const { questions } = await response.json();
 
     const { data, error } = await supabase
       .from("mock_interviews")

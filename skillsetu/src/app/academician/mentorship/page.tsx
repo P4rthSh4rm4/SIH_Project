@@ -21,6 +21,7 @@ export default function MentorshipPage() {
   const [students, setStudents] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<UserProfile | null>(null);
+  const [academicianDept, setAcademicianDept] = useState<string | null>(null);
   
   // Message Form State
   const [subject, setSubject] = useState("");
@@ -34,13 +35,39 @@ export default function MentorshipPage() {
     async function fetchStudents() {
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setStudents([]);
+          return;
+        }
+
+        const { data: userData, error: userError } = await supabase
           .from("users")
-          .select("*")
-          .eq("role", "student");
+          .select("department")
+          .eq("id", user.id)
+          .single();
+
+        if (userError || !userData?.department) {
+          setStudents([]);
+          return;
+        }
+
+        setAcademicianDept(userData.department);
+
+        const { data, error } = await supabase
+          .from("mentorships")
+          .select(`
+            mentee:users!mentorships_mentee_id_fkey!inner (*)
+          `)
+          .eq("mentor_id", user.id)
+          .eq("status", "active")
+          .eq("mentee.department", userData.department);
           
         if (error) throw error;
-        setStudents(data || []);
+        
+        // Map the result to extract the mentee UserProfile
+        const menteesList = data ? data.map((m: any) => m.mentee) : [];
+        setStudents(menteesList);
       } catch (err) {
         console.error("Failed to fetch students", err);
         toast.error("Failed to load students roster.");
@@ -101,7 +128,7 @@ export default function MentorshipPage() {
         <Card className="lg:col-span-1 border-border/50 flex flex-col h-full shadow-sm">
           <CardHeader className="pb-3 border-b border-border/50">
             <CardTitle className="text-lg flex items-center gap-2">
-              <UsersIcon className="w-5 h-5 text-emerald-500" /> My Mentees
+              <UsersIcon className="w-5 h-5 text-emerald-500" /> My Mentees — {students.length}
             </CardTitle>
             <div className="relative mt-2">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -120,7 +147,7 @@ export default function MentorshipPage() {
             ) : students.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
                 <User className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>No students found.</p>
+                <p>No active mentees found.</p>
               </div>
             ) : (
               <div className="divide-y divide-border/50">
@@ -184,14 +211,18 @@ export default function MentorshipPage() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
                           <CheckCircle2 className="w-5 h-5 text-emerald-500 mb-1" />
-                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Tech</span>
+                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                            {academicianDept === 'Ayurveda' ? 'Clinical' : 'Tech'}
+                          </span>
                           <span className="text-lg font-bold">
                             {passport.metrics.technical.attempted ? `${passport.metrics.technical.score}%` : '--'}
                           </span>
                         </div>
                         <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
                           <Activity className="w-5 h-5 text-blue-500 mb-1" />
-                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Soft Skills</span>
+                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                            {academicianDept === 'Ayurveda' ? 'Communication' : 'Soft Skills'}
+                          </span>
                           <span className="text-lg font-bold">
                             {passport.metrics.softSkills.attempted ? `${passport.metrics.softSkills.score}%` : '--'}
                           </span>
@@ -205,7 +236,9 @@ export default function MentorshipPage() {
                         </div>
                         <div className="p-3 bg-secondary/30 rounded-lg flex flex-col items-center text-center">
                           <Target className="w-5 h-5 text-purple-500 mb-1" />
-                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Aptitude</span>
+                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                            {academicianDept === 'Ayurveda' ? 'Reasoning' : 'Aptitude'}
+                          </span>
                           <span className="text-lg font-bold">
                             {passport.metrics.aptitude.attempted ? `${passport.metrics.aptitude.score}%` : '--'}
                           </span>
@@ -274,7 +307,7 @@ export default function MentorshipPage() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Subject / Project Title</label>
                     <Input 
-                      placeholder="e.g. Action Required: Improve React State Management" 
+                      placeholder={academicianDept === 'Ayurveda' ? "e.g. Improve Clinical Documentation Skills" : "e.g. Action Required: Improve React State Management"} 
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                     />
@@ -282,7 +315,7 @@ export default function MentorshipPage() {
                   <div className="space-y-2 flex-1 flex flex-col h-full min-h-[150px]">
                     <label className="text-sm font-medium">Details</label>
                     <Textarea 
-                      placeholder="Provide discussion points, project requirements, or areas of improvement..." 
+                      placeholder={academicianDept === 'Ayurveda' ? "Provide clinical discussion points, research requirements, documentation tasks, or areas for improvement..." : "Provide discussion points, project requirements, or areas of improvement..."} 
                       className="flex-1 resize-none"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}

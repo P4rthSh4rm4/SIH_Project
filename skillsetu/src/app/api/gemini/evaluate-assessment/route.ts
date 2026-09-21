@@ -16,6 +16,7 @@ interface EvaluateRequest {
   }>;
   answers: Record<string, number>;
   timeTakenSeconds: number;
+  department?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -28,8 +29,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body: EvaluateRequest = await req.json();
-    const { category, subcategory, questions, answers, timeTakenSeconds } = body;
+    let body: EvaluateRequest;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+    const { category, subcategory, questions, answers, timeTakenSeconds, department = "CSE" } = body;
 
     if (!questions || !answers) {
       return NextResponse.json(
@@ -77,7 +86,10 @@ export async function POST(req: NextRequest) {
       .filter((r) => r.isCorrect)
       .map((r) => r.skillTag);
 
+    const deptContext = department === "Ayurveda" ? "The student is an Ayurveda medical student." : "";
+
     const feedbackPrompt = `A student completed a ${category} (${subcategory}) skill assessment.
+${deptContext}
 Score: ${score}% (${correctCount}/${totalCount} correct)
 Time taken: ${timeTakenSeconds} seconds
 Topics answered correctly: ${[...new Set(rightTopics)].join(", ") || "None"}
@@ -115,8 +127,12 @@ Return ONLY the feedback text, no JSON, no markdown formatting.`;
         const aiText =
           geminiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (aiText) feedback = aiText;
+      } else {
+        const errText = await geminiRes.text();
+        console.error(`[evaluate-assessment] Gemini API error (${geminiRes.status}):`, errText);
       }
-    } catch {
+    } catch (err) {
+      console.error("[evaluate-assessment] Gemini fetch error:", err);
       // Use fallback feedback if Gemini call fails
     }
 

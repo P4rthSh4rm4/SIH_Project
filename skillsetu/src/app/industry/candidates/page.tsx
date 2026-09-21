@@ -114,8 +114,43 @@ export default function CandidatesPage() {
 
         const { data: { user: currentUser } } = await supabase.auth.getUser();
 
+        // Fetch current user department for isolated skill filtering
+        if (!currentUser) {
+          setErrorMsg("Not authenticated");
+          setLoading(false);
+          return;
+        }
+
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("department")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (userError || !userData?.department) {
+          console.error("Failed to fetch user department:", userError);
+          toast.error("Failed to verify industry department.");
+          setErrorMsg("Department verification failed. Please try again.");
+          setLoading(false);
+          return;
+        }
+
+        const currentDept = userData.department;
+
+        let allowedCategories = ["Coding", "Aptitude", "Soft Skills", "Tech Soft Skills"]; // Default
+        if (currentDept === "Ayurveda") {
+          allowedCategories = ["Ayurveda Knowledge", "Soft Skills"];
+        } else if (currentDept === "BPharma") {
+          allowedCategories = ["BPharma Knowledge", "Aptitude", "Soft Skills", "Tech Soft Skills"];
+        }
+
         // 1. Fetch available skills for the filter
-        const { data: skillsData } = await supabase.from("skills").select("id, name");
+        const { data: skillsData } = await supabase
+          .from("skills")
+          .select("id, name, category")
+          .in("category", allowedCategories)
+          .order("name");
+
         if (skillsData) {
           setAllSkills(skillsData.map(s => ({ label: s.name, value: s.id })));
         }

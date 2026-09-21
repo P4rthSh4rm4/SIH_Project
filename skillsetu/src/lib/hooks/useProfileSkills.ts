@@ -45,7 +45,7 @@ export function useProfileSkills(): UseProfileSkillsResult {
 
       if (error) throw error;
 
-      const mapped: ProfileSkillEntry[] = (data ?? []).map(
+      let mapped: ProfileSkillEntry[] = (data ?? []).map(
         (row: Record<string, unknown>) => ({
           student_id: row.student_id as string,
           skill_id: row.skill_id as string,
@@ -55,6 +55,61 @@ export function useProfileSkills(): UseProfileSkillsResult {
           skill: row.skill as Skill,
         })
       );
+
+      // Synthesize missing skills from completed assessments
+      const { data: assessments } = await supabase
+        .from("assessments")
+        .select("taken_at, generated_profile_json, responses_json")
+        .eq("student_id", user.id)
+        .order("taken_at", { ascending: true });
+
+      if (assessments) {
+        const assessmentMaxScores: Record<string, { score: number, category: string, sub: string }> = {};
+        
+        assessments.forEach((a: any) => {
+          const profile = a.generated_profile_json as Record<string, any> | null;
+          const responses = a.responses_json as Record<string, any> | null;
+          if (profile && responses) {
+            const score = profile.score || 0;
+            const sub = responses.subcategory as string;
+            
+            let mappedName = "";
+            let category = "Ayurveda Knowledge";
+            
+            if (sub === "clinical_practice" || sub === "pharma") mappedName = "Clinical Knowledge";
+            else if (sub === "research") mappedName = "Research Skills";
+            else if (sub === "communication") { mappedName = "Communication Skills"; category = "Soft Skills"; }
+            else if (sub === "documentation") { mappedName = "Documentation"; category = "Soft Skills"; }
+            else if (sub === "quant") { mappedName = "Quantitative Aptitude"; category = "Aptitude"; }
+            else if (sub === "logical") { mappedName = "Logical Reasoning"; category = "Aptitude"; }
+            
+            if (mappedName) {
+              if (!assessmentMaxScores[mappedName] || score > assessmentMaxScores[mappedName].score) {
+                assessmentMaxScores[mappedName] = { score, category, sub };
+              }
+            }
+          }
+        });
+
+        Object.entries(assessmentMaxScores).forEach(([name, data]) => {
+          const exists = mapped.some((m) => m.skill?.name === name);
+          if (!exists) {
+            mapped.push({
+              student_id: user.id,
+              skill_id: `synth_${data.sub}`,
+              proficiency_score: data.score,
+              verified: false,
+              source: "assessment",
+              skill: {
+                id: `synth_${data.sub}`,
+                name: name,
+                category: data.category,
+                source_taxonomy: "System",
+              },
+            });
+          }
+        });
+      }
 
       setSkills(mapped);
     } catch (err) {

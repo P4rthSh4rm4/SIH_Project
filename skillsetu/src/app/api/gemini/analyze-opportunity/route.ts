@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     // 2. Fetch User Resume
     const { data: profile, error: profileError } = await supabase
       .from("student_profiles")
-      .select("resume_url")
+      .select("resume_url, department")
       .eq("user_id", user.id)
       .single();
 
@@ -59,9 +59,13 @@ export async function POST(req: NextRequest) {
     const base64Data = buffer.toString("base64");
     const mimeType = fileData.type || "application/pdf";
 
+    const deptContext = profile.department === "Ayurveda" 
+      ? "\nNote: The candidate is an Ayurveda student. Evaluate their resume taking clinical, research, and ayurvedic pharmaceutical context into consideration if applicable."
+      : "";
+
     // 4. Construct Prompt
     const prompt = `You are an expert technical recruiter and career coach.
-I am providing you with a candidate's resume (attached as a document) and a Job Description (JD).
+I am providing you with a candidate's resume (attached as a document) and a Job Description (JD).${deptContext}
 
 Job Title: ${opp.title}
 Job Description: ${opp.description}

@@ -36,6 +36,8 @@ export default function ProgramsPage() {
     skills_covered: [] as string[]
   });
 
+  const [userDepartment, setUserDepartment] = useState<string | null>(null);
+
   const fetchPrograms = async () => {
     try {
       const supabase = createClient();
@@ -43,10 +45,30 @@ export default function ProgramsPage() {
       if (!user) return;
       setUserId(user.id);
       
+      // Fetch department
+      const { data: userData, error: userError } = await supabase.from("users").select("department").eq("id", user.id).single();
+      
+      if (userError || !userData?.department) {
+        console.error("Failed to fetch user department:", userError);
+        toast.error("Failed to verify industry department.");
+        setLoading(false);
+        return;
+      }
+
+      const currentDept = userData.department;
+      setUserDepartment(currentDept);
+      
+      let allowedCategories = ["Coding", "Aptitude", "Soft Skills", "Tech Soft Skills"]; // Default
+      if (currentDept === "Ayurveda") {
+        allowedCategories = ["Ayurveda Knowledge", "Soft Skills"];
+      } else if (currentDept === "BPharma") {
+        allowedCategories = ["BPharma Knowledge", "Aptitude", "Soft Skills", "Tech Soft Skills"];
+      }
+
       const [programsRes, enrollmentsRes, skillsRes] = await Promise.all([
         supabase.from("learning_programs").select("*").eq("industry_id", user.id).order("id", { ascending: false }),
         supabase.from("learning_enrollments").select("program_id, progress_pct"),
-        supabase.from("skills").select("id, name").order("name")
+        supabase.from("skills").select("id, name, category").in("category", allowedCategories).order("name")
       ]);
 
       if (programsRes.error) throw programsRes.error;
@@ -180,7 +202,7 @@ export default function ProgramsPage() {
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="col-span-2 space-y-2">
                 <Label>Program Title</Label>
-                <Input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. AWS Cloud Fundamentals" />
+                <Input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder={userDepartment === "Ayurveda" ? "e.g. Panchakarma Training Program" : userDepartment === "CSE" ? "e.g. AWS Cloud Fundamentals" : "Loading..."} />
               </div>
               
               <div className="space-y-2">

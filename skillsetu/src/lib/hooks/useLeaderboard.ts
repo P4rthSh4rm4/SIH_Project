@@ -13,33 +13,51 @@ export function useLeaderboard(limit = 20) {
     try {
       setLoading(true);
       const supabase = createClient();
+      // 1. Get current user
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Fetch top N from leaderboard view
-      const { data: leaderboard } = await supabase
-        .from("leaderboard_view")
-        .select("*")
-        .limit(limit);
+      // 2. Get user department
+      let department = "CSE";
+      if (user) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("department")
+          .eq("id", user.id)
+          .single();
+        if (userData?.department) {
+          department = userData.department;
+        }
+      }
 
-      const entries = (leaderboard ?? []) as LeaderboardEntry[];
-      setEntries(entries);
+      // 3. Fetch leaderboard data for the specific department
+      // Since leaderboard_view lacks department, we query student_gamification directly
+      const { data: rawLeaderboard } = await supabase
+        .from("student_gamification")
+        .select("*, users!inner(name, avatar_url, department, role)")
+        .eq("users.role", "student")
+        .eq("users.department", department)
+        .order("total_xp", { ascending: false });
+
+      // 4. Map it to LeaderboardEntry array with correct rank
+      const allEntries = (rawLeaderboard || []).map((row: any, index: number) => ({
+        user_id: row.user_id,
+        name: row.users.name,
+        avatar_url: row.users.avatar_url,
+        total_xp: row.total_xp,
+        level: row.level,
+        current_streak: row.current_streak,
+        rank: index + 1
+      }));
+
+      const topEntries = allEntries.slice(0, limit);
+      setEntries(topEntries);
 
       // Find current user's rank
       if (user) {
-        const myEntry = entries.find((e) => e.user_id === user.id);
-        if (myEntry) {
-          setMyRank(myEntry);
-        } else {
-          // User not in top N — fetch their specific rank
-          const { data: myData } = await supabase
-            .from("leaderboard_view")
-            .select("*")
-            .eq("user_id", user.id)
-            .single();
-          setMyRank((myData as LeaderboardEntry) ?? null);
-        }
+        const myEntry = allEntries.find((e: any) => e.user_id === user.id);
+        setMyRank(myEntry || null);
       }
     } catch (err) {
       console.error("[useLeaderboard]", err);

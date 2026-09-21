@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Briefcase, Code, ShieldCheck, Award, Map, Link as LinkIcon, Mail, Globe, FileText, Star, User, Trophy, BookOpen, Zap, ExternalLink } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import Image from "next/image";
-import { CAREER_PATHS } from "@/lib/data/career-paths";
+import { getCareerPaths } from "@/lib/data/career-paths";
 import { QRCodeSVG } from "qrcode.react";
 
 // Server Component fetching from the DB securely
@@ -31,12 +31,14 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
   const certs = data.certificates || [];
   const projects = data.projects || [];
   const enrollments = data.enrollments || [];
+  
+  const careerPaths = getCareerPaths(profile?.department);
 
   // Recalculate stats for UI
   const completedCoursesCount = enrollments.filter((e: any) => e.progress_pct >= 100).length;
   
   // Roadmap logic
-  const completedRoadmaps = CAREER_PATHS.filter(path => {
+  const completedRoadmaps = careerPaths.filter(path => {
     const completedPhases = path.phases.filter(phase => {
       if (!("program_id" in phase)) return false;
       return enrollments.some((e: any) => 
@@ -76,7 +78,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
 
   certs.forEach((c: any) => {
     achievements.push({
-      id: `cert-ach-${c.id}`, title: `${CAREER_PATHS.find(p => p.id === c.career_path_id)?.title || 'Career Path'} Certified`,
+      id: `cert-ach-${c.id}`, title: `${careerPaths.find(p => p.id === c.career_path_id)?.title || 'Career Path'} Certified`,
       description: `Passed the final assessment with score ${c.score}%`,
       date: new Date(c.issued_at), category: "certificate", icon: "Award"
     });
@@ -165,7 +167,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
     events.push({
       id: `cert-${c.id}`,
       title: "Earned Career Certificate",
-      description: `Passed the assessment for ${CAREER_PATHS.find(p => p.id === c.career_path_id)?.title || 'Career Path'}`,
+      description: `Passed the assessment for ${careerPaths.find(p => p.id === c.career_path_id)?.title || 'Career Path'}`,
       date: new Date(c.issued_at),
       type: "certificate",
     });

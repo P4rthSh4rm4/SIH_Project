@@ -50,6 +50,7 @@ interface CertificationsSectionProps {
     }>
   ) => Promise<{ success: boolean; error?: string }>;
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  department?: string;
 }
 
 const STATUS_CONFIG: Record<
@@ -89,6 +90,7 @@ export function CertificationsSection({
   onAdd,
   onUpdate,
   onDelete,
+  department,
 }: CertificationsSectionProps) {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -184,7 +186,7 @@ export function CertificationsSection({
                     onChange={(e) =>
                       setForm((f) => ({ ...f, title: e.target.value }))
                     }
-                    placeholder="AWS Cloud Practitioner"
+                    placeholder={department === "Ayurveda" ? "Certificate / Training name" : "AWS Cloud Practitioner"}
                   />
                 </div>
                 <div className="space-y-2">
@@ -194,7 +196,7 @@ export function CertificationsSection({
                     onChange={(e) =>
                       setForm((f) => ({ ...f, issuer: e.target.value }))
                     }
-                    placeholder="Amazon Web Services"
+                    placeholder={department === "Ayurveda" ? "Institute / University / Training Provider" : "Amazon Web Services"}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">

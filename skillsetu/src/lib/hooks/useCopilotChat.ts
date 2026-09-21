@@ -18,6 +18,7 @@ export function useCopilotChat() {
       content: string,
       studentContext?: {
         name?: string;
+        department?: string;
         careerObjective?: string;
         skills?: Array<{ name: string; proficiency: number }>;
         education?: string;

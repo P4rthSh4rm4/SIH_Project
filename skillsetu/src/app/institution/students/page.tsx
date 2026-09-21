@@ -10,15 +10,28 @@ import { Search, Loader2, Users, Briefcase, GraduationCap, Award, Calendar } fro
 import { useInstitutionStudents, type InstitutionStudent } from "@/lib/hooks/useInstitutionStudents";
 
 export default function InstitutionStudentsPage() {
-  const { loading, error, students } = useInstitutionStudents();
+  const [departmentFilter, setDepartmentFilter] = useState("All Students");
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const { loading, error, students, counts, totalRecords } = useInstitutionStudents(
+    departmentFilter,
+    searchQuery,
+    page,
+    pageSize
+  );
+
   const [selectedStudent, setSelectedStudent] = useState<InstitutionStudent | null>(null);
 
-  // Client-side filtering
-  const filteredStudents = students.filter(student => 
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+
+  const tabs = [
+    { label: "All Students", count: counts.all },
+    { label: "CSE", count: counts.cse },
+    { label: "Ayurveda", count: counts.ayurveda },
+    { label: "B.Pharm", count: counts.bpharma },
+  ];
 
   return (
     <div className="space-y-8">
@@ -27,15 +40,35 @@ export default function InstitutionStudentsPage() {
         <p className="text-muted-foreground mt-1">Manage and monitor students in your institution.</p>
       </div>
 
-      <div className="flex items-center space-x-2 w-full max-w-sm">
-        <div className="relative w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.label}
+              variant={departmentFilter === tab.label ? "default" : "outline"}
+              size="sm"
+              className="rounded-full whitespace-nowrap"
+              onClick={() => {
+                setDepartmentFilter(tab.label);
+                setPage(1); // Reset page on tab change
+              }}
+            >
+              {tab.label} ({tab.count})
+            </Button>
+          ))}
+        </div>
+
+        <div className="relative w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search students..."
             className="pl-9 bg-background"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1); // Reset page on search
+            }}
           />
         </div>
       </div>
@@ -61,68 +94,98 @@ export default function InstitutionStudentsPage() {
                 <Users className="w-6 h-6 text-muted-foreground" />
               </div>
               <p className="font-medium">No students found</p>
-              <p className="text-sm text-muted-foreground mt-1">There are no students registered under your institution yet.</p>
-            </div>
-          ) : filteredStudents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Search className="w-12 h-12 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">No students match your search.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {searchQuery 
+                  ? "No students match your search." 
+                  : "There are no students registered under this category."}
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-muted-foreground bg-muted/50 uppercase border-b border-border/50">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Student</th>
-                    <th className="px-6 py-4 font-medium">Skills</th>
-                    <th className="px-6 py-4 font-medium">Applications</th>
-                    <th className="px-6 py-4 font-medium">Status</th>
-                    <th className="px-6 py-4 font-medium text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStudents.map((student) => (
-                    <tr key={student.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-foreground">{student.name}</div>
-                        <div className="text-xs text-muted-foreground">{student.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {student.skillCount > 0 ? (
-                          <Badge variant="secondary" className="font-normal">{student.skillCount} skills</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">--</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {student.applicationCount > 0 ? (
-                          <span className="font-medium">{student.applicationCount}</span>
-                        ) : (
-                          <span className="text-muted-foreground">--</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {student.placementStatus === 'Placed' ? (
-                          <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none">Placed</Badge>
-                        ) : student.placementStatus === 'In Process' ? (
-                          <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none">In Process</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="font-normal">Not Placed</Badge>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setSelectedStudent(student)}
-                        >
-                          View Details
-                        </Button>
-                      </td>
+            <div className="flex flex-col">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-muted-foreground bg-muted/50 uppercase border-b border-border/50">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">Student</th>
+                      <th className="px-6 py-4 font-medium">Skills</th>
+                      <th className="px-6 py-4 font-medium">Applications</th>
+                      <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {students.map((student) => (
+                      <tr key={student.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-foreground">{student.name}</div>
+                          <div className="text-xs text-muted-foreground">{student.email}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {student.skillCount > 0 ? (
+                            <Badge variant="secondary" className="font-normal">{student.skillCount} skills</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">--</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {student.applicationCount > 0 ? (
+                            <span className="font-medium">{student.applicationCount}</span>
+                          ) : (
+                            <span className="text-muted-foreground">--</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {student.placementStatus === 'Placed' ? (
+                            <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none">Placed</Badge>
+                          ) : student.placementStatus === 'In Process' ? (
+                            <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none">In Process</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="font-normal">Not Placed</Badge>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setSelectedStudent(student)}
+                          >
+                            View Details
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {totalRecords > pageSize && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-muted/20">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, totalRecords)} of {totalRecords} students
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1 || loading}
+                    >
+                      Previous
+                    </Button>
+                    <div className="text-sm font-medium px-2">
+                      Page {page} of {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages || loading}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

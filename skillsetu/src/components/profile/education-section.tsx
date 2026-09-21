@@ -36,6 +36,7 @@ interface EducationSectionProps {
     data: Partial<Omit<StudentEducation, "id" | "user_id" | "created_at">>
   ) => Promise<{ success: boolean; error?: string }>;
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  department?: string;
 }
 
 const EMPTY_FORM = {
@@ -56,11 +57,14 @@ export function EducationSection({
   onAdd,
   onUpdate,
   onDelete,
+  department,
 }: EducationSectionProps) {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+
+  const isAyurveda = department === "Ayurveda";
 
   const openAddDialog = () => {
     setEditId(null);
@@ -162,17 +166,17 @@ export function EducationSection({
                       onChange={(e) =>
                         setForm((f) => ({ ...f, degree: e.target.value }))
                       }
-                      placeholder="B.Tech, M.Sc..."
+                      placeholder={isAyurveda ? "BAMS, MD/MS Ayurveda..." : "B.Tech, M.Sc..."}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Branch</Label>
+                    <Label>{isAyurveda ? "Specialization" : "Branch"}</Label>
                     <Input
                       value={form.branch}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, branch: e.target.value }))
                       }
-                      placeholder="CS, ECE..."
+                      placeholder={isAyurveda ? "Kayachikitsa, Shalya Tantra..." : "CS, ECE..."}
                     />
                   </div>
                 </div>

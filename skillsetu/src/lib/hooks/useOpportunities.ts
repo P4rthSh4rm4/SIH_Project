@@ -23,12 +23,27 @@ export function useOpportunities() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch all active opportunities
+      // Fetch the student's department to ensure safe strict filtering
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("department")
+        .eq("id", user.id)
+        .single();
+
+      if (userError || !userData?.department) {
+        // Fail closed: Do not return cross-department opportunities if department is unknown
+        setOpportunities([]);
+        return;
+      }
+      const userDepartment = userData.department;
+
+      // Fetch all active opportunities filtered by the student's department
       const { data: opps, error } = await supabase
         .from("opportunities")
-        .select("*")
+        .select("*, users!inner(department)")
         .eq("status", "active")
         .eq("verification_status", "approved")
+        .eq("users.department", userDepartment)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

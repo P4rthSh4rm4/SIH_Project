@@ -170,7 +170,11 @@ export function ProfileForm({
             id="profile-bio"
             value={profile.bio ?? ""}
             onChange={(e) => onChange({ bio: e.target.value })}
-            placeholder="Tell us about yourself..."
+            placeholder={
+              profile.department === "Ayurveda"
+                ? "Tell us about your Ayurveda background, clinical interests, experience, research interests, or areas of specialization..."
+                : "Tell us about yourself..."
+            }
             rows={3}
           />
         </div>
@@ -182,14 +186,20 @@ export function ProfileForm({
             id="profile-objective"
             value={profile.career_objective ?? ""}
             onChange={(e) => onChange({ career_objective: e.target.value })}
-            placeholder="What are your career goals?"
+            placeholder={
+              profile.department === "Ayurveda"
+                ? "Describe your career goals, preferred Ayurveda field, and the type of role you want to pursue..."
+                : "What are your career goals?"
+            }
             rows={3}
           />
         </div>
 
         {/* Social Links */}
         <div className="space-y-3">
-          <Label className="text-sm font-semibold">Social & Portfolio</Label>
+          <Label className="text-sm font-semibold">
+            {profile.department === "Ayurveda" ? "Social & Professional Profile" : "Social & Portfolio"}
+          </Label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -206,7 +216,7 @@ export function ProfileForm({
                 value={profile.github ?? ""}
                 onChange={(e) => onChange({ github: e.target.value })}
                 className="pl-9"
-                placeholder="GitHub URL"
+                placeholder={profile.department === "Ayurveda" ? "ResearchGate / Publications URL" : "GitHub URL"}
               />
             </div>
             <div className="relative">
@@ -217,11 +227,80 @@ export function ProfileForm({
                   onChange({ portfolio_website: e.target.value })
                 }
                 className="pl-9"
-                placeholder="Portfolio Website"
+                placeholder={profile.department === "Ayurveda" ? "Clinical Portfolio / Professional Profile" : "Portfolio Website"}
               />
             </div>
           </div>
         </div>
+
+        {/* Ayurveda Optional Fields */}
+        {profile.department === "Ayurveda" && (
+          <div className="space-y-5 pt-4 border-t border-border/50">
+            <Label className="text-sm font-semibold text-primary">Ayurveda Specific Details (Optional)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label>Year / Semester</Label>
+                <Input
+                  value={(profile.portfolio_json?.year_semester as string) ?? ""}
+                  onChange={(e) =>
+                    onChange({
+                      portfolio_json: { ...profile.portfolio_json, year_semester: e.target.value },
+                    })
+                  }
+                  placeholder="e.g., 3rd Year, 5th Semester"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ayurveda Area of Interest</Label>
+                <Select
+                  value={(profile.portfolio_json?.area_of_interest as string) ?? ""}
+                  onValueChange={(val) =>
+                    onChange({
+                      portfolio_json: { ...profile.portfolio_json, area_of_interest: val },
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Area of Interest" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Clinical Practice">Clinical Practice</SelectItem>
+                    <SelectItem value="Ayurvedic Pharma">Ayurvedic Pharma</SelectItem>
+                    <SelectItem value="Research">Research</SelectItem>
+                    <SelectItem value="Panchakarma & Wellness">Panchakarma & Wellness</SelectItem>
+                    <SelectItem value="Medicinal Plants">Medicinal Plants</SelectItem>
+                    <SelectItem value="Teaching & Academics">Teaching & Academics</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Clinical Training / Internship</Label>
+                <Input
+                  value={(profile.portfolio_json?.clinical_training as string) ?? ""}
+                  onChange={(e) =>
+                    onChange({
+                      portfolio_json: { ...profile.portfolio_json, clinical_training: e.target.value },
+                    })
+                  }
+                  placeholder="e.g., Govt. Ayurvedic Hospital"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Research Interests</Label>
+                <Input
+                  value={(profile.portfolio_json?.research_interests as string) ?? ""}
+                  onChange={(e) =>
+                    onChange({
+                      portfolio_json: { ...profile.portfolio_json, research_interests: e.target.value },
+                    })
+                  }
+                  placeholder="e.g., Herbal formulations, Nadi Pariksha"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Save Button */}
         <div className="flex justify-end pt-4">

@@ -13,7 +13,8 @@ import Link from "next/link";
 import { useSkillAnalytics } from "@/lib/hooks/useSkillAnalytics";
 import { useLearningHub } from "@/lib/hooks/useLearningHub";
 import { useCareerAssessment, type CareerCertificate } from "@/lib/hooks/useCareerAssessment";
-import { CAREER_PATHS } from "@/lib/data/career-paths";
+import { getCareerPaths } from "@/lib/data/career-paths";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 import {
   Command,
   CommandDialog,
@@ -28,16 +29,29 @@ export default function CareerGuidancePage() {
   const { skills, loading } = useSkillAnalytics();
   const { enrollments, loading: enrollmentsLoading } = useLearningHub();
   const { getCertificates } = useCareerAssessment();
-  const [selectedPath, setSelectedPath] = useState(CAREER_PATHS[0]);
+  const { profile } = useUserProfile();
+  const careerPaths = getCareerPaths(profile?.department);
+  const [selectedPath, setSelectedPath] = useState(careerPaths[0]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [pathStatuses, setPathStatuses] = useState<Record<string, "in_progress" | "assessment_unlocked" | "certified">>({});
   const [certificates, setCertificates] = useState<CareerCertificate[]>([]);
+
+  // React to department loaded/changed
+  useEffect(() => {
+    if (profile?.department) {
+      const paths = getCareerPaths(profile.department);
+      // Only reset if current selected path doesn't exist in the new paths list
+      if (!paths.find(p => p.id === selectedPath.id)) {
+        setSelectedPath(paths[0]);
+      }
+    }
+  }, [profile?.department]);
 
   // Calculate path statuses once enrollments load
   useEffect(() => {
     if (enrollmentsLoading) return;
     const statuses: Record<string, "in_progress" | "assessment_unlocked" | "certified"> = {};
-    for (const path of CAREER_PATHS) {
+    for (const path of careerPaths) {
       // Find completed phases using stable program IDs, with title fallback
       const completedPhases = path.phases.filter((phase) => {
         if (!("program_id" in phase)) return false;
@@ -149,9 +163,9 @@ export default function CareerGuidancePage() {
   }, []);
 
   // Calculate suitability score for each path based on student skills
-  const getSuitability = (path: typeof CAREER_PATHS[0]) => {
+  const getSuitability = (path: any) => {
     if (skills.length === 0) return 0;
-    const reqLower = path.requiredSkills.map((s) => s.toLowerCase());
+    const reqLower = path.requiredSkills.map((s: string) => s.toLowerCase());
     const matched = skills.filter((s) => reqLower.includes(s.name.toLowerCase()));
     return Math.round((matched.length / reqLower.length) * 100);
   };
@@ -203,7 +217,7 @@ export default function CareerGuidancePage() {
 
       {/* Career Paths Grid (Featured) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {CAREER_PATHS.slice(0, 3).map((path) => {
+        {careerPaths.slice(0, 3).map((path) => {
           const suitability = getSuitability(path);
           const isSelected = selectedPath.id === path.id;
 
@@ -420,10 +434,16 @@ export default function CareerGuidancePage() {
                   Based on your current skills, you have a <strong className="text-foreground">{getSuitability(selectedPath)}% match</strong> for <strong>{selectedPath.title}</strong>.
                 </p>
                 <p className="mb-3">
-                  <strong>Strengths:</strong> You have verified experience in some of the core frontend technologies.
+                  <strong>Strengths:</strong> {skills.filter((s) => selectedPath.requiredSkills.map((r: string) => r.toLowerCase()).includes(s.name.toLowerCase())).length > 0 
+                    ? `You have foundational knowledge in ${skills.filter((s) => selectedPath.requiredSkills.map((r: string) => r.toLowerCase()).includes(s.name.toLowerCase())).slice(0, 2).map((s) => s.name).join(' and ')}.`
+                    : `You are at the beginning of your journey towards becoming a ${selectedPath.title}.`}
                 </p>
                 <p>
-                  <strong>Next Steps:</strong> Focus on completing Phase 3. Consider taking the Node.js assessment or enrolling in a backend development course.
+                  <strong>Next Steps:</strong> {profile?.department === "Ayurveda" 
+                    ? `Focus on mastering ${selectedPath.requiredSkills[0]} and completing the core Ayurveda modules.`
+                    : profile?.department === "BPharma"
+                      ? "Focus on completing the core pharmaceutical and industry modules."
+                      : "Focus on completing Phase 3. Consider taking the Node.js assessment or enrolling in a backend development course."}
                 </p>
               </div>
               <Button asChild className="w-full">
@@ -466,7 +486,7 @@ export default function CareerGuidancePage() {
           <CommandList className="bg-transparent pb-2 max-h-[60vh]">
             <CommandEmpty>No career path found.</CommandEmpty>
             <CommandGroup heading="All Paths" className="text-foreground">
-              {CAREER_PATHS.map((path) => {
+              {careerPaths.map((path) => {
                 const suitability = getSuitability(path);
                 return (
                   <CommandItem

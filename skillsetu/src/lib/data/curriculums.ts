@@ -135,6 +135,73 @@ export const COURSE_CURRICULUMS: Record<string, Curriculum> = {
     ]
   },
   // ═══════════════════════════════════════════════════
+  // AYURVEDA MOCK COURSES
+  // ═══════════════════════════════════════════════════
+  "Ayurvedic Fundamentals": {
+    overview: "Learn the foundational principles of Ayurveda, Dosha assessment, and basic herbology.",
+    difficulty: "Beginner",
+    estimated_duration: "Complete in 5 Days",
+    instructor: "SkillSetu Ayurveda",
+    modules: [
+      {
+        id: "ayur-f-m1",
+        title: "Introduction to Ayurveda",
+        lessons: [
+          { id: "ayur-f-l1", title: "Fundamentals of Doshas", description: "Learn about Vata, Pitta, and Kapha.", duration: "1 hr 0 min", youtube_url: "" },
+          { id: "ayur-f-l2", title: "Basic Herbology", description: "Introduction to Ayurvedic herbs.", duration: "1 hr 30 min", youtube_url: "" }
+        ]
+      }
+    ]
+  },
+  "Clinical Diagnosis": {
+    overview: "Master Ayurvedic diagnostic methods including pulse diagnosis and patient consultation.",
+    difficulty: "Intermediate",
+    estimated_duration: "Complete in 5 Days",
+    instructor: "SkillSetu Ayurveda",
+    modules: [
+      {
+        id: "ayur-d-m1",
+        title: "Diagnostic Methods",
+        lessons: [
+          { id: "ayur-d-l1", title: "Pulse Diagnosis (Nadi Pariksha)", description: "Learn the ancient art of pulse reading.", duration: "2 hr 0 min", youtube_url: "" },
+          { id: "ayur-d-l2", title: "Patient Consultation", description: "Effective communication and examination.", duration: "1 hr 15 min", youtube_url: "" }
+        ]
+      }
+    ]
+  },
+  "Formulation Basics": {
+    overview: "Learn the principles of herbal extraction, drug formulation, and Ayurvedic pharmacy.",
+    difficulty: "Intermediate",
+    estimated_duration: "Complete in 5 Days",
+    instructor: "SkillSetu Pharma",
+    modules: [
+      {
+        id: "ayur-p-m1",
+        title: "Herbal Pharmacy",
+        lessons: [
+          { id: "ayur-p-l1", title: "Herbal Extraction Techniques", description: "Traditional and modern extraction methods.", duration: "1 hr 45 min", youtube_url: "" },
+          { id: "ayur-p-l2", title: "Formulation Design", description: "Designing effective Ayurvedic medicines.", duration: "2 hr 30 min", youtube_url: "" }
+        ]
+      }
+    ]
+  },
+  "Quality Assurance": {
+    overview: "Understand GMP, quality testing, and standardization of Ayurvedic formulations.",
+    difficulty: "Advanced",
+    estimated_duration: "Complete in 5 Days",
+    instructor: "SkillSetu Pharma",
+    modules: [
+      {
+        id: "ayur-q-m1",
+        title: "Standardization",
+        lessons: [
+          { id: "ayur-q-l1", title: "Good Manufacturing Practices (GMP)", description: "Implementing GMP in Ayurvedic pharmacy.", duration: "1 hr 30 min", youtube_url: "" },
+          { id: "ayur-q-l2", title: "Quality Testing Methods", description: "Ensuring safety and efficacy.", duration: "2 hr 0 min", youtube_url: "" }
+        ]
+      }
+    ]
+  },
+  // ═══════════════════════════════════════════════════
   // ═══════════════════════════════════════════════════
   "Frontend Fundamentals": {
     overview: "Master the building blocks of the web: HTML5, CSS3, and JavaScript.",
@@ -552,7 +619,7 @@ export function getCurriculum(title: string): Curriculum {
         id: "fb-m1",
         title: "Getting Started",
         lessons: [
-          { id: "fb-l1", title: "Introduction to " + title, description: "An introductory overview of the core concepts you need to grasp.", duration: "1 hr 0 min", youtube_url: "https://www.youtube.com/embed/kqtD5dpn9C8" },
+          { id: "fb-l1", title: "Introduction to " + title, description: "An introductory overview of the core concepts you need to grasp.", duration: "1 hr 0 min", youtube_url: "" },
         ]
       }
     ]

@@ -60,6 +60,7 @@ interface ExperienceSectionProps {
     }>
   ) => Promise<{ success: boolean; error?: string }>;
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
+  department?: string;
 }
 
 const TYPE_LABELS: Record<ExperienceType, string> = {
@@ -99,6 +100,7 @@ export function ExperienceSection({
   onAdd,
   onUpdate,
   onDelete,
+  department,
 }: ExperienceSectionProps) {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -218,7 +220,7 @@ export function ExperienceSection({
                     onChange={(e) =>
                       setForm((f) => ({ ...f, title: e.target.value }))
                     }
-                    placeholder="Position / Project name"
+                    placeholder={department === "Ayurveda" ? "Clinical Internship / Research Project / Training" : "Position / Project name"}
                   />
                 </div>
                 <div className="space-y-2">
@@ -228,7 +230,7 @@ export function ExperienceSection({
                     onChange={(e) =>
                       setForm((f) => ({ ...f, organization: e.target.value }))
                     }
-                    placeholder="Company / Institution"
+                    placeholder={department === "Ayurveda" ? "Hospital / Ayurvedic Institution / Research Centre" : "Company / Institution"}
                   />
                 </div>
                 <div className="space-y-2">
@@ -238,7 +240,7 @@ export function ExperienceSection({
                     onChange={(e) =>
                       setForm((f) => ({ ...f, description: e.target.value }))
                     }
-                    placeholder="Brief description of your role..."
+                    placeholder={department === "Ayurveda" ? "Describe your clinical training, research work, responsibilities, or practical experience..." : "Brief description of your role..."}
                     rows={3}
                   />
                 </div>

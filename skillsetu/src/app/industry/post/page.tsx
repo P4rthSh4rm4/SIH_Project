@@ -59,11 +59,38 @@ export default function PostOpportunity() {
     resume_required: false,
   });
 
+  const [userDepartment, setUserDepartment] = useState<string>("CSE");
+
   useEffect(() => {
     async function fetchSkills() {
       try {
         const supabase = createClient();
-        const { data, error } = await supabase.from("skills").select("id, name").order("name");
+        
+        // Get user department first
+        const { data: { user } } = await supabase.auth.getUser();
+        let currentDept = "CSE";
+        if (user) {
+          const { data: userData } = await supabase.from("users").select("department").eq("id", user.id).single();
+          if (userData?.department) {
+            currentDept = userData.department;
+            setUserDepartment(currentDept);
+          }
+        }
+        
+        // Fetch skills based on department category mapping
+        let allowedCategories = ["Coding", "Aptitude", "Soft Skills", "Tech Soft Skills"]; // Default to CSE/Global
+        if (currentDept === "Ayurveda") {
+          allowedCategories = ["Ayurveda Knowledge", "Soft Skills"];
+        } else if (currentDept === "BPharma") {
+          allowedCategories = ["BPharma Knowledge", "Aptitude", "Soft Skills", "Tech Soft Skills"];
+        }
+
+        const { data, error } = await supabase
+          .from("skills")
+          .select("id, name, category")
+          .in("category", allowedCategories)
+          .order("name");
+          
         if (error) throw error;
         setAvailableSkills((data || []).map(s => ({ label: s.name, value: s.id })));
       } catch (err) {
@@ -113,7 +140,7 @@ export default function PostOpportunity() {
           duration: formData.duration || null,
           start_date: formData.start_date || null,
           deadline: formData.deadline || null,
-          positions: formData.positions,
+          positions: (formData.positions as any) === '' ? 1 : formData.positions,
           required_skills: requiredSkills,
           preferred_skills: preferredSkills,
           eligibility_requirements: {
@@ -181,7 +208,7 @@ export default function PostOpportunity() {
                 <label className="text-sm font-medium">Title <span className="text-red-500">*</span></label>
                 <Input 
                   required 
-                  placeholder="e.g. Software Engineer Intern"
+                  placeholder={userDepartment === 'Ayurveda' ? "e.g. Ayurvedic Clinical Intern, Ayurveda Research Intern" : "e.g. Software Engineer Intern"}
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
@@ -227,7 +254,7 @@ export default function PostOpportunity() {
                   <Input 
                     type="number" min={1}
                     value={formData.positions}
-                    onChange={(e) => setFormData({ ...formData, positions: parseInt(e.target.value) || 1 })}
+                    onChange={(e) => setFormData({ ...formData, positions: e.target.value === '' ? ('' as any) : parseInt(e.target.value) })}
                   />
                 </div>
 
@@ -257,7 +284,7 @@ export default function PostOpportunity() {
                 <Textarea 
                   required
                   className="min-h-[120px]"
-                  placeholder="Describe the role, responsibilities, and what you're looking for..."
+                  placeholder={userDepartment === 'Ayurveda' ? "Describe the role, clinical/research activities, and what you're looking for..." : "Describe the role, responsibilities, and what you're looking for..."}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
@@ -276,11 +303,11 @@ export default function PostOpportunity() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Degree (Optional)</label>
-                  <Input placeholder="e.g. B.Tech, M.Tech, BCA" value={eligibility.degree} onChange={e => setEligibility({...eligibility, degree: e.target.value})} />
+                  <Input placeholder={userDepartment === 'Ayurveda' ? "e.g. BAMS, MD (Ayurveda), PG Diploma" : "e.g. B.Tech, M.Tech, BCA"} value={eligibility.degree} onChange={e => setEligibility({...eligibility, degree: e.target.value})} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Branch/Department (Optional)</label>
-                  <Input placeholder="e.g. Computer Science, IT" value={eligibility.branch} onChange={e => setEligibility({...eligibility, branch: e.target.value})} />
+                  <Input placeholder={userDepartment === 'Ayurveda' ? "e.g. Ayurveda, Kayachikitsa, Panchakarma" : "e.g. Computer Science, IT"} value={eligibility.branch} onChange={e => setEligibility({...eligibility, branch: e.target.value})} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Graduation Year/Batch</label>
@@ -360,8 +387,8 @@ export default function PostOpportunity() {
                 <label className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-secondary/10 hover:bg-secondary/20 cursor-pointer transition-colors">
                   <input type="checkbox" className="w-4 h-4 rounded border-border" checked={assessments.technical} onChange={e => setAssessments({...assessments, technical: e.target.checked})} />
                   <div>
-                    <div className="font-medium text-sm">Technical / Coding Assessment</div>
-                    <div className="text-xs text-muted-foreground">Domain-specific technical test (DSA, OOP, SQL, etc.).</div>
+                    <div className="font-medium text-sm">{userDepartment === 'Ayurveda' ? 'Clinical & Domain Assessment' : 'Technical / Coding Assessment'}</div>
+                    <div className="text-xs text-muted-foreground">{userDepartment === 'Ayurveda' ? 'Assesses Ayurveda domain knowledge and role-relevant clinical concepts.' : 'Domain-specific technical test (DSA, OOP, SQL, etc.).'}</div>
                   </div>
                 </label>
                 
@@ -394,7 +421,7 @@ export default function PostOpportunity() {
                   <Input type="number" min="0" max="100" placeholder="e.g. 70" value={screening.min_placement_readiness} onChange={e => setScreening({...screening, min_placement_readiness: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Min. Technical Score (0-100)</label>
+                  <label className="text-sm font-medium">{userDepartment === 'Ayurveda' ? 'Min. Clinical & Domain Score (0-100)' : 'Min. Technical Score (0-100)'}</label>
                   <Input type="number" min="0" max="100" placeholder="e.g. 60" value={screening.min_technical_score} onChange={e => setScreening({...screening, min_technical_score: e.target.value})} />
                 </div>
                 <div className="space-y-2">

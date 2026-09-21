@@ -19,20 +19,22 @@ export function AiRecommendations({
   matchPct, 
   role,
   portfolioSkills = [],
-  completedCourses = []
+  completedCourses = [],
+  department
 }: { 
   gapData: SkillGap[], 
   matchPct: number, 
   role: { label: string, requiredSkills: any[] },
   portfolioSkills?: any[],
-  completedCourses?: any[]
+  completedCourses?: any[],
+  department?: string
 }) {
   const { courses, certifications, platforms, weakestSkills } = useMemo(() => 
-    getRecommendations(gapData, portfolioSkills, completedCourses), 
-  [gapData, portfolioSkills, completedCourses]);
+    getRecommendations(gapData, portfolioSkills, completedCourses, department), 
+  [gapData, portfolioSkills, completedCourses, department]);
 
   const topSkill = weakestSkills[0]?.skill || "General Skills";
-  const weeklyRoadmap = useMemo(() => generateWeeklyRoadmap(topSkill), [topSkill]);
+  const weeklyRoadmap = useMemo(() => generateWeeklyRoadmap(topSkill, department), [topSkill, department]);
 
   const estimatedTotalImprovement = courses.reduce((acc, c) => acc + c.expectedImprovement, 0);
   const estimatedReadiness = Math.min(100, matchPct + estimatedTotalImprovement);
@@ -40,6 +42,15 @@ export function AiRecommendations({
   const completedRequired = gapData.filter(g => g.current >= g.target).length;
   const totalRequired = gapData.length;
   const pathProgress = totalRequired > 0 ? Math.round((completedRequired / totalRequired) * 100) : 0;
+
+  if (!department) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 rounded-xl border border-dashed border-border/50">
+        <h3 className="text-lg font-semibold text-foreground mb-1">Unable to generate recommendations</h3>
+        <p className="text-muted-foreground text-sm">Please update your department information to receive personalized learning recommendations.</p>
+      </div>
+    );
+  }
 
   if (gapData.length === 0) return null;
 
@@ -287,17 +298,28 @@ export function AiRecommendations({
         <h3 className="text-lg font-bold flex items-center gap-2">
           <Star className="w-5 h-5 text-yellow-500" /> Curated Learning Platforms
         </h3>
-        <p className="text-sm text-muted-foreground mb-4">Recommended external platforms based on your missing skills.</p>
-        <div className="flex flex-wrap gap-3">
-          {platforms.map((platform, idx) => (
-            <a key={idx} href={platform.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 bg-card border rounded-xl hover:bg-accent hover:border-primary/30 transition-all group">
-              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
-                {platform.name.charAt(0)}
-              </div>
-              <span className="font-semibold text-sm">{platform.name}</span>
-            </a>
-          ))}
-        </div>
+        
+        {platforms.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic mb-4">
+            {department === "Ayurveda" 
+              ? "Ayurveda learning resources will appear here based on your skill gaps."
+              : "No specific learning platforms matched your current skill gaps."}
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground mb-4">Recommended external platforms based on your missing skills.</p>
+            <div className="flex flex-wrap gap-3">
+              {platforms.map((platform, idx) => (
+                <a key={idx} href={platform.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 bg-card border rounded-xl hover:bg-accent hover:border-primary/30 transition-all group">
+                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                    {platform.name.charAt(0)}
+                  </div>
+                  <span className="font-semibold text-sm">{platform.name}</span>
+                </a>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
     </div>

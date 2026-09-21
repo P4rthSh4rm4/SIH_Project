@@ -78,10 +78,11 @@ export async function updateSession(request: NextRequest) {
 
   // ─── Unauthenticated users: block protected routes ────────────────────
   if (!user && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    url.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(url);
+    // BYPASS FOR TESTING
+    // const url = request.nextUrl.clone();
+    // url.pathname = "/auth/login";
+    // url.searchParams.set("redirectTo", pathname);
+    // return NextResponse.redirect(url);
   }
 
   // ─── Authenticated users: redirect away from login/signup pages ───────

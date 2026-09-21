@@ -68,14 +68,34 @@ export function useAssessments() {
       category: string,
       subcategory: string,
       difficulty: string,
-      count: number
+      count: number,
+      department?: string
     ): Promise<AssessmentQuestion[]> => {
       const res = await fetch("/api/gemini/generate-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, subcategory, difficulty, count }),
+        body: JSON.stringify({ category, subcategory, difficulty, count, department }),
       });
-      if (!res.ok) throw new Error("Failed to generate questions");
+      if (!res.ok) {
+        let errMsg = "Failed to generate questions";
+        try {
+          const text = await res.text();
+          try {
+            const errData = JSON.parse(text);
+            errMsg = errData.details || errData.error || `Server error ${res.status}`;
+          } catch (_) {
+            errMsg = text || `HTTP error ${res.status}`;
+          }
+        } catch (_) {
+          errMsg = `HTTP error ${res.status}`;
+        }
+        // Throwing a string instead of an Error object prevents Next.js dev overlay from capturing it
+        // when caught and logged by console.error in the component.
+        // We attach it as a string so toast.error(error.message || error) works.
+        const customError = new Error(errMsg);
+        customError.name = "AssessmentError";
+        throw customError;
+      }
       const data = await res.json();
       return data.questions;
     },
@@ -88,7 +108,8 @@ export function useAssessments() {
       subcategory: string,
       questions: AssessmentQuestion[],
       answers: Record<string, number>,
-      timeTakenSeconds: number
+      timeTakenSeconds: number,
+      department?: string
     ): Promise<AssessmentResult> => {
       const res = await fetch("/api/gemini/evaluate-assessment", {
         method: "POST",
@@ -99,6 +120,7 @@ export function useAssessments() {
           questions,
           answers,
           timeTakenSeconds,
+          department,
         }),
       });
       if (!res.ok) throw new Error("Failed to evaluate assessment");
@@ -154,6 +176,10 @@ export function useAssessments() {
             
           if (existingSkill?.id) {
             masterSkillId = existingSkill.id;
+          } else {
+            // DO NOT dynamically insert missing skills from the client.
+            // The master skills catalog must be seeded by admin/migrations.
+            console.error(`[DEBUG] Master skill missing for targetSkillName: "${targetSkillName}". RLS prevents client insertion. Seed this skill via admin script.`);
           }
         }
         

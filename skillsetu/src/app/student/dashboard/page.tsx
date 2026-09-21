@@ -27,23 +27,35 @@ import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import { LeaderboardWidget } from "@/components/dashboard/leaderboard-widget";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const NEWS_ITEMS = [
-  { text: "Google is hiring for SDE-1 Off-Campus Placements 2026 Batch!", type: "Off-Campus", logo: "G", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
-  { text: "Meta Open Source Hackathon - $10k Prize Pool. Register now!", type: "Hackathon", logo: "M", color: "text-blue-600", bg: "bg-blue-600/10", border: "border-blue-600/20" },
-  { text: "Amazon 6-month Software Engineering Internship for Pre-final years", type: "Internship", logo: "A", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-  { text: "Microsoft is looking for Student Cloud Advocates", type: "Project", logo: "M", color: "text-emerald-600", bg: "bg-emerald-600/10", border: "border-emerald-600/20" },
-  { text: "Apple hardware engineering internship applications open", type: "Internship", logo: "", color: "text-slate-600 dark:text-slate-300", bg: "bg-slate-500/10", border: "border-slate-500/20" },
-];
+const GET_NEWS_ITEMS = (dept: string) => {
+  if (dept === "Ayurveda") {
+    return [
+      { text: "Patanjali is hiring for Clinical Research Interns!", type: "Internship", logo: "P", color: "text-green-600", bg: "bg-green-600/10", border: "border-green-600/20" },
+      { text: "National Ayurveda Hackathon - Submit your research!", type: "Hackathon", logo: "A", color: "text-blue-600", bg: "bg-blue-600/10", border: "border-blue-600/20" },
+      { text: "Dabur 6-month Ayurvedic formulation internship", type: "Internship", logo: "D", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+      { text: "Ministry of AYUSH is looking for Student Advocates", type: "Project", logo: "M", color: "text-emerald-600", bg: "bg-emerald-600/10", border: "border-emerald-600/20" },
+      { text: "Himalaya Wellness clinical training applications open", type: "Internship", logo: "H", color: "text-slate-600 dark:text-slate-300", bg: "bg-slate-500/10", border: "border-slate-500/20" },
+    ];
+  }
+  return [
+    { text: "Google is hiring for SDE-1 Off-Campus Placements 2026 Batch!", type: "Off-Campus", logo: "G", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+    { text: "Meta Open Source Hackathon - $10k Prize Pool. Register now!", type: "Hackathon", logo: "M", color: "text-blue-600", bg: "bg-blue-600/10", border: "border-blue-600/20" },
+    { text: "Amazon 6-month Software Engineering Internship for Pre-final years", type: "Internship", logo: "A", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+    { text: "Microsoft is looking for Student Cloud Advocates", type: "Project", logo: "M", color: "text-emerald-600", bg: "bg-emerald-600/10", border: "border-emerald-600/20" },
+    { text: "Apple hardware engineering internship applications open", type: "Internship", logo: "", color: "text-slate-600 dark:text-slate-300", bg: "bg-slate-500/10", border: "border-slate-500/20" },
+  ];
+};
 
-function NewsTicker() {
+function NewsTicker({ department }: { department?: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const newsItems = GET_NEWS_ITEMS(department || "CSE");
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % NEWS_ITEMS.length);
+      setCurrentIndex((prev) => (prev + 1) % newsItems.length);
     }, 4500);
     return () => clearInterval(timer);
-  }, []);
+  }, [newsItems.length]);
 
   return (
     <Link href="/student/opportunities" className="block mt-6 group">
@@ -53,13 +65,13 @@ function NewsTicker() {
           </div>
           
           <div className="flex-1 relative h-full">
-            {NEWS_ITEMS.map((item, idx) => (
+            {newsItems.map((item, idx) => (
               <div 
                 key={idx}
                 className={`absolute inset-0 flex items-center gap-3 transition-all duration-500 ease-in-out ${
                   idx === currentIndex 
                     ? 'opacity-100 translate-y-0' 
-                    : idx < currentIndex || (currentIndex === 0 && idx === NEWS_ITEMS.length - 1)
+                    : idx < currentIndex || (currentIndex === 0 && idx === newsItems.length - 1)
                       ? 'opacity-0 -translate-y-6'
                       : 'opacity-0 translate-y-6'
                 }`}
@@ -94,7 +106,7 @@ export default function StudentDashboard() {
 
   const firstName = profile?.name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
-  const targetRole = (profile as any)?.career_objective || (profile?.department === "Ayurveda" ? "Ayurvedic Medical Practitioner" : profile?.department === "BPharma" ? "Pharmaceutical Research Specialist" : "Software Engineer");
+  const targetRole = (profile as any)?.career_objective || (profile?.department === "Ayurveda" ? "Ayurvedic Medical Practitioner" : "Software Engineer");
 
   const statCards = [
     {
@@ -161,7 +173,7 @@ export default function StudentDashboard() {
         </p>
         
         {/* News Ticker */}
-        <NewsTicker />
+        <NewsTicker department={profile?.department} />
       </div>
 
       {/* Onboarding Strip */}
@@ -269,7 +281,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <span className="text-sm font-medium">
-                    {weakSkills.length > 0 ? `Improve ${weakSkills[0].name} concepts` : "Complete the System Design module"}
+                    {weakSkills.length > 0 ? `Improve ${weakSkills[0].name} concepts` : (profile?.department === 'Ayurveda' ? "Complete the Clinical Practice module" : "Complete the System Design module")}
                   </span>
                   <Link href="/student/learning-hub">
                     <Button size="sm" className="w-full sm:w-auto text-xs h-8">Start Module</Button>
@@ -372,7 +384,7 @@ export default function StudentDashboard() {
         </Card>
 
         {/* Recommended Opportunities */}
-        <RecommendedSection skills={skills} />
+        <RecommendedSection skills={skills} department={profile?.department} />
       </div>
 
       <div className="pt-8 border-t border-border/50">
@@ -498,7 +510,7 @@ export default function StudentDashboard() {
 
 /* ─── Recommended Section (reads from Supabase) ─────────────────────── */
 
-function RecommendedSection({ skills }: { skills: SkillDataPoint[] }) {
+function RecommendedSection({ skills, department }: { skills: SkillDataPoint[], department?: string }) {
   const [opps, setOpps] = useState<
     { id: string; title: string; type: string; deadline: string | null; location?: string; stipend_amount?: number }[]
   >([]);
@@ -536,10 +548,11 @@ function RecommendedSection({ skills }: { skills: SkillDataPoint[] }) {
           opps.map(
             (opp, i: number) => {
               // Dynamic AI match reasons based on student skills and opportunity
+              const isAyurveda = department === "Ayurveda";
               const sortedSkills = [...skills].sort((a, b) => b.score - a.score);
-              const topSkill = sortedSkills.length > 0 ? sortedSkills[0].name : "React";
-              const secondSkill = sortedSkills.length > 1 ? sortedSkills[1].name : "Python";
-              const weakSkill = sortedSkills.length > 2 ? sortedSkills[sortedSkills.length - 1].name : "SQL";
+              const topSkill = sortedSkills.length > 0 ? sortedSkills[0].name : (isAyurveda ? "Panchakarma" : "React");
+              const secondSkill = sortedSkills.length > 1 ? sortedSkills[1].name : (isAyurveda ? "Dravyaguna" : "Python");
+              const weakSkill = sortedSkills.length > 2 ? sortedSkills[sortedSkills.length - 1].name : (isAyurveda ? "Clinical Diagnosis" : "SQL");
 
               const reasons = [
                 `85% fit — Strong match with your ${topSkill} and ${secondSkill} skills.`,

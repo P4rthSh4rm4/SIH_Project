@@ -18,6 +18,14 @@ const statsConfig = [
   { key: "activeMentees", label: "Active Mentees", icon: Presentation, color: "text-amber-500", bg: "bg-amber-500/10" },
 ];
 
+const ZeroGapMarker = (props: any) => {
+  const { x, y, width, height, value } = props;
+  if (value > 0) return null;
+  return (
+    <circle cx={x + 8} cy={y + height / 2} r={3} fill="#94a3b8" />
+  );
+};
+
 export default function AcademicianDashboard() {
   const { stats, skillDistribution, latestOpportunities, upcomingActivities, loading: dashboardLoading } = useAcademicianDashboard();
   const { skillGaps, loading: gapsLoading } = useAcademicianSkillGaps();
@@ -128,16 +136,16 @@ export default function AcademicianDashboard() {
             ) : (
               <div className="h-[300px] w-full mt-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={skillGaps.slice(0, 5)} margin={{ top: 10, right: 30, left: -20, bottom: 0 }} layout="vertical">
+                  <BarChart data={skillGaps.slice(0, 5)} margin={{ top: 10, right: 30, left: 0, bottom: 0 }} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#333333" opacity={0.2} />
                     <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
-                    <YAxis type="category" dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} width={100} />
+                    <YAxis type="category" dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} width={180} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f8fafc' }}
                       itemStyle={{ color: '#f8fafc' }}
                       formatter={(value: any, name: any, props: any) => [`${Number(value || 0).toFixed(0)}% Gap`, `Affected Students: ${props.payload.gapCount}`]}
                     />
-                    <Bar dataKey="gapSeverity" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="gapSeverity" radius={[0, 4, 4, 0]} label={<ZeroGapMarker />}>
                       {skillGaps.slice(0, 5).map((entry, index) => {
                         let color = "#3b82f6"; // Default Blue
                         if (entry.name === "SQL") color = "#3b82f6"; // Blue

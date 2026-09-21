@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FlaskConical, PlusCircle, Search, Calendar, Briefcase, Trash2, Edit, Loader2 } from "lucide-react";
+import { FlaskConical, PlusCircle, Search, Calendar, Briefcase, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAcademicianResearch, ResearchProject } from "@/lib/hooks/useAcademicianResearch";
@@ -12,53 +12,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-function EditProjectDialog({ project, onUpdate, isMutating }: { project: ResearchProject, onUpdate: (id: string, fd: FormData) => Promise<boolean>, isMutating: boolean }) {
-  const [open, setOpen] = useState(false);
-  
-  const handleEdit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const success = await onUpdate(project.id, new FormData(e.currentTarget));
-    if (success) setOpen(false);
-  };
 
-  return (
-    <>
-      <Button variant="outline" size="sm" className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50" disabled={isMutating} onClick={() => setOpen(true)}>
-        <Edit className="w-3 h-3 mr-1" /> Edit
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Research Project</DialogTitle>
-          </DialogHeader>
-        <form onSubmit={handleEdit} className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Title *</label>
-            <input name="title" defaultValue={project.title} required className="w-full p-2 border rounded-md" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
-            <textarea name="description" defaultValue={project.description || ""} rows={3} className="w-full p-2 border rounded-md" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Deadline (Optional)</label>
-            <input name="deadline" type="date" defaultValue={project.deadline || ""} className="w-full p-2 border rounded-md" />
-          </div>
-          <Button type="submit" className="w-full bg-blue-600" disabled={isMutating}>
-            {isMutating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Save Changes
-          </Button>
-        </form>
-      </DialogContent>
-      </Dialog>
-    </>
-  );
-}
 
 export default function ResearchPage() {
-  const { projects, loading, isMutating, profile, createProject, deleteProject, updateProject } = useAcademicianResearch();
+  const { projects, loading, isMutating, profile, createProject } = useAcademicianResearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -69,11 +28,6 @@ export default function ResearchPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this research project?")) {
-      await deleteProject(id);
-    }
-  };
 
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return "Rolling / TBA";
@@ -109,11 +63,11 @@ export default function ResearchPage() {
               <form onSubmit={handleCreate} className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Title *</label>
-                  <input name="title" required placeholder="e.g. Advancements in Machine Learning" className="w-full p-2 border rounded-md" />
+                  <input name="title" required placeholder={profile?.department === 'Ayurveda' ? 'e.g. Clinical Evidence in Ayurveda' : 'e.g. Advancements in Machine Learning'} className="w-full p-2 border rounded-md" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Description</label>
-                  <textarea name="description" rows={3} placeholder="Brief summary of the research..." className="w-full p-2 border rounded-md" />
+                  <textarea name="description" rows={3} placeholder={profile?.department === 'Ayurveda' ? 'Describe the Ayurveda research objective, methodology, clinical/research focus, and expected outcomes...' : 'Brief summary of the research...'} className="w-full p-2 border rounded-md" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -155,7 +109,6 @@ export default function ResearchPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project: ResearchProject) => {
-            const isCreator = profile?.id === project.created_by;
             
             return (
               <Card key={project.id} className="group hover:shadow-lg transition-all duration-300 border-border/50 flex flex-col h-full">
@@ -189,14 +142,7 @@ export default function ResearchPage() {
                     )}
                   </div>
 
-                  {isCreator && (
-                    <div className="flex gap-2 mt-2">
-                      <EditProjectDialog project={project} onUpdate={updateProject} isMutating={isMutating} />
-                      <Button variant="outline" size="sm" className="flex-1 border-red-200 text-red-600 hover:bg-red-50" onClick={() => handleDelete(project.id)} disabled={isMutating}>
-                        <Trash2 className="w-3 h-3 mr-1" /> Delete
-                      </Button>
-                    </div>
-                  )}
+
                 </CardContent>
               </Card>
             );

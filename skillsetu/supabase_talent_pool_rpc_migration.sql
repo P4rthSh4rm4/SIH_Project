@@ -9,6 +9,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_caller_role TEXT;
+  v_caller_department TEXT;
   v_result JSONB;
 BEGIN
   -- 1. Verify Caller Authentication & Role
@@ -17,7 +18,7 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  SELECT role INTO v_caller_role
+  SELECT role, department INTO v_caller_role, v_caller_department
   FROM users
   WHERE id = auth.uid()
   LIMIT 1;
@@ -25,6 +26,11 @@ BEGIN
   -- Allow industry or admin to view talent pool
   IF v_caller_role NOT IN ('industry', 'admin') THEN
     RAISE EXCEPTION 'Access denied. Only industry and admin users can access the talent pool.';
+  END IF;
+
+  -- Strictly fail closed if the caller does not have a department
+  IF v_caller_department IS NULL THEN
+    RAISE EXCEPTION 'Access denied. Caller department is missing.';
   END IF;
 
   -- 2. Build Candidate JSON Payload
@@ -120,7 +126,8 @@ BEGIN
   ), '[]'::jsonb)
   INTO v_result
   FROM users u
-  WHERE u.role = 'student';
+  WHERE u.role = 'student'
+    AND u.department = v_caller_department;
 
   RETURN v_result;
 END;

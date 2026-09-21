@@ -29,9 +29,14 @@ export function useAcademicianPlacementOverview() {
     setLoading(true);
     setError(null);
     try {
+      if (profile?.role === 'academician' && !profile.department) {
+        setLoading(false);
+        return; // Fail closed if department is not yet loaded
+      }
+
       // 1. Fetch all students in the academician's institution (RLS handles scoping)
       // along with their placement_records and applications.
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from('users')
         .select(`
           id,
@@ -40,6 +45,12 @@ export function useAcademicianPlacementOverview() {
           applications ( status )
         `)
         .eq('role', 'student');
+
+      if (profile?.role === 'academician') {
+        query = query.eq('department', profile.department);
+      }
+
+      const { data, error: fetchError } = await query;
 
       if (fetchError) throw fetchError;
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,31 +11,45 @@ import { Briefcase, Building2, User, CheckCircle, XCircle, Loader2 } from "lucid
 import { toast } from "sonner";
 
 export default function AcademicianPlacementsPage() {
+  const { profile, loading: profileLoading } = useUserProfile();
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (profileLoading) return;
+    
+    // Fail closed if the user is an academician but department is missing
+    if (profile?.role === 'academician' && !profile.department) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const supabase = createClient();
       
-      // Fetch pending opportunities
-      const { data: oppsData, error: oppsError } = await supabase
+      // Fetch pending opportunities (isolated by industry department)
+      let oppsQuery = supabase
         .from("opportunities")
         .select(`
           *,
-          industry:users(name)
+          industry:users!inner(name, department)
         `)
         .eq("verification_status", "pending")
         .order("created_at", { ascending: false });
 
+      if (profile?.role === 'academician' && profile.department) {
+        oppsQuery = oppsQuery.eq('industry.department', profile.department);
+      }
+
+      const { data: oppsData, error: oppsError } = await oppsQuery;
       if (oppsError) throw oppsError;
       setOpportunities(oppsData || []);
 
-      // Fetch pending applications
-      const { data: appsData, error: appsError } = await supabase
+      // Fetch pending applications (isolated by student department)
+      let appsQuery = supabase
         .from("applications")
         .select(`
           *,
@@ -42,11 +57,16 @@ export default function AcademicianPlacementsPage() {
             title,
             industry:users(name)
           ),
-          student:users(name)
+          student:users!inner(name, department)
         `)
         .eq("status", "pending_faculty")
         .order("applied_at", { ascending: false });
 
+      if (profile?.role === 'academician' && profile.department) {
+        appsQuery = appsQuery.eq('student.department', profile.department);
+      }
+
+      const { data: appsData, error: appsError } = await appsQuery;
       if (appsError) throw appsError;
       setApplications(appsData || []);
     } catch (err) {
@@ -55,11 +75,11 @@ export default function AcademicianPlacementsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.id, profile?.department, profile?.role, profileLoading]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleVerifyOpportunity = async (id: string, isApproved: boolean) => {
     setProcessingId(id);
