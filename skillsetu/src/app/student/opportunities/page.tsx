@@ -176,8 +176,13 @@ export default function OpportunitiesPage() {
                             <Building2 className="w-6 h-6 text-muted-foreground" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
                               <h3 className="font-semibold text-lg leading-tight">{opp.title}</h3>
+                              {opp.is_campus_collaboration && (
+                                <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/30 px-2 py-0.5">
+                                  <GraduationCap className="w-3 h-3 mr-1" /> Campus Drive • {opp.target_institution_name || "Exclusive Campus Drive"}
+                                </Badge>
+                              )}
                               {opp.verifiedBy && (
                                 <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 px-1.5 py-0">
                                   <CheckCircle2 className="w-3 h-3 mr-1" /> Verified by {opp.verifiedBy}

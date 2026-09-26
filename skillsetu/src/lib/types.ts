@@ -74,6 +74,13 @@ export type OpportunityType =
 
 export type OpportunityStatus = "draft" | "pending" | "active" | "rejected" | "closed" | "archived";
 
+export type CampusCollaborationType =
+  | "Campus Placement Drive"
+  | "Joint Internship Program"
+  | "Campus Hackathon / Contest"
+  | "Faculty-Guided Research & Lab"
+  | "Guest Lecture / Workshop";
+
 export interface Opportunity {
   id: string;
   industry_id: string;
@@ -85,6 +92,7 @@ export interface Opportunity {
   stipend?: string;
   deadline?: string;
   status: OpportunityStatus;
+  verification_status?: "pending" | "approved" | "rejected";
   created_at: string;
   company?: string;
   company_name?: string;
@@ -101,6 +109,13 @@ export interface Opportunity {
   assessment_requirements?: Record<string, unknown>;
   hiring_process?: string[]; // Custom stages
   smart_screening_requirements?: Record<string, unknown>;
+
+  // Campus Collaboration Fields
+  is_campus_collaboration?: boolean;
+  target_institution_id?: string;
+  target_institution_name?: string;
+  campus_collaboration_type?: CampusCollaborationType | string;
+  faculty_note?: string;
 }
 
 // ─── Applications ──────────────────────────────────────────

@@ -9,10 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ArrowLeft, Loader2, Send, PlusCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Send, PlusCircle, CheckCircle2, Building2, Globe, GraduationCap, School, ShieldCheck, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import Link from "next/link";
-import type { OpportunityType, Skill } from "@/lib/types";
+import type { OpportunityType, Skill, CampusCollaborationType } from "@/lib/types";
 import { MultiSelect, MultiSelectOption } from "@/components/ui/multi-select";
 
 export default function PostOpportunity() {
@@ -20,6 +21,14 @@ export default function PostOpportunity() {
   const [loading, setLoading] = useState(false);
   const [isFetchingSkills, setIsFetchingSkills] = useState(true);
   const [availableSkills, setAvailableSkills] = useState<MultiSelectOption[]>([]);
+
+  // Publishing Scope & Campus Collaboration State
+  const [publishingMode, setPublishingMode] = useState<"direct" | "campus_collaboration">("direct");
+  const [targetInstitutionId, setTargetInstitutionId] = useState<string>("");
+  const [campusCollaborationType, setCampusCollaborationType] = useState<string>("Campus Placement Drive");
+  const [facultyNote, setFacultyNote] = useState<string>("");
+  const [institutions, setInstitutions] = useState<{ id: string; name: string; type?: string; address?: string }[]>([]);
+  const [isLoadingInstitutions, setIsLoadingInstitutions] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -62,11 +71,11 @@ export default function PostOpportunity() {
   const [userDepartment, setUserDepartment] = useState<string>("CSE");
 
   useEffect(() => {
-    async function fetchSkills() {
+    async function loadData() {
       try {
         const supabase = createClient();
         
-        // Get user department first
+        // 1. Get user department first
         const { data: { user } } = await supabase.auth.getUser();
         let currentDept = "CSE";
         if (user) {
@@ -77,7 +86,7 @@ export default function PostOpportunity() {
           }
         }
         
-        // Fetch skills based on department category mapping
+        // 2. Fetch skills based on department category mapping
         let allowedCategories = ["Coding", "Aptitude", "Soft Skills", "Tech Soft Skills"]; // Default to CSE/Global
         if (currentDept === "Ayurveda") {
           allowedCategories = ["Ayurveda Knowledge", "Soft Skills"];
@@ -85,28 +94,49 @@ export default function PostOpportunity() {
           allowedCategories = ["BPharma Knowledge", "Aptitude", "Soft Skills", "Tech Soft Skills"];
         }
 
-        const { data, error } = await supabase
+        const { data: skillsData, error: skillsError } = await supabase
           .from("skills")
           .select("id, name, category")
           .in("category", allowedCategories)
           .order("name");
           
-        if (error) throw error;
-        setAvailableSkills((data || []).map(s => ({ label: s.name, value: s.id })));
+        if (skillsError) throw skillsError;
+        setAvailableSkills((skillsData || []).map(s => ({ label: s.name, value: s.id })));
+
+        // 3. Fetch institutions for Campus Collaboration
+        setIsLoadingInstitutions(true);
+        const { data: instData, error: instError } = await supabase
+          .from("institutions")
+          .select("id, name, type, address")
+          .order("name");
+          
+        if (!instError && instData) {
+          setInstitutions(instData);
+          if (instData.length > 0) {
+            setTargetInstitutionId(instData[0].id);
+          }
+        }
       } catch (err) {
-        console.error("Failed to load skills:", err);
-        toast.error("Failed to load skills master table.");
+        console.error("Failed to load skills or institutions:", err);
+        toast.error("Failed to load master setup data.");
       } finally {
         setIsFetchingSkills(false);
+        setIsLoadingInstitutions(false);
       }
     }
-    fetchSkills();
+    loadData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.description) {
       toast.error("Title and description are required.");
+      return;
+    }
+
+    const isCollab = publishingMode === "campus_collaboration";
+    if (isCollab && !targetInstitutionId) {
+      toast.error("Please select a target institution for campus collaboration.");
       return;
     }
     
@@ -120,6 +150,8 @@ export default function PostOpportunity() {
         toast.error("You must be logged in to post an opportunity");
         return;
       }
+
+      const selectedInstitution = institutions.find(i => i.id === targetInstitutionId);
 
       // Format numeric fields properly
       const minCgpa = eligibility.min_cgpa ? parseFloat(eligibility.min_cgpa) : null;
@@ -148,7 +180,12 @@ export default function PostOpportunity() {
              branch: eligibility.branch,
              batch: eligibility.batch,
              min_cgpa: minCgpa,
-             experience: eligibility.experience
+             experience: eligibility.experience,
+             is_campus_collaboration: isCollab,
+             target_institution_id: isCollab ? targetInstitutionId : null,
+             target_institution_name: isCollab ? (selectedInstitution?.name || null) : null,
+             campus_collaboration_type: isCollab ? campusCollaborationType : null,
+             faculty_note: isCollab && facultyNote.trim() ? facultyNote.trim() : null
           },
           assessment_requirements: assessments,
           smart_screening_requirements: {
@@ -159,12 +196,16 @@ export default function PostOpportunity() {
           },
           hiring_process: ["Application", "Screening", "Interview", "Offer", "Hired"],
           status: "active",
-          verification_status: "pending", 
+          verification_status: isCollab ? "pending" : "approved", 
         });
 
       if (error) throw error;
       
-      toast.success("Opportunity submitted for verification!");
+      if (isCollab) {
+        toast.success("Campus collaboration submitted! Sent to faculty for verification.");
+      } else {
+        toast.success("Opportunity posted successfully! Published directly to students.");
+      }
       router.push("/industry/dashboard");
       router.refresh();
       
@@ -188,12 +229,154 @@ export default function PostOpportunity() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Create Opportunity</h1>
           <p className="text-muted-foreground mt-1">
-            Build a structured, recruitment-ready opportunity for smart candidate matching.
+            Publish an open opportunity directly to students or initiate an institute-specific campus collaboration.
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Publishing Mode Selection */}
+        <Card className="border-border/50 overflow-hidden shadow-sm">
+          <CardHeader className="pb-3 bg-secondary/10 border-b border-border/30">
+            <CardTitle className="text-base font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" /> Publishing Scope & Collaboration Mode
+              </span>
+              <Badge variant={publishingMode === "direct" ? "default" : "secondary"} className="text-xs">
+                {publishingMode === "direct" ? "Direct to Students" : "Institute Specific"}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Option 1: Direct to Students */}
+              <div 
+                onClick={() => setPublishingMode("direct")}
+                className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                  publishingMode === "direct"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border/60 hover:border-border hover:bg-secondary/20"
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                      <Globe className="w-5 h-5" />
+                    </div>
+                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-medium">
+                      Direct Publishing
+                    </Badge>
+                  </div>
+                  <h4 className="font-semibold text-base text-foreground">Direct to Students</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Open opportunity visible immediately to all eligible students across institutions. No faculty verification required.
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center text-xs text-emerald-600 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Instant Student Visibility
+                </div>
+              </div>
+
+              {/* Option 2: Campus Collaboration */}
+              <div 
+                onClick={() => setPublishingMode("campus_collaboration")}
+                className={`relative p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                  publishingMode === "campus_collaboration"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border/60 hover:border-border hover:bg-secondary/20"
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                      <GraduationCap className="w-5 h-5" />
+                    </div>
+                    <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/30 font-medium">
+                      Campus Collab
+                    </Badge>
+                  </div>
+                  <h4 className="font-semibold text-base text-foreground">Campus Collaboration</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Target an exclusive campus drive or joint initiative. Routes to institute faculty for verification before publishing.
+                  </p>
+                </div>
+                <div className="mt-3 flex items-center text-xs text-blue-600 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Verified via College Faculty
+                </div>
+              </div>
+            </div>
+
+            {/* Campus Collaboration Specific Config */}
+            {publishingMode === "campus_collaboration" && (
+              <div className="mt-4 p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-4 animate-in fade-in duration-200">
+                <div className="flex items-start gap-3">
+                  <School className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h5 className="text-sm font-semibold text-blue-900 dark:text-blue-200">Campus Collaboration Configuration</h5>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+                      Select the destination institute. Faculty and TPO from this campus will review and verify this drive before their students can apply.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Target Institution <span className="text-red-500">*</span>
+                    </label>
+                    {isLoadingInstitutions ? (
+                      <div className="flex items-center text-xs text-muted-foreground h-10"><Loader2 className="w-4 h-4 animate-spin mr-2"/> Loading institutes...</div>
+                    ) : (
+                      <Select value={targetInstitutionId} onValueChange={(val) => setTargetInstitutionId(val || "")}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Select target institute" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {institutions.map(inst => (
+                            <SelectItem key={inst.id} value={inst.id}>
+                              {inst.name} {inst.address ? `(${inst.address})` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Collaboration Type
+                    </label>
+                    <Select value={campusCollaborationType} onValueChange={(val) => setCampusCollaborationType(val || "Campus Placement Drive")}>
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Select collaboration type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Campus Placement Drive">Campus Placement Drive</SelectItem>
+                        <SelectItem value="Joint Internship Program">Joint Internship Program</SelectItem>
+                        <SelectItem value="Campus Hackathon / Contest">Campus Hackathon / Contest</SelectItem>
+                        <SelectItem value="Faculty-Guided Research & Lab">Faculty-Guided Research & Lab</SelectItem>
+                        <SelectItem value="Guest Lecture / Workshop">Guest Lecture / Workshop</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Message / Note to Faculty (Optional)
+                    </label>
+                    <Input 
+                      placeholder="e.g. Seeking top final year students for on-campus interviews..."
+                      className="bg-background"
+                      value={facultyNote}
+                      onChange={(e) => setFacultyNote(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Accordion type="multiple" defaultValue={["basic", "eligibility", "skills", "assessments", "screening"]} className="space-y-4">
           
           {/* 1. BASIC INFO */}

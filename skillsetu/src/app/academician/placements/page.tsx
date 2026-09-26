@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Briefcase, Building2, User, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Briefcase, Building2, User, CheckCircle, XCircle, Loader2, GraduationCap, School, Sparkles, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AcademicianPlacementsPage() {
@@ -46,7 +46,17 @@ export default function AcademicianPlacementsPage() {
 
       const { data: oppsData, error: oppsError } = await oppsQuery;
       if (oppsError) throw oppsError;
-      setOpportunities(oppsData || []);
+
+      // Filter to relevant campus collaborations (if academician has institution_id, show collaborations for this institution or general)
+      const filteredOpps = (oppsData || []).filter(opp => {
+        const targetInstId = opp.eligibility_requirements?.target_institution_id;
+        if (targetInstId && profile?.institution_id) {
+          return targetInstId === profile.institution_id;
+        }
+        return true;
+      });
+
+      setOpportunities(filteredOpps);
 
       // Fetch pending applications (isolated by student department)
       let appsQuery = supabase
@@ -75,7 +85,7 @@ export default function AcademicianPlacementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.id, profile?.department, profile?.role, profileLoading]);
+  }, [profile?.id, profile?.department, profile?.role, profile?.institution_id, profileLoading]);
 
   useEffect(() => {
     fetchData();
@@ -94,7 +104,7 @@ export default function AcademicianPlacementsPage() {
         
       if (error) throw error;
       
-      toast.success(`Opportunity ${isApproved ? "approved" : "rejected"} successfully`);
+      toast.success(isApproved ? "Opportunity approved and published for students!" : "Opportunity rejected.");
       fetchData(); // Refresh data
     } catch (err) {
       toast.error("Action failed");
@@ -143,12 +153,12 @@ export default function AcademicianPlacementsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Placements & Campus Drives</h1>
-        <p className="text-muted-foreground mt-1">Review and verify industry opportunities and student applications.</p>
+        <p className="text-muted-foreground mt-1">Review and verify industry opportunities, campus collaboration drives, and student applications.</p>
       </div>
 
       <Tabs defaultValue="opportunities" className="w-full">
         <TabsList className="w-full max-w-md grid grid-cols-2">
-          <TabsTrigger value="opportunities">Opportunities ({opportunities.length})</TabsTrigger>
+          <TabsTrigger value="opportunities">Campus Opportunities ({opportunities.length})</TabsTrigger>
           <TabsTrigger value="applications">Applications ({applications.length})</TabsTrigger>
         </TabsList>
         
@@ -157,57 +167,100 @@ export default function AcademicianPlacementsPage() {
             <Card className="border-border/50 border-dashed bg-secondary/20">
               <CardContent className="p-12 text-center text-muted-foreground">
                 <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-medium">No pending opportunities</p>
-                <p className="text-sm">All posted opportunities have been verified.</p>
+                <p className="text-lg font-medium">No pending campus opportunities</p>
+                <p className="text-sm">All posted campus collaborations and drives have been reviewed.</p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {opportunities.map((opp) => (
-                <Card key={opp.id} className="border-border/50">
-                  <CardHeader className="pb-3 border-b border-border/30">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                        <Building2 className="w-5 h-5 text-muted-foreground" />
+              {opportunities.map((opp) => {
+                const isCampusCollab = opp.eligibility_requirements?.is_campus_collaboration;
+                const targetInstName = opp.eligibility_requirements?.target_institution_name;
+                const collabType = opp.eligibility_requirements?.campus_collaboration_type;
+                const facultyNote = opp.eligibility_requirements?.faculty_note;
+
+                return (
+                  <Card key={opp.id} className="border-border/50 flex flex-col justify-between">
+                    <div>
+                      <CardHeader className="pb-3 border-b border-border/30">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                              <Building2 className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-lg line-clamp-1">{opp.title}</CardTitle>
+                              <p className="text-sm text-muted-foreground">
+                                {opp.industry?.name || "Unknown Company"}
+                              </p>
+                            </div>
+                          </div>
+
+                          {isCampusCollab ? (
+                            <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[11px] shrink-0">
+                              <GraduationCap className="w-3 h-3 mr-1" /> Campus Collab
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[11px] shrink-0">
+                              Direct
+                            </Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-3">
+                        {isCampusCollab && (
+                          <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/15 space-y-1 text-xs">
+                            <div className="flex items-center gap-1.5 text-blue-800 dark:text-blue-300 font-semibold">
+                              <School className="w-3.5 h-3.5" />
+                              Target: {targetInstName || "Your Institution"}
+                            </div>
+                            {collabType && (
+                              <div className="text-blue-700/80 dark:text-blue-400">
+                                Program: <span className="font-medium">{collabType}</span>
+                              </div>
+                            )}
+                            {facultyNote && (
+                              <div className="pt-1 text-muted-foreground italic border-t border-blue-500/10 mt-1">
+                                &quot;{facultyNote}&quot;
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                          <div><span className="font-medium text-foreground">Type:</span> <span className="capitalize">{opp.type}</span></div>
+                          <div><span className="font-medium text-foreground">Location:</span> {opp.location || "N/A"}</div>
+                          <div><span className="font-medium text-foreground">Stipend:</span> {opp.stipend || "N/A"}</div>
+                          <div><span className="font-medium text-foreground">Deadline:</span> {opp.deadline ? new Date(opp.deadline).toLocaleDateString() : "Rolling"}</div>
+                        </div>
+                        {opp.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{opp.description}</p>
+                        )}
+                      </CardContent>
+                    </div>
+
+                    <CardContent className="pt-0">
+                      <div className="flex gap-2 pt-2 border-t border-border/20">
+                        <Button 
+                          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white" 
+                          disabled={processingId === opp.id}
+                          onClick={() => handleVerifyOpportunity(opp.id, true)}
+                        >
+                          {processingId === opp.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle className="w-4 h-4 mr-2" /> Approve & Publish</>}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          className="flex-1"
+                          disabled={processingId === opp.id}
+                          onClick={() => handleVerifyOpportunity(opp.id, false)}
+                        >
+                          {processingId === opp.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><XCircle className="w-4 h-4 mr-2" /> Reject</>}
+                        </Button>
                       </div>
-                      <div>
-                        <CardTitle className="text-lg line-clamp-1">{opp.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          {opp.industry?.name || "Unknown Company"}
-                        </p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                      <div><span className="font-medium text-foreground">Type:</span> <span className="capitalize">{opp.type}</span></div>
-                      <div><span className="font-medium text-foreground">Location:</span> {opp.location || "N/A"}</div>
-                      <div><span className="font-medium text-foreground">Stipend:</span> {opp.stipend || "N/A"}</div>
-                      <div><span className="font-medium text-foreground">Deadline:</span> {opp.deadline ? new Date(opp.deadline).toLocaleDateString() : "Rolling"}</div>
-                    </div>
-                    {opp.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{opp.description}</p>
-                    )}
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white" 
-                        disabled={processingId === opp.id}
-                        onClick={() => handleVerifyOpportunity(opp.id, true)}
-                      >
-                        {processingId === opp.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle className="w-4 h-4 mr-2" /> Approve</>}
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        className="flex-1"
-                        disabled={processingId === opp.id}
-                        onClick={() => handleVerifyOpportunity(opp.id, false)}
-                      >
-                        {processingId === opp.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <><XCircle className="w-4 h-4 mr-2" /> Reject</>}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </TabsContent>

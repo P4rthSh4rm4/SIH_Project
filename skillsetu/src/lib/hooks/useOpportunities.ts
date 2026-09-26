@@ -23,10 +23,10 @@ export function useOpportunities() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch the student's department to ensure safe strict filtering
+      // Fetch the student's department and institution to ensure safe strict filtering
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("department")
+        .select("department, institution_id")
         .eq("id", user.id)
         .single();
 
@@ -36,6 +36,7 @@ export function useOpportunities() {
         return;
       }
       const userDepartment = userData.department;
+      const userInstitutionId = userData.institution_id;
 
       // Fetch all active opportunities filtered by the student's department
       const { data: opps, error } = await supabase
@@ -47,6 +48,21 @@ export function useOpportunities() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
+      // Filter out institute-specific campus collaborations intended for other institutions
+      const eligibleOpps = ((opps as any[]) ?? []).filter((opp) => {
+        const isCampusCollab = opp.eligibility_requirements?.is_campus_collaboration;
+        const targetInstId = opp.eligibility_requirements?.target_institution_id;
+        
+        // If it's a campus collaboration targeted to an institution:
+        if (isCampusCollab && targetInstId) {
+          // If student has an institution and it doesn't match, exclude
+          if (userInstitutionId && userInstitutionId !== targetInstId) {
+            return false;
+          }
+        }
+        return true;
+      });
 
       // Fetch user's skills for matching
       const { data: userSkills } = await supabase
@@ -68,10 +84,10 @@ export function useOpportunities() {
         (apps ?? []).map((a: { opportunity_id: string }) => a.opportunity_id)
       );
 
-      const withMatch: OpportunityWithMatch[] = ((opps as Opportunity[]) ?? []).map(
+      const withMatch: OpportunityWithMatch[] = eligibleOpps.map(
         (opp) => {
           const reqSkills = opp.required_skills ?? [];
-          const matchCount = reqSkills.filter((sid) =>
+          const matchCount = reqSkills.filter((sid: string) =>
             userSkillIds.has(sid)
           ).length;
           const matchScore =
@@ -84,8 +100,20 @@ export function useOpportunities() {
               : matchScore >= 50
                 ? "Good Match"
                 : "Low Match";
+
+          const isCollab = opp.eligibility_requirements?.is_campus_collaboration ?? false;
+          const targetInstId = opp.eligibility_requirements?.target_institution_id;
+          const targetInstName = opp.eligibility_requirements?.target_institution_name;
+          const collabType = opp.eligibility_requirements?.campus_collaboration_type;
+          const facultyNote = opp.eligibility_requirements?.faculty_note;
+
           return {
             ...opp,
+            is_campus_collaboration: isCollab,
+            target_institution_id: targetInstId,
+            target_institution_name: targetInstName,
+            campus_collaboration_type: collabType,
+            faculty_note: facultyNote,
             matchScore,
             matchLabel,
             hasApplied: appliedSet.has(opp.id),
